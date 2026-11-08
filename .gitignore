@@ -1,0 +1,16 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary & Scratch Files
+scratch/
+*.tmp
+*.log
+scratch.html
+
+# Local Server & IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

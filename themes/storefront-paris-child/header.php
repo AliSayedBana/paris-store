@@ -1,0 +1,226 @@
+<?php
+/**
+ * Paris Store - Custom Header Template v3.1
+ * تنظيم وفصل أقسام الملابس عن الأدوات المنزلية
+ */
+defined('ABSPATH') || exit;
+
+// Determine active mall: 'clothes' or 'home'
+$current_mall = 'clothes'; // Default on front page or when in clothes
+if (isset($_GET['mall'])) {
+    $current_mall = sanitize_text_field($_GET['mall']);
+} elseif (is_product_category()) {
+    $current_term = get_queried_object();
+    if ($current_term) {
+        $ancestors = get_ancestors($current_term->term_id, 'product_cat');
+        $home_term = get_term_by('slug', 'home', 'product_cat');
+        $home_id = $home_term ? $home_term->term_id : 0;
+        
+        $home_slugs = ['home', 'kitchen', 'decor', 'textiles', 'cleaning', 'organization', 'appliances', 'cookware'];
+        if (in_array($current_term->slug, $home_slugs) || in_array($home_id, $ancestors)) {
+            $current_mall = 'home';
+        } else {
+            $current_mall = 'clothes';
+        }
+    }
+}
+?><!DOCTYPE html>
+<html <?php language_attributes(); ?> dir="rtl">
+<head>
+<meta charset="<?php bloginfo('charset'); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
+<?php wp_body_open(); ?>
+
+<!-- ===================== SIDE CART DRAWER ===================== -->
+<div class="paris-cart-overlay"></div>
+<div class="paris-cart-panel" id="paris-cart-panel" role="dialog" aria-label="سلة التسوق">
+  <div class="paris-cart-panel-header">
+    <div class="paris-cart-panel-title">
+      🛒 سلتك - حاجاتك المختارة
+      <span class="cart-count-badge"><?php echo WC()->cart ? WC()->cart->get_cart_contents_count() : 0; ?></span>
+    </div>
+    <button class="paris-cart-close" aria-label="إغلاق السلة">✕</button>
+  </div>
+  <div class="paris-cart-panel-body">
+    <div class="paris-cart-loading"><div class="paris-spinner"></div></div>
+  </div>
+  <div class="paris-cart-panel-footer">
+    <div class="paris-cart-total-row">
+      <span class="paris-cart-total-label">الإجمالي</span>
+      <span class="paris-cart-total-value">
+        <?php echo WC()->cart ? WC()->cart->get_cart_total() : '0 ج.م'; ?>
+      </span>
+    </div>
+    <p class="paris-cart-shipping-note">تفاصيل الشحن تتحدد عند تأكيد الطلب</p>
+    <a href="<?php echo wc_get_checkout_url(); ?>" class="paris-cart-checkout-btn">
+      كمّل طلبك &larr;
+    </a>
+    <span class="paris-cart-continue">راجع بياناتك قبل تأكيد الطلب</span>
+  </div>
+</div>
+<!-- ===================== / SIDE CART DRAWER ===================== -->
+
+<!-- ===================== 1. TOP ANNOUNCEMENT BAR ===================== -->
+<div class="paris-top-bar">
+  <div class="paris-top-bar-inner">
+    <div class="top-bar-center">
+      أدوات منزلية وملابس لكل العائلة.. عروض حصرية لفترة محدودة
+    </div>
+    <div class="top-bar-contact">
+      <a href="https://wa.me/<?php echo get_option('paris_whatsapp_number', '201065968425'); ?>" target="_blank" rel="noopener">
+        <span>تواصل معنا</span>
+        <span class="top-phone-icon">📞</span>
+      </a>
+    </div>
+  </div>
+</div>
+<!-- ===================== / TOP ANNOUNCEMENT BAR ===================== -->
+
+<!-- ===================== 2. MAIN HEADER ===================== -->
+<header class="paris-header" role="banner">
+  <div class="paris-header-inner">
+
+    <!-- Logo & Brand (Right in RTL) -->
+    <a href="<?php echo home_url('/'); ?>" class="paris-brand-logo">
+      <div class="paris-brand-text">
+        <strong class="brand-name">مول باريس التجاري</strong>
+        <span class="brand-tagline">أناقة الملابس وجودة المنزل</span>
+      </div>
+      <div class="paris-brand-icon">
+        <svg viewBox="0 0 48 48" width="44" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 36V16C14 12.6863 16.6863 10 20 10C23.3137 10 26 12.6863 26 16V36" stroke="#c59b27" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M26 22C26 18.6863 28.6863 16 32 16C35.3137 16 38 18.6863 38 22V36" stroke="#16432f" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="20" cy="11" r="2.5" fill="#d4af37"/>
+          <circle cx="32" cy="17" r="2.5" fill="#1b4d36"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Center Search Bar -->
+    <form class="paris-search-bar" role="search" method="get" action="<?php echo home_url('/'); ?>">
+      <button type="submit" class="paris-search-btn" aria-label="بحث">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+      <input type="text" name="s" placeholder="ابحث عن الملابس، الأدوات المنزلية، أو الديكور..." value="<?php echo get_search_query(); ?>" autocomplete="off">
+      <input type="hidden" name="post_type" value="product">
+    </form>
+
+    <!-- Header Actions (Left in RTL) -->
+    <div class="paris-header-actions">
+      <!-- Account Button -->
+      <a href="<?php echo get_permalink(get_option('woocommerce_myaccount_page_id')); ?>" class="paris-account-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>حسابي</span>
+      </a>
+
+      <!-- Coral Orange Cart Button -->
+      <button type="button" class="paris-coral-cart-btn paris-open-cart" aria-label="السلة">
+        <span class="cart-btn-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </span>
+        <span class="cart-btn-text">السلة</span>
+        <span class="paris-cart-count">
+          <?php echo WC()->cart ? WC()->cart->get_cart_contents_count() : 0; ?>
+        </span>
+      </button>
+    </div>
+
+  </div>
+</header>
+<!-- ===================== / MAIN HEADER ===================== -->
+
+<!-- ===================== 3. DUAL-MALL TABS & CATEGORIES ===================== -->
+<?php
+// URLs for categories
+$clothes_url = home_url('/product-category/clothes/');
+$men_url     = home_url('/product-category/clothes/men/');
+$women_url   = home_url('/product-category/clothes/women/');
+$kids_url    = home_url('/product-category/clothes/kids/');
+$clothes_sale= home_url('/product-category/clothes/?on_sale=1');
+
+$home_url    = home_url('/product-category/home/');
+$kitchen_url = home_url('/product-category/home/kitchen/');
+$decor_url   = home_url('/product-category/home/decor/');
+$textiles_url= home_url('/product-category/textiles/');
+$org_url     = home_url('/product-category/home/organization/');
+$clean_url   = home_url('/product-category/home/cleaning/');
+$home_sale   = home_url('/product-category/home/?on_sale=1');
+
+$current_url = home_url(add_query_arg([], $GLOBALS['wp']->request ?? ''));
+?>
+<nav class="paris-nav-container" aria-label="التنقل الذكي والأقسام">
+  <div class="paris-nav-inner">
+
+    <!-- Row 1: The Two Main Malls (Tabs) -->
+    <div class="paris-dual-malls">
+      <button type="button" class="paris-mall-tab <?php echo ($current_mall === 'clothes') ? 'active' : ''; ?>" data-mall="clothes" data-url="<?php echo esc_url($clothes_url); ?>">
+        مول باريس للملابس
+      </button>
+      <button type="button" class="paris-mall-tab <?php echo ($current_mall === 'home') ? 'active' : ''; ?>" data-mall="home" data-url="<?php echo esc_url($home_url); ?>">
+        مول باريس للأدوات المنزلية
+      </button>
+    </div>
+
+    <!-- Row 2-A: Sub-categories for Clothes (الملابس) -->
+    <div class="paris-subnav-list subnav-for-clothes <?php echo ($current_mall === 'clothes') ? 'active' : ''; ?>" id="subnav-clothes">
+      <a href="<?php echo esc_url($clothes_url); ?>" class="subnav-link <?php echo (is_front_page() || $current_url === $clothes_url) ? 'active' : ''; ?>">
+        كل الملابس
+      </a>
+      <a href="<?php echo esc_url($men_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'men') !== false) ? 'active' : ''; ?>">
+        ملابس رجالية
+      </a>
+      <a href="<?php echo esc_url($women_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'women') !== false) ? 'active' : ''; ?>">
+        ملابس نسائية
+      </a>
+      <a href="<?php echo esc_url($kids_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'kids') !== false) ? 'active' : ''; ?>">
+        أطفال
+      </a>
+      <a href="<?php echo esc_url($clothes_sale); ?>" class="subnav-link subnav-discount">
+        تخفيضات الملابس %
+      </a>
+    </div>
+
+    <!-- Row 2-B: Sub-categories for Home & Living (الأدوات المنزلية) -->
+    <div class="paris-subnav-list subnav-for-home <?php echo ($current_mall === 'home') ? 'active' : ''; ?>" id="subnav-home">
+      <a href="<?php echo esc_url($home_url); ?>" class="subnav-link <?php echo ($current_url === $home_url) ? 'active' : ''; ?>">
+        كل الأدوات المنزلية
+      </a>
+      <a href="<?php echo esc_url($kitchen_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'kitchen') !== false) ? 'active' : ''; ?>">
+        أدوات المطبخ
+      </a>
+      <a href="<?php echo esc_url($decor_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'decor') !== false) ? 'active' : ''; ?>">
+        ديكورات
+      </a>
+      <a href="<?php echo esc_url($textiles_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'textiles') !== false) ? 'active' : ''; ?>">
+        مفروشات
+      </a>
+      <a href="<?php echo esc_url($org_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'organization') !== false) ? 'active' : ''; ?>">
+        تنظيم
+      </a>
+      <a href="<?php echo esc_url($clean_url); ?>" class="subnav-link <?php echo (strpos($current_url, 'cleaning') !== false) ? 'active' : ''; ?>">
+        تنظيف
+      </a>
+      <a href="<?php echo esc_url($home_sale); ?>" class="subnav-link subnav-discount">
+        تخفيضات الأدوات %
+      </a>
+    </div>
+
+  </div>
+</nav>
+<!-- ===================== / DUAL-MALL TABS & CATEGORIES ===================== -->
+
+<div id="page" class="site">
+  <div id="content" class="site-content">
