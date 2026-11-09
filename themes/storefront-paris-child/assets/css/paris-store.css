@@ -1671,36 +1671,52 @@ li.product.paris-modern-card:hover {
 
 /* 2. Coupon Notice Bar (شريط القسيمة) */
 .woocommerce-checkout .woocommerce-form-coupon-toggle .woocommerce-info,
-.woocommerce-checkout .woocommerce-info {
+.woocommerce-checkout .woocommerce-info:not(.cart-empty),
+.woocommerce-form-coupon-toggle .woocommerce-info {
   background: #2880b9 !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 8px !important;
-  padding: 12px 20px !important;
+  padding: 13px 20px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
-  margin-bottom: 30px !important;
+  margin: 0 0 25px 0 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
   box-shadow: 0 2px 6px rgba(40, 128, 185, 0.15) !important;
+  direction: rtl !important;
+  text-align: right !important;
 }
 
-.woocommerce-checkout .woocommerce-info::before {
-  content: "ℹ️" !important;
+.woocommerce-checkout .woocommerce-form-coupon-toggle .woocommerce-info::before,
+.woocommerce-checkout .woocommerce-info:not(.cart-empty)::before,
+.woocommerce-form-coupon-toggle .woocommerce-info::before {
+  content: "🏷️" !important;
   color: #ffffff !important;
-  font-size: 15px !important;
-  margin-left: 8px !important;
+  font-size: 16px !important;
+  margin: 0 0 0 4px !important;
+  position: static !important;
+  border: none !important;
+  outline: none !important;
+  background: none !important;
+  width: auto !important;
+  height: auto !important;
+  box-shadow: none !important;
 }
 
-.woocommerce-checkout .woocommerce-info a {
+.woocommerce-checkout .woocommerce-form-coupon-toggle .woocommerce-info a,
+.woocommerce-checkout .woocommerce-info:not(.cart-empty) a,
+.woocommerce-form-coupon-toggle .woocommerce-info a {
   color: #ffffff !important;
   text-decoration: underline !important;
   font-weight: 800 !important;
   transition: opacity 0.2s ease !important;
 }
 
-.woocommerce-checkout .woocommerce-info a:hover {
+.woocommerce-checkout .woocommerce-form-coupon-toggle .woocommerce-info a:hover,
+.woocommerce-checkout .woocommerce-info:not(.cart-empty) a:hover,
+.woocommerce-form-coupon-toggle .woocommerce-info a:hover {
   opacity: 0.9 !important;
 }
 
@@ -1856,12 +1872,9 @@ body.woocommerce-checkout .form-row label .required,
 body.woocommerce-checkout .form-row input.input-text,
 body.woocommerce-checkout .form-row textarea,
 body.woocommerce-checkout .form-row select,
-body.woocommerce-checkout .select2-container,
-body.woocommerce-checkout .select2-container .select2-selection--single,
 .woocommerce-checkout .form-row input.input-text,
 .woocommerce-checkout .form-row textarea,
-.woocommerce-checkout .form-row select,
-.woocommerce-checkout .select2-container--default .select2-selection--single {
+.woocommerce-checkout .form-row select {
   background: #f7f7f5 !important;
   border: 1.5px solid #ded9ce !important;
   border-radius: 8px !important;
@@ -1889,26 +1902,73 @@ body.woocommerce-checkout .form-row textarea,
   resize: vertical !important;
 }
 
+/* Governorate Select2 Clean Single Box Styling */
+body.woocommerce-checkout .select2-container,
+.woocommerce-checkout .select2-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  float: none !important;
+}
+
+body.woocommerce-checkout .select2-container .selection,
+.woocommerce-checkout .select2-container .selection {
+  display: block !important;
+  width: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.woocommerce-checkout .select2-container--default .select2-selection--single,
 body.woocommerce-checkout .select2-container .select2-selection--single,
 .woocommerce-checkout .select2-container--default .select2-selection--single {
+  background: #f7f7f5 !important;
+  border: 1.5px solid #ded9ce !important;
+  border-radius: 8px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-family: var(--font-cairo) !important;
+  color: #1a221e !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
   height: 48px !important;
-  padding: 10px 16px !important;
+  line-height: 46px !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
 }
 
 body.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered,
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
-  line-height: 26px !important;
+  line-height: 46px !important;
   padding: 0 !important;
   color: #1a221e !important;
   font-weight: 600 !important;
   text-align: right !important;
+  padding-left: 30px !important;
 }
 
 body.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow,
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
   height: 46px !important;
-  left: 12px !important;
+  position: absolute !important;
+  left: 14px !important;
   right: auto !important;
+  top: 0 !important;
+  width: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 body.woocommerce-checkout .form-row input.input-text:focus,
@@ -1922,6 +1982,8 @@ body.woocommerce-checkout .select2-container--default.select2-container--open .s
   background: #ffffff !important;
   border-color: #093B23 !important;
   box-shadow: 0 0 0 3px rgba(9, 59, 35, 0.1) !important;
+  outline: none !important;
+}
   outline: none !important;
 }
 
@@ -2288,4 +2350,87 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
       "review-body" !important;
     gap: 30px !important;
   }
+}
+
+/* ============================================================
+   13. LUXURY EMPTY CART UI
+   ============================================================ */
+.woocommerce-cart .entry-header {
+  text-align: center !important;
+  margin-bottom: 25px !important;
+  padding-top: 25px !important;
+}
+
+.woocommerce-cart .entry-title {
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  color: #093B23 !important;
+  font-family: var(--font-cairo) !important;
+  margin: 0 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.woocommerce-cart .cart-empty,
+.cart-empty.woocommerce-info {
+  background: #ffffff !important;
+  border: 1.5px solid #ece7dd !important;
+  border-radius: 16px !important;
+  padding: 50px 30px !important;
+  text-align: center !important;
+  max-width: 600px !important;
+  margin: 30px auto 20px !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+  color: #1e2421 !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+
+.cart-empty.woocommerce-info::before {
+  content: "🛒" !important;
+  font-size: 54px !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+  position: static !important;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.woocommerce-cart .return-to-shop,
+.woocommerce-checkout .return-to-shop {
+  text-align: center !important;
+  margin: 15px auto 60px !important;
+}
+
+.woocommerce-cart .return-to-shop .button,
+.woocommerce-checkout .return-to-shop .button {
+  background: #093B23 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 14px 36px !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  font-family: var(--font-cairo) !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(9, 59, 35, 0.25) !important;
+  transition: all 0.25s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+}
+
+.woocommerce-cart .return-to-shop .button:hover,
+.woocommerce-checkout .return-to-shop .button:hover {
+  background: #0d4a2d !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(9, 59, 35, 0.35) !important;
+  color: #ffffff !important;
 }

@@ -102,10 +102,13 @@ class PWO_Gateway extends WC_Payment_Gateway {
         // تفريغ السلة
         WC()->cart->empty_cart();
 
-        // ✅ إرجاع صفحة الشكر (التحويل لواتساب يتم من صفحة الشكر)
+        // ✅ التحويل مباشرة إلى واتساب بدون المرور بصفحة الشكر
+        require_once dirname( __FILE__ ) . '/class-pwo-message.php';
+        $whatsapp_url = PWO_Message::get_whatsapp_url( $order );
+
         return [
             'result'   => 'success',
-            'redirect' => $this->get_return_url( $order ),
+            'redirect' => $whatsapp_url,
         ];
     }
 }

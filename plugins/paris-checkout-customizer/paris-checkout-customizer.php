@@ -21,16 +21,35 @@ add_action( 'before_woocommerce_init', function () {
 } );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 1. عنوان الصفحة الرئيسي (سلة المشتريات وإتمام الطلب)
+// 1. عنوان الصفحة الرئيسي (سلة المشتريات / سلة المشتريات وإتمام الطلب)
 // ════════════════════════════════════════════════════════════════════════════
 add_filter( 'the_title', function ( $title, $id = null ) {
-    if ( ! is_admin() && function_exists( 'is_checkout' ) && is_checkout() && ! is_order_received_page() ) {
-        if ( $id === (int) get_option( 'woocommerce_checkout_page_id' ) ) {
-            return 'سلة المشتريات وإتمام الطلب';
-        }
+    if ( is_admin() ) {
+        return $title;
+    }
+    $cart_id     = (int) get_option( 'woocommerce_cart_page_id' );
+    $checkout_id = (int) get_option( 'woocommerce_checkout_page_id' );
+
+    if ( ( $id && $id === $cart_id ) || ( function_exists( 'is_cart' ) && is_cart() ) ) {
+        return 'سلة المشتريات';
+    }
+    if ( ( $id && $id === $checkout_id ) || ( function_exists( 'is_checkout' ) && is_checkout() && ! is_order_received_page() ) ) {
+        return 'سلة المشتريات وإتمام الطلب';
     }
     return $title;
 }, 20, 2 );
+
+// تصحيح عناوين الصفحات في قاعدة البيانات تلقائياً لمنع ظهور علامات الاستفهام
+add_action( 'init', function () {
+    $cart_id = (int) get_option( 'woocommerce_cart_page_id' );
+    if ( $cart_id && get_post_field( 'post_title', $cart_id ) !== 'سلة المشتريات' ) {
+        wp_update_post( [ 'ID' => $cart_id, 'post_title' => 'سلة المشتريات' ] );
+    }
+    $checkout_id = (int) get_option( 'woocommerce_checkout_page_id' );
+    if ( $checkout_id && get_post_field( 'post_title', $checkout_id ) !== 'سلة المشتريات وإتمام الطلب' ) {
+        wp_update_post( [ 'ID' => $checkout_id, 'post_title' => 'سلة المشتريات وإتمام الطلب' ] );
+    }
+} );
 
 // ════════════════════════════════════════════════════════════════════════════
 // 2. تعديل حقول نموذج الطلب (تخطيط متناسق ونظيف بدون تكرار "اختياري")
