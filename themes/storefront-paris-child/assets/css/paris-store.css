@@ -1984,8 +1984,6 @@ body.woocommerce-checkout .select2-container--default.select2-container--open .s
   box-shadow: 0 0 0 3px rgba(9, 59, 35, 0.1) !important;
   outline: none !important;
 }
-  outline: none !important;
-}
 
 /* Left Column: Order Review (#order_review) */
 body.woocommerce-checkout #order_review,
