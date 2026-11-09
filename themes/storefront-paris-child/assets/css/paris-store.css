@@ -2128,19 +2128,83 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   background: none !important;
   border: none !important;
   padding: 0 !important;
-  margin-top: 15px !important;
+  margin-top: 20px !important;
 }
 
 .woocommerce-checkout #payment ul.payment_methods {
-  border: none !important;
-  padding: 0 !important;
-  margin-bottom: 15px !important;
+  border: 1.5px solid #ebe6dc !important;
+  background: #fdfdfc !important;
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  margin-bottom: 16px !important;
+  list-style: none !important;
 }
 
-.woocommerce-checkout #payment ul.payment_methods li {
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #1e2421 !important;
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li label {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #093B23 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li img,
+.woocommerce-checkout #payment ul.payment_methods li img.pwo-gateway-icon {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+  margin: 0 4px !important;
+}
+
+.woocommerce-checkout #payment div.payment_box {
+  background: none !important;
+  border: none !important;
+  padding: 6px 0 0 0 !important;
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: #555555 !important;
+  line-height: 1.6 !important;
+  font-weight: 600 !important;
+}
+
+.woocommerce-checkout #payment div.payment_box::before {
+  display: none !important;
+}
+
+.woocommerce-checkout #payment div.payment_box p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: #555555 !important;
+}
+
+/* Optional field suffix */
+.woocommerce-checkout .form-row label .optional {
+  color: #88928c !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
+  margin-right: 4px !important;
+}
+
+/* Additional fields heading */
+.woocommerce-checkout .woocommerce-additional-fields h3 {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #093B23 !important;
+  margin: 26px 0 14px 0 !important;
 }
 
 /* Place Order CTA Button (أكّد الطلب عبر واتساب) */

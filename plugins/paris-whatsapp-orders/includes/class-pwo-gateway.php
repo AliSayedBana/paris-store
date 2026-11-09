@@ -29,6 +29,12 @@ class PWO_Gateway extends WC_Payment_Gateway {
         );
     }
 
+    public function get_icon(): string {
+        $icon_url = PWO_PLUGIN_URL . 'assets/images/whatsapp-icon.svg';
+        $icon = '<img src="' . esc_url( $icon_url ) . '" alt="' . esc_attr( $this->get_title() ) . '" class="pwo-gateway-icon" style="width:24px;height:24px;vertical-align:middle;margin:0 8px;display:inline-block;" />';
+        return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
+    }
+
     // ── حقول الإعداد في لوحة WooCommerce ────────────────────────────────────
     public function init_form_fields(): void {
         $this->form_fields = [

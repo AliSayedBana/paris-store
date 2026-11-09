@@ -3,7 +3,7 @@
  * Plugin Name: Paris Checkout Customizer
  * Plugin URI:  https://example.com
  * Description: تخصيص نموذج سلة المشتريات وإتمام الطلب: محافظات مصر، فحص الهاتف، تخطيط عصري، تأكيد الواتساب.
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      Paris Store
  * Text Domain: paris-checkout
  * Requires at least: 6.0
@@ -33,7 +33,7 @@ add_filter( 'the_title', function ( $title, $id = null ) {
 }, 20, 2 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 2. تعديل حقول نموذج الطلب (تخطيط متناسق ونظيف)
+// 2. تعديل حقول نموذج الطلب (تخطيط متناسق ونظيف بدون تكرار "اختياري")
 // ════════════════════════════════════════════════════════════════════════════
 add_filter( 'woocommerce_checkout_fields', function ( array $fields ): array {
 
@@ -67,7 +67,7 @@ add_filter( 'woocommerce_checkout_fields', function ( array $fields ): array {
     $fields['billing']['billing_state']['priority']    = 30;
     $fields['billing']['billing_state']['default']     = 'EGKFS'; // كفر الشيخ افتراضياً
 
-    // 4. بيتي (أو المنطقة)
+    // 4. بيتي (أو المنطقة) (بدون كلمة اختياري في النص لأن ووكومرس يضيفها تلقائياً)
     $fields['billing']['billing_address_2']['label']       = __( 'بيتي (أو المنطقة)', 'paris-checkout' );
     $fields['billing']['billing_address_2']['label_class'] = [];
     $fields['billing']['billing_address_2']['placeholder'] = __( 'مثال: وسط البلد / شارع النصر', 'paris-checkout' );
@@ -82,25 +82,25 @@ add_filter( 'woocommerce_checkout_fields', function ( array $fields ): array {
     $fields['billing']['billing_address_1']['class']       = [ 'form-row-wide' ];
     $fields['billing']['billing_address_1']['priority']    = 50;
 
-    // 6. المدينة / المركز (اختياري)
-    $fields['billing']['billing_city']['label']       = __( 'المدينة / المركز (اختياري)', 'paris-checkout' );
+    // 6. المدينة / المركز (بدون كتابة اختياري في النص لتفادي التكرار)
+    $fields['billing']['billing_city']['label']       = __( 'المدينة / المركز', 'paris-checkout' );
     $fields['billing']['billing_city']['placeholder'] = __( 'مثال: كفر الشيخ / دسوق', 'paris-checkout' );
     $fields['billing']['billing_city']['required']    = false;
     $fields['billing']['billing_city']['class']       = [ 'form-row-wide' ];
     $fields['billing']['billing_city']['priority']    = 60;
 
-    // 7. البريد الإلكتروني (اختياري)
+    // 7. البريد الإلكتروني (بدون كتابة اختياري في النص)
     if ( isset( $fields['billing']['billing_email'] ) ) {
-        $fields['billing']['billing_email']['label']       = __( 'البريد الإلكتروني (اختياري)', 'paris-checkout' );
+        $fields['billing']['billing_email']['label']       = __( 'البريد الإلكتروني', 'paris-checkout' );
         $fields['billing']['billing_email']['placeholder'] = 'name@example.com';
         $fields['billing']['billing_email']['required']    = false;
         $fields['billing']['billing_email']['class']       = [ 'form-row-wide' ];
         $fields['billing']['billing_email']['priority']    = 70;
     }
 
-    // 8. ملاحظات الطلب (اختياري)
+    // 8. ملاحظات الطلب (بدون كتابة اختياري في النص)
     if ( isset( $fields['order']['order_comments'] ) ) {
-        $fields['order']['order_comments']['label']       = __( 'ملاحظات الطلب (اختياري)', 'paris-checkout' );
+        $fields['order']['order_comments']['label']       = __( 'ملاحظات الطلب', 'paris-checkout' );
         $fields['order']['order_comments']['placeholder'] = __( 'أي ملاحظات خاصة بالتسليم أو مواعيد الاستلام...', 'paris-checkout' );
         $fields['order']['order_comments']['class']       = [ 'form-row-wide' ];
     }
@@ -163,29 +163,79 @@ add_action( 'woocommerce_before_checkout_form', function (): void {
 }, 5 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 7. استبدال رسالة عدم توفر الشحن بـ "سنتواصل معك لتأكيد التوفر والشحن"
+// 7. حل مشكلة الشحن بالكامل ومنع أي خطأ عند تأكيد الطلب
 // ════════════════════════════════════════════════════════════════════════════
+// ضمان وجود وسيلة شحن صالحة في ووكومرس للمنطقة الافتراضية
+add_action( 'init', function () {
+    if ( ! class_exists( 'WC_Shipping_Zone' ) ) {
+        return;
+    }
+
+    $zone_0 = new WC_Shipping_Zone( 0 );
+    $methods = $zone_0->get_shipping_methods();
+    if ( empty( $methods ) ) {
+        $instance_id = $zone_0->add_shipping_method( 'free_shipping' );
+        if ( $instance_id ) {
+            update_option( 'woocommerce_free_shipping_' . $instance_id . '_settings', [
+                'title'      => 'سنتواصل معك لتأكيد التوفر والشحن',
+                'requires'   => '',
+                'min_amount' => '0',
+                'enabled'    => 'yes',
+            ] );
+        }
+    }
+} );
+
+// حقن وسيلة الشحن في الحزم البرمجية
+add_filter( 'woocommerce_package_rates', function ( $rates, $package ) {
+    if ( empty( $rates ) ) {
+        $rate = new WC_Shipping_Rate(
+            'free_shipping:paris',
+            'سنتواصل معك لتأكيد التوفر والشحن',
+            0,
+            [],
+            'free_shipping'
+        );
+        return [ 'free_shipping:paris' => $rate ];
+    }
+    return $rates;
+}, 100, 2 );
+
+// تثبيت وسيلة الشحن الافتراضية للجلسة
+add_action( 'woocommerce_checkout_process', function () {
+    $chosen_methods = WC()->session->get( 'chosen_shipping_methods', [] );
+    if ( empty( $chosen_methods[0] ) ) {
+        WC()->session->set( 'chosen_shipping_methods', [ 'free_shipping:paris' ] );
+    }
+}, 5 );
+
+// حذف أي رسالة خطأ متعلقة بعدم تحديد الشحن
+add_action( 'woocommerce_after_checkout_validation', function ( $data, $errors ) {
+    $error_codes = $errors->get_error_codes();
+    foreach ( $error_codes as $code ) {
+        $messages = $errors->get_error_messages( $code );
+        foreach ( $messages as $msg ) {
+            if ( mb_strpos( $msg, 'طريقة شحن' ) !== false || stripos( $msg, 'shipping' ) !== false ) {
+                $errors->remove( $code );
+            }
+        }
+    }
+}, 99, 2 );
+
+// ربط عنصر الشحن بالطلب المسجل
+add_action( 'woocommerce_checkout_create_order_shipping_item', function ( $item, $package_key, $package, $order ) {
+    $item->set_method_title( 'سنتواصل معك لتأكيد التوفر والشحن' );
+    $item->set_method_id( 'free_shipping' );
+    $item->set_total( 0 );
+}, 10, 4 );
+
+// استبدال رسائل عدم توفر الشحن
 add_filter( 'woocommerce_no_shipping_available_html', function () {
     return '<span class="paris-shipping-notice">سنتواصل معك لتأكيد التوفر والشحن</span>';
 } );
 add_filter( 'woocommerce_cart_no_shipping_available_html', function () {
     return '<span class="paris-shipping-notice">سنتواصل معك لتأكيد التوفر والشحن</span>';
 } );
-
-// إضافة وسيلة شحن افتراضية لتفادي أخطاء ووكومرس عند الحساب
-add_filter( 'woocommerce_package_rates', function ( $rates, $package ) {
-    if ( empty( $rates ) ) {
-        $rate = new WC_Shipping_Rate(
-            'paris_contact_shipping',
-            'سنتواصل معك لتأكيد التوفر والشحن',
-            0,
-            [],
-            'paris_contact'
-        );
-        return [ 'paris_contact_shipping' => $rate ];
-    }
-    return $rates;
-}, 100, 2 );
 
 // ════════════════════════════════════════════════════════════════════════════
 // 8. تخصيص نصوص العناوين والأزرار والخصوصية
