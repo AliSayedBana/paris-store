@@ -1,0 +1,64 @@
+/* ============================================================
+   Paris WhatsApp Button — Styles
+   ============================================================ */
+
+/* ── الزر العائم ──────────────────────────────────────────── */
+.pwb-float {
+    position: fixed;
+    bottom: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--pwb-color, #25D366);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-family: Cairo, Tajawal, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 18px rgba(37, 211, 102, 0.45);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, padding 0.25s ease;
+    white-space: nowrap;
+    /* RTL: الزر على اليسار (وهو الجانب السائد في العربي) */
+}
+
+.pwb-float:hover,
+.pwb-float:focus {
+    transform: scale(1.06) translateY(-2px);
+    box-shadow: 0 6px 24px rgba(37, 211, 102, 0.6);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* على الشاشات الصغيرة: أخفِ النص وأبقِ الأيقونة فقط */
+@media (max-width: 480px) {
+    .pwb-float__label {
+        display: none;
+    }
+
+    .pwb-float {
+        padding: 14px;
+        border-radius: 50%;
+    }
+}
+
+/* ── زر "اسأل عن المنتج" ─────────────────────────────────── */
+.pwb-product-btn {
+    width: 100%;
+    justify-content: center;
+    border-radius: 6px !important;
+    font-family: Cairo, Tajawal, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: filter 0.2s ease;
+}
+
+.pwb-product-btn:hover,
+.pwb-product-btn:focus {
+    filter: brightness(1.1);
+    color: #fff;
+    text-decoration: none;
+}
+
