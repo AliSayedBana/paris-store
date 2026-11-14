@@ -101,33 +101,54 @@
     });
 
     // ============================================================
-    // DUAL MALL TABS (Clothes vs Home)
+    // DUAL MALL TABS (Clothes vs Home) & BROWSER HISTORY SUPPORT
     // ============================================================
+    function switchToMall(mall, pushHistory) {
+        if (!mall) mall = 'clothes';
+
+        $('.paris-mall-tab').removeClass('active');
+        $('.paris-mall-tab[data-mall="' + mall + '"]').addClass('active');
+
+        if (mall === 'clothes') {
+            $('#subnav-home').removeClass('active').hide();
+            $('#subnav-clothes').addClass('active').fadeIn(200);
+            $('#paris-home-pills .paris-pill').removeClass('active');
+            $('#paris-home-pills .paris-pill[data-filter="clothes"]').addClass('active');
+            filterProductsByMall('clothes');
+        } else if (mall === 'home') {
+            $('#subnav-clothes').removeClass('active').hide();
+            $('#subnav-home').addClass('active').fadeIn(200);
+            $('#paris-home-pills .paris-pill').removeClass('active');
+            $('#paris-home-pills .paris-pill[data-filter="home"]').addClass('active');
+            filterProductsByMall('home');
+        }
+
+        if (pushHistory && window.history && window.history.pushState) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('mall', mall);
+            window.history.pushState({ mall: mall }, '', currentUrl.toString());
+        }
+    }
+
     $(document).on('click', '.paris-mall-tab', function(e) {
         const $tab = $(this);
         const mall = $tab.data('mall');
         const url  = $tab.data('url');
 
-        // If on homepage, switch subnav smoothly & filter products
         if ($('body').hasClass('home') || $('body').hasClass('paris-home-page')) {
             e.preventDefault();
-            $('.paris-mall-tab').removeClass('active');
-            $tab.addClass('active');
-
-            if (mall === 'clothes') {
-                $('#subnav-home').removeClass('active').hide();
-                $('#subnav-clothes').addClass('active').fadeIn(200);
-                // Filter products to clothes
-                filterProductsByMall('clothes');
-            } else {
-                $('#subnav-clothes').removeClass('active').hide();
-                $('#subnav-home').addClass('active').fadeIn(200);
-                // Filter products to home
-                filterProductsByMall('home');
-            }
+            switchToMall(mall, true);
         } else {
-            // If on internal page, navigate to mall category archive
             window.location.href = url;
+        }
+    });
+
+    // Handle browser Back / Forward buttons
+    window.addEventListener('popstate', function(event) {
+        if ($('body').hasClass('home') || $('body').hasClass('paris-home-page')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mall = urlParams.get('mall') || (event.state && event.state.mall) || 'clothes';
+            switchToMall(mall, false);
         }
     });
 
@@ -152,7 +173,7 @@
     }
 
     // Instant Homepage Category Filter
-    function applyPillFilter(filter) {
+    function applyPillFilter(filter, pushHistory) {
         if (!filter || filter === 'all') {
             $('.paris-products-section ul.products li.product').fadeIn(200);
         } else {
@@ -166,6 +187,12 @@
                 }
             });
         }
+
+        if (pushHistory && window.history && window.history.pushState) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('filter', filter);
+            window.history.pushState({ filter: filter }, '', currentUrl.toString());
+        }
     }
 
     $(document).on('click', '#paris-home-pills .paris-pill', function(e) {
@@ -176,22 +203,40 @@
         $('#paris-home-pills .paris-pill').removeClass('active');
         $pill.addClass('active');
 
-        applyPillFilter(filter);
+        if (filter === 'clothes') {
+            $('.paris-mall-tab').removeClass('active');
+            $('.paris-mall-tab[data-mall="clothes"]').addClass('active');
+            $('#subnav-home').removeClass('active').hide();
+            $('#subnav-clothes').addClass('active').fadeIn(200);
+        } else if (filter === 'home' || filter === 'textiles') {
+            $('.paris-mall-tab').removeClass('active');
+            $('.paris-mall-tab[data-mall="home"]').addClass('active');
+            $('#subnav-clothes').removeClass('active').hide();
+            $('#subnav-home').addClass('active').fadeIn(200);
+        }
+
+        applyPillFilter(filter, true);
     });
 
-    // Run active filter on load
+    // Run active filter on load and support direct ?mall= or ?filter= URLs
     $(function() {
-        const initialFilter = $('#paris-home-pills .paris-pill.active').data('filter');
-        if (initialFilter && initialFilter !== 'all') {
-            $('.paris-products-section ul.products li.product').each(function() {
-                const cat = $(this).attr('data-category') || '';
-                const cats = cat.split(' ');
-                if (cats.indexOf(initialFilter) !== -1) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
+        if ($('body').hasClass('home') || $('body').hasClass('paris-home-page')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mallParam = urlParams.get('mall');
+            const filterParam = urlParams.get('filter');
+
+            if (mallParam) {
+                switchToMall(mallParam, false);
+            } else if (filterParam) {
+                $('#paris-home-pills .paris-pill').removeClass('active');
+                $('#paris-home-pills .paris-pill[data-filter="' + filterParam + '"]').addClass('active');
+                applyPillFilter(filterParam, false);
+            } else {
+                const initialFilter = $('#paris-home-pills .paris-pill.active').data('filter');
+                if (initialFilter && initialFilter !== 'all') {
+                    applyPillFilter(initialFilter, false);
                 }
-            });
+            }
         }
     });
 
