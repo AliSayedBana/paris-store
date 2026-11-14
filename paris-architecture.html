@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>معمارية ودورة عمل متجر مول باريس التجاري | Paris Store Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #133e29;
+      --primary-dark: #0d2b1c;
+      --primary-light: #eaf3ed;
+      --gold: #c59b27;
+      --gold-light: #fdf8eb;
+      --coral: #eb6b47;
+      --coral-light: #fef1ed;
+      --dark: #1e2421;
+      --gray-bg: #f8f7f4;
+      --card-border: #ede8de;
+      --font-cairo: 'Cairo', Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-cairo);
+    }
+
+    body {
+      background-color: var(--gray-bg);
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 30px 20px 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #133e29 0%, #1e5a3c 100%);
+      color: #ffffff;
+      padding: 40px 30px;
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 12px 36px rgba(19, 62, 41, 0.2);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(197, 155, 39, 0.3);
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(197, 155, 39, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .header-logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 15px;
+    }
+
+    .header h1 {
+      font-size: 34px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #d8e5de;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Section Titles */
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 40px 0 24px;
+    }
+
+    .section-title-wrap .icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .section-title-wrap h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* Journey Flow Grid */
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .flow-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+      position: relative;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .flow-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 28px rgba(19, 62, 41, 0.09);
+      border-color: var(--gold);
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .flow-card.accent-coral .step-badge {
+      background: var(--coral);
+    }
+
+    .flow-card.accent-gold .step-badge {
+      background: var(--gold);
+    }
+
+    .flow-card h3 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .flow-card p {
+      font-size: 14px;
+      color: #555e58;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .flow-pills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid #f0ebe2;
+    }
+
+    .flow-pill {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .flow-pill.gold {
+      background: var(--gold-light);
+      color: #927117;
+    }
+
+    .flow-pill.coral {
+      background: var(--coral-light);
+      color: var(--coral);
+    }
+
+    /* Architecture Layers (Tech Stack) */
+    .stack-container {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-top: 24px;
+    }
+
+    .layer-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      padding: 20px 0;
+      border-bottom: 1px dashed #ede7db;
+      align-items: center;
+    }
+
+    .layer-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .layer-name {
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .layer-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip-item {
+      background: #fbf9f4;
+      border: 1px solid #ded7ca;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #333d37;
+    }
+
+    /* WhatsApp Flow Highlight */
+    .wa-highlight-box {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 32px;
+      margin-top: 36px;
+      box-shadow: 0 10px 30px rgba(37, 211, 102, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .wa-content h3 {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .wa-content p {
+      font-size: 15px;
+      color: #e4fbee;
+      line-height: 1.7;
+      max-width: 650px;
+    }
+
+    .wa-badge-btn {
+      background: #ffffff;
+      color: #128C7E;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 12px 26px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    .footer-note {
+      text-align: center;
+      font-size: 13.5px;
+      color: #8c9790;
+      margin-top: 50px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo-badge">
+        <span>🏛️</span>
+        <span>مخطط المعمارية ودورة العمل الشاملة</span>
+      </div>
+      <h1>متجر مول باريس التجاري (Paris Store)</h1>
+      <p>دليل بصري شامل يوضح رحلة العميل داخل الموقع، آلية التبديل بين المولات، السلة الجانبية السريعة، وتأكيد الطلبات المباشر عبر واتساب.</p>
+    </header>
+
+    <!-- SECTION 1: CUSTOMER JOURNEY (رحلة العميل) -->
+    <div class="section-title-wrap">
+      <div class="icon-box">🧭</div>
+      <h2>دورة حركة وتفاعل العميل داخل الموقع (Customer Flow)</h2>
+    </div>
+
+    <div class="flow-grid">
+      
+      <!-- Step 1 -->
+      <div class="flow-card">
+        <span class="step-badge">1</span>
+        <h3>الواجهة والمول المزدوج</h3>
+        <p>يدخل العميل فيجد تجربة فريدة تقسم المتجر إلى مركزين رئيسيين: <strong>مول الملابس</strong> و<strong>مول الأدوات المنزلية</strong>. التبديل بينهم لحظي دون إعادة تحميل، مع حفظ موضع التصفح في تاريخ المتصفح (History API) ليعمل زر الرجوع (Back) بسلاسة تامة.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill">مول الملابس</span>
+          <span class="flow-pill">مول الأدوات المنزلية</span>
+          <span class="flow-pill gold">Back / Forward Support</span>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flow-card">
+        <span class="step-badge">2</span>
+        <h3>فلترة وتصفح المنتجات</h3>
+        <p>فلترة فورية ذكية عبر حبوب الأقسام (Filter Pills): ملابس رجالي، حريمي، أطفال، أو تخفيضات. كارت المنتج الحديث <strong>(paris-modern-card)</strong> يعرض نسب الخصم الفورية، شارات "جديد"، وزر الإضافة السريعة.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill">تصفية فورية AJAX</span>
+          <span class="flow-pill coral">شارات الخصم %</span>
+          <span class="flow-pill">كروت عصرية فاخرة</span>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flow-card accent-coral">
+        <span class="step-badge">3</span>
+        <h3>صفحة المنتج الفاخرة</h3>
+        <p>تصميم مخصص بتقسيم عصري (2-Column Grid): في اليمين معرض صور عالي الدقة مع زر تكبير، وفي اليسار مسار العودة الذكي، أسعار واضحة، محدد كمية أنيق، زر إضافة للسلة، وزر استفسار وطلب فوري عبر واتساب.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill coral">طلب سريع واتساب</span>
+          <span class="flow-pill">مزايا الشحن والمعاينة</span>
+          <span class="flow-pill gold">مسار عودة ذكي</span>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flow-card">
+        <span class="step-badge">4</span>
+        <h3>السلة الجانبية السريعة (Side Cart)</h3>
+        <p>عند إضافة أي منتج، تفتح سلة تسوق جانبية ذكية منزلقة (Drawer) فوراً دون مغادرة الصفحة. تتيح زيادة/نقصان الكميات، مسح العناصر، وحساب الإجمالي لحظياً، مع زر إتمام الطلب مباشرة.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill">سلة جانبية سريعة</span>
+          <span class="flow-pill">تحديث لحظي AJAX</span>
+          <span class="flow-pill gold">حساب الإجمالي</span>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="flow-card accent-gold">
+        <span class="step-badge">5</span>
+        <h3>صفحة إتمام الطلب (Checkout)</h3>
+        <p>شاشة دفع منسقة بتقسيم احترافي (Split Screen): إدخال بيانات الشحن (المحافظة مع حساب الشحن التلقائي، الاسم، الهاتف، العنوان) + ملخص تفصيلي للطلب مع إمكانية إدخال القسائم الترويجية بسهولة.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill gold">شحن حسب المحافظة</span>
+          <span class="flow-pill">قسائم الخصم</span>
+          <span class="flow-pill">واجهة مقسمة أنيقة</span>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="flow-card accent-coral">
+        <span class="step-badge">6</span>
+        <h3>التوجيه الفوري لواتساب وإغلاق الطلب</h3>
+        <p>بمجرد الضغط على <strong>"أكّد الطلب عبر واتساب"</strong>، يتم حفظ الطلب في قاعدة البيانات وتوليد رقم طلب فريد، ثم إعادة توجيه العميل فوراً إلى محادثة واتساب الإدارة مع رسالة مفصلة جاهزة بكل المنتجات والإجمالي.</p>
+        <div class="flow-pills-list">
+          <span class="flow-pill coral">تحويل فوري wa.me</span>
+          <span class="flow-pill">رسالة منسقة تلقائياً</span>
+          <span class="flow-pill">تسجيل في لوحة التحكم</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- WhatsApp Automation Highlight -->
+    <div class="wa-highlight-box">
+      <div class="wa-content">
+        <h3>💬 دورة إنهاء الطلبات عبر واتساب (WhatsApp Order Flow)</h3>
+        <p>العميل لا ينتظر رسائل تأكيد تقليدية عبر البريد؛ بل ترسل له رسالة جاهزة في حسابه على واتساب تتضمن (رقم الطلب، أسماء المنتجات والكميات، عنوان التوصيل، وقيمة الشحن والمبلغ الإجمالي)، لتبدأ خدمة العملاء تجهيز وشحن الطلب على الفور!</p>
+      </div>
+      <div class="wa-badge-btn">✓ تأكيد فوري 100%</div>
+    </div>
+
+    <!-- SECTION 2: TECHNICAL ARCHITECTURE (الهيكل الفني للمشروع) -->
+    <div class="section-title-wrap">
+      <div class="icon-box">⚙️</div>
+      <h2>الهيكل البرمجي والطبقات التقنية (Technical Architecture)</h2>
+    </div>
+
+    <div class="stack-container">
+      
+      <div class="layer-row">
+        <div class="layer-name">
+          <span>🎨</span>
+          <span>واجهة المستخدم (UI/UX)</span>
+        </div>
+        <div class="layer-chips">
+          <span class="chip-item">ثيم Storefront Paris Child مخصص</span>
+          <span class="chip-item">خط Cairo العربي المعتمد</span>
+          <span class="chip-item">ألوان الهوية (الأخضر الملكي #133e29 + الذهبي #c59b27 + المرجاني #eb6b47)</span>
+          <span class="chip-item">تنسيق RTL أصلي متجاوب للجوال والشاشات</span>
+        </div>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-name">
+          <span>⚡</span>
+          <span>التفاعل وحفظ الحالة</span>
+        </div>
+        <div class="layer-chips">
+          <span class="chip-item">HTML5 History API (pushState & popstate) للرجوع المتزن</span>
+          <span class="chip-item">AJAX Cart Engine لتحديث السلة بدون إعادة تحميل</span>
+          <span class="chip-item">Select2 محسّن لاختيار المحافظات</span>
+        </div>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-name">
+          <span>🧩</span>
+          <span>الإضافات المخصصة</span>
+        </div>
+        <div class="layer-chips">
+          <span class="chip-item"><strong>paris-whatsapp-orders:</strong> معالجة وإنشاء رسائل الطلبات وتحويل الدفع لواتساب</span>
+          <span class="chip-item"><strong>paris-whatsapp-button:</strong> الأزرار العائمة وأزرار الاستفسار بصفحة المنتج</span>
+        </div>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-name">
+          <span>🗄️</span>
+          <span>محرك التجارة والبيانات</span>
+        </div>
+        <div class="layer-chips">
+          <span class="chip-item">WordPress 6.8+ النواة الأساسية</span>
+          <span class="chip-item">WooCommerce 10+ لإدارة المنتجات، المخزون، والطلبات</span>
+          <span class="chip-item">قواعد بيانات MySQL لحفظ بيانات العملاء والشحن</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-note">
+      متجر مول باريس التجاري &copy; 2026 - تم إعداد وتوثيق هذه المعمارية بدقة متناهية لضمان أعلى معايير الجودة وتجربة المستخدم الفاخرة.
+    </div>
+
+  </div>
+
+</body>
+</html>
