@@ -94,6 +94,16 @@ add_filter('the_title', function($title, $id = null) {
     return $title;
 }, 10, 2);
 
+// Hide default page header on Cart and Checkout
+add_action('wp', function() {
+    if (function_exists('is_cart') && is_cart()) {
+        remove_action('storefront_page', 'storefront_page_header', 10);
+    }
+    if (function_exists('is_checkout') && is_checkout()) {
+        remove_action('storefront_page', 'storefront_page_header', 10);
+    }
+});
+
 // Hide page title element
 add_filter('woocommerce_show_page_title', '__return_false');
 

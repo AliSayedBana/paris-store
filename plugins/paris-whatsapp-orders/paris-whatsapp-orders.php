@@ -57,5 +57,35 @@ add_action( 'plugins_loaded', function () {
         $gateways[] = 'PWO_Gateway';
         return $gateways;
     } );
+
+    // التأكيد البرمجي لتحويل AJAX إلى واتساب فوراً
+    add_filter( 'woocommerce_payment_successful_result', function ( $result, $order_id ) {
+        $order = wc_get_order( $order_id );
+        if ( $order && $order->get_payment_method() === 'paris_whatsapp' ) {
+            require_once PWO_PLUGIN_DIR . 'includes/class-pwo-message.php';
+            $result['redirect'] = PWO_Message::get_whatsapp_url( $order );
+        }
+        return $result;
+    }, 999, 2 );
+
+    // تحويل فوري لواتساب عند وصول الزبون لصفحة استلام الطلب لمنع ظهور صفحة الشكر
+    add_action( 'template_redirect', function () {
+        if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+            global $wp;
+            $order_id = isset( $wp->query_vars['order-received'] ) ? absint( $wp->query_vars['order-received'] ) : 0;
+            if ( ! $order_id && isset( $_GET['order-received'] ) ) {
+                $order_id = absint( $_GET['order-received'] );
+            }
+            if ( $order_id ) {
+                $order = wc_get_order( $order_id );
+                if ( $order && $order->get_payment_method() === 'paris_whatsapp' ) {
+                    require_once PWO_PLUGIN_DIR . 'includes/class-pwo-message.php';
+                    $wa_url = PWO_Message::get_whatsapp_url( $order );
+                    wp_redirect( $wa_url );
+                    exit;
+                }
+            }
+        }
+    }, 1 );
 } );
 
