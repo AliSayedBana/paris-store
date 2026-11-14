@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مسار المشتري داخل المتجر | متجر باريس</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #133e29;
+      --primary-soft: #eaf3ed;
+      --gold: #c59b27;
+      --gold-soft: #fbf5e6;
+      --coral: #eb6b47;
+      --coral-soft: #fef1ed;
+      --dark: #202623;
+      --gray-bg: #f7f6f2;
+      --card-border: #e8e3d8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-bg);
+      color: var(--dark);
+      padding: 40px 20px 80px;
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: #ffffff;
+      border: 1.5px solid var(--card-border);
+      border-radius: 22px;
+      padding: 32px 28px;
+      text-align: center;
+      margin-bottom: 35px;
+      box-shadow: 0 4px 20px rgba(19, 62, 41, 0.05);
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: var(--primary-soft);
+      color: var(--primary);
+      padding: 5px 16px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 15px;
+      color: #606863;
+    }
+
+    /* Timeline Container */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* Step Card */
+    .step-card {
+      background: #ffffff;
+      border: 1.5px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px 26px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      transition: all 0.2s ease;
+    }
+
+    .step-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 6px 20px rgba(19, 62, 41, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .step-icon-col {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .step-card.accent-coral .step-icon-col {
+      background: var(--coral);
+    }
+
+    .step-card.accent-gold .step-icon-col {
+      background: var(--gold);
+    }
+
+    .step-card.accent-green-wa .step-icon-col {
+      background: #25D366;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .step-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .step-badge-tag {
+      font-size: 12px;
+      font-weight: 700;
+      background: #f1ede4;
+      color: #555f59;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .step-desc {
+      font-size: 14.5px;
+      color: #444d47;
+      margin-bottom: 12px;
+    }
+
+    .step-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #faf8f4;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px dashed #ded7c8;
+    }
+
+    .step-points li {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #2b332f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-points li::before {
+      content: "•";
+      color: var(--primary);
+      font-size: 18px;
+    }
+
+    /* Note Box for the Client */
+    .client-notes-box {
+      background: #ffffff;
+      border: 2px dashed #c59b27;
+      border-radius: 20px;
+      padding: 28px;
+      margin-top: 35px;
+      text-align: center;
+    }
+
+    .client-notes-box h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #947113;
+      margin-bottom: 8px;
+    }
+
+    .client-notes-box p {
+      font-size: 14.5px;
+      color: #555e58;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 13px;
+      color: #8c9690;
+      margin-top: 35px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="header-badge">📋 ملخص مسار العميل داخل المتجر</span>
+      <h1>رحلة المشتري من الدخول وحتى استلام الطلب</h1>
+      <p>هذا المخطط يوضح كل خطوة يمر بها العميل داخل موقع مول باريس لمراجعتها والتأكد من مناسبتها أو إضافة أي نقطة أخرى ترغب بها.</p>
+    </div>
+
+    <!-- Timeline of Steps -->
+    <div class="timeline">
+
+      <!-- Step 1 -->
+      <div class="step-card">
+        <div class="step-icon-col">1</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">دخول الموقع واختيار المول</h2>
+            <span class="step-badge-tag">الصفحة الرئيسية</span>
+          </div>
+          <p class="step-desc">العميل يفتح الموقع ويختار بضغطة واحدة بين القسمين الرئيسيين بدون أي انتظار أو إعادة تحميل للصفحة:</p>
+          <ul class="step-points">
+            <li><strong>مول باريس للملابس</strong> (رجالي - حريمي - أطفال).</li>
+            <li><strong>مول باريس للأدوات المنزلية</strong> (مطبخ - مفروشات - ديكورات - تنظيم).</li>
+            <li>يعمل زر الرجوع (Back) بالمتصفح بسلاسة ليعيده للمول السابق.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card accent-gold">
+        <div class="step-icon-col">2</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">استعراض وتصفية المنتجات</h2>
+            <span class="step-badge-tag">التصفح والفلترة</span>
+          </div>
+          <p class="step-desc">العميل يرى المنتجات في شكل كروت فاخرة وواضحة جداً، ويستطيع تصفيتها بسهولة:</p>
+          <ul class="step-points">
+            <li>فلترة بنقرة واحدة (مثال: ملابس نسائية أو عروض وتخفيضات).</li>
+            <li>رؤية السعر الحالي، والسعر قبل الخصم، ونسبة الخصم % بوضوح.</li>
+            <li>إمكانية إضافة المنتج للسلة مباشرة من الكارت الخارجي.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card accent-coral">
+        <div class="step-icon-col">3</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">صفحة المنتج وخيارات الطلب</h2>
+            <span class="step-badge-tag">صفحة تفاصيل المنتج</span>
+          </div>
+          <p class="step-desc">عند الضغط على أي منتج، تفتح صفحة منسقة بجودة عالية تمكن العميل من الاختيار بين مسارين:</p>
+          <ul class="step-points">
+            <li><strong>المسار الأول:</strong> تحديد الكمية والضغط على "إضافة إلى السلة" لإكمال التسوق.</li>
+            <li><strong>المسار الثاني:</strong> الضغط المباشر على زر <strong>"اطلب أو استفسر عبر واتساب 💬"</strong> للتواصل والشراء الفوري.</li>
+            <li>رؤية ضمانات الشحن السريع والمعاينة قبل الاستلام.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-card">
+        <div class="step-icon-col">4</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">السلة الجانبية الفورية (Side Drawer)</h2>
+            <span class="step-badge-tag">مراجعة المشتريات</span>
+          </div>
+          <p class="step-desc">تنزلق السلة من الجانب فوراً بدون مغادرة صفحة التسوق:</p>
+          <ul class="step-points">
+            <li>رؤية صور وأسماء المنتجات التي اختارها.</li>
+            <li>زيادة أو تقليل الكمية (+) أو (-) ومسح أي منتج مع تحديث السعر الإجمالي فوراً.</li>
+            <li>زر "كمّل طلبك" للتوجه مباشرة لصفحة إنهاء الطلب.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-card accent-gold">
+        <div class="step-icon-col">5</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">كتابة بيانات الشحن واحتساب التوصيل</h2>
+            <span class="step-badge-tag">صفحة إتمام الطلب (Checkout)</span>
+          </div>
+          <p class="step-desc">صفحة بسيطة جداً وغير معقدة يملأ فيها العميل بياناته الأساسية فقط:</p>
+          <ul class="step-points">
+            <li>الاسم ورقم الهاتف والعنوان بالتفصيل.</li>
+            <li>اختيار <strong>المحافظة</strong> من القائمة، فيقوم النظام تلقائياً باحتساب سعر الشحن الخاص بمحافظته وإضافته للمجموع.</li>
+            <li>إمكانية كتابة كود خصم (كوبون) للحصول على تخفيض فوري إن وجد.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step-card accent-green-wa">
+        <div class="step-icon-col">✓</div>
+        <div class="step-content">
+          <div class="step-top">
+            <h2 class="step-title">تأكيد الطلب عبر واتساب (WhatsApp Direct)</h2>
+            <span class="step-badge-tag" style="background:#e8faee;color:#0e7737;">الخطوة النهائية</span>
+          </div>
+          <p class="step-desc">بمجرد نقر العميل على زر <strong>"أكّد الطلب عبر واتساب"</strong>:</p>
+          <ul class="step-points">
+            <li>يُسجل الطلب رسمياً في لوحة تحكم المتجر برقم طلب فريد.</li>
+            <li>يتحول العميل فوراً وبدون أي انتظار إلى محادثة واتساب الإدارة مع رسالة فاتورة جاهزة تحتوي على: (رقم الطلب - المنتجات والكميات - العنوان والمحافظة - سعر الشحن والإجمالي).</li>
+            <li>يقوم فريق العمل بتأكيد الطلب وشحنه للعميل فوراً دون الحاجة لأي دفع إلكتروني معقد.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Client Notes Box -->
+    <div class="client-notes-box">
+      <h3>💡 ملاحظات وإضافات مقترحة لصاحب الموقع</h3>
+      <p>راجع هذا المسار بدقة، ولو كان هناك أي خطوة أو حقل بيانات ترغب في إضافته أو تعديله (مثل إضافة خيارات ألوان ومقاسات معينة، أو ملاحظات شحن محددة)، يمكننا تنفيذه وتخصيصه بالكامل فوراً!</p>
+    </div>
+
+    <div class="footer">
+      متجر مول باريس التجاري &copy; 2026 - مخطط مسار الشراء البسيط
+    </div>
+
+  </div>
+
+</body>
+</html>
