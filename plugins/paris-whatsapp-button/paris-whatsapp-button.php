@@ -176,7 +176,7 @@ add_action( 'wp_footer', function (): void {
 // ── زر "اسأل عن المنتج" في صفحة المنتج ─────────────────────────────────────
 add_action( 'woocommerce_after_add_to_cart_button', function (): void {
     $opts = get_option( 'pwb_options', pwb_defaults() );
-    if ( $opts['show_product_btn'] !== '1' || ! is_product() ) {
+    if ( empty( $opts['show_product_btn'] ) || ! is_product() ) {
         return;
     }
 

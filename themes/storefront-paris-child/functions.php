@@ -306,4 +306,111 @@ function paris_shop_category_pills() {
 // ============================================================
 add_action('init', function() {
     remove_action('storefront_before_content', 'storefront_homepage_header', 10);
+    remove_action('woocommerce_after_single_product_summary', 'storefront_single_product_pagination', 30);
+    remove_action('woocommerce_after_single_product_summary', 'storefront_upsell_display', 15);
 });
+
+// ============================================================
+// 18. RETURN TO SHOP REDIRECT & CLEAN SHOP URLS
+// ============================================================
+add_filter('woocommerce_return_to_shop_redirect', function() {
+    return home_url('/');
+});
+
+add_action('template_redirect', function() {
+    if (is_shop() || (function_exists('is_page') && is_page(790))) {
+        wp_safe_redirect(home_url('/'), 301);
+        exit;
+    }
+});
+
+// ============================================================
+// 19. SINGLE PRODUCT ENHANCEMENTS
+// ============================================================
+// Breadcrumb and back navigation
+add_action('woocommerce_before_single_product', 'paris_single_product_breadcrumb', 15);
+function paris_single_product_breadcrumb() {
+    global $product;
+    if (! $product) return;
+
+    $terms = get_the_terms($product->get_id(), 'product_cat');
+    $cat_name = '';
+    $cat_link = home_url('/');
+    if ($terms && ! is_wp_error($terms)) {
+        foreach ($terms as $term) {
+            if ($term->slug !== 'uncategorized') {
+                $cat_name = $term->name;
+                $cat_link = get_term_link($term);
+                break;
+            }
+        }
+    }
+
+    echo '<div class="paris-sp-breadcrumb-bar">';
+    echo '  <a href="' . esc_url(home_url('/')) . '" class="paris-sp-back-btn">';
+    echo '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
+    echo '    <span>العودة للمتجر</span>';
+    echo '  </a>';
+    if ($cat_name) {
+        echo '  <span class="paris-sp-bread-sep">/</span>';
+        echo '  <a href="' . esc_url($cat_link) . '" class="paris-sp-bread-cat">' . esc_html($cat_name) . '</a>';
+    }
+    echo '  <span class="paris-sp-bread-sep">/</span>';
+    echo '  <span class="paris-sp-bread-current">' . esc_html($product->get_name()) . '</span>';
+    echo '</div>';
+}
+
+// Trust perks under add to cart
+add_action('woocommerce_single_product_summary', 'paris_single_product_trust_perks', 35);
+function paris_single_product_trust_perks() {
+    ?>
+    <div class="paris-sp-perks">
+        <div class="paris-sp-perk-item">
+            <span class="paris-sp-perk-icon">🚚</span>
+            <div class="paris-sp-perk-text">
+                <strong>شحن سريع</strong>
+                <span>توصيل لكافة المحافظات</span>
+            </div>
+        </div>
+        <div class="paris-sp-perk-item">
+            <span class="paris-sp-perk-icon">🔍</span>
+            <div class="paris-sp-perk-text">
+                <strong>معاينة وفحص</strong>
+                <span>عاين طلبك قبل الاستلام</span>
+            </div>
+        </div>
+        <div class="paris-sp-perk-item">
+            <span class="paris-sp-perk-icon">🔄</span>
+            <div class="paris-sp-perk-text">
+                <strong>استبدال سهل</strong>
+                <span>ضمان الجودة والراحة</span>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+// Related products count
+add_filter('woocommerce_output_related_products_args', function($args) {
+    $args['posts_per_page'] = 4;
+    $args['columns'] = 4;
+    return $args;
+});
+
+// Fallback for single product image if no media attachment
+add_filter('woocommerce_single_product_image_thumbnail_html', function($html, $post_thumbnail_id) {
+    global $product;
+    if (! $product) return $html;
+    if (! has_post_thumbnail($product->get_id())) {
+        $ext_img = get_post_meta($product->get_id(), '_paris_external_img', true);
+        if ($ext_img) {
+            return sprintf(
+                '<div class="woocommerce-product-gallery__image"><img src="%s" alt="%s" class="wp-post-image" /></div>',
+                esc_url($ext_img),
+                esc_attr($product->get_name())
+            );
+        }
+    }
+    return $html;
+}, 10, 2);
+
