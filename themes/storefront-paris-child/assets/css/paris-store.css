@@ -3301,3 +3301,86 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   border: 1px solid rgba(197, 155, 39, 0.3) !important;
 }
 
+/* ── Amazon-style Cart Item Selection ── */
+.paris-cart-selection-bar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  background: #ffffff !important;
+  border: 1.5px solid #ece7dd !important;
+  border-radius: 14px !important;
+  padding: 14px 20px !important;
+  margin-bottom: 22px !important;
+  box-shadow: 0 3px 12px rgba(19, 62, 41, 0.04) !important;
+}
+
+.paris-csb-right {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.paris-csb-checkbox-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: #133e29 !important;
+  user-select: none !important;
+}
+
+.paris-csb-checkbox-label input[type="checkbox"],
+.paris-item-select-label input[type="checkbox"] {
+  width: 19px !important;
+  height: 19px !important;
+  accent-color: #133e29 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+.paris-csb-btn-action {
+  background: #f4f8f5 !important;
+  color: #133e29 !important;
+  border: 1px solid #c9decb !important;
+  border-radius: 50px !important;
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.paris-csb-btn-action:hover {
+  background: #133e29 !important;
+  color: #ffffff !important;
+  border-color: #133e29 !important;
+}
+
+tr.woocommerce-cart-form__cart-item.paris-item-unselected {
+  opacity: 0.52 !important;
+  background: #faf8f5 !important;
+  transition: all 0.25s ease !important;
+}
+
+.paris-unselected-tag {
+  display: inline-block !important;
+  background: #fff3cd !important;
+  color: #856404 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 3px 10px !important;
+  border-radius: 12px !important;
+  margin-top: 6px !important;
+  border: 1px solid #ffeeba !important;
+}
+
+.checkout-button.paris-disabled-checkout {
+  background: #bbb !important;
+  border-color: #bbb !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+

@@ -247,4 +247,105 @@
         $(this).toggleClass('favorited');
     });
 
+    // ============================================================
+    // AMAZON-STYLE CART SELECTION INTERACTION
+    // ============================================================
+    function updateCartSelectionUI() {
+        const $checkboxes = $('.paris-cart-item-checkbox');
+        if ($checkboxes.length === 0) return;
+
+        let selectedCount = 0;
+        let selectedTotal = 0;
+        const totalCount    = $checkboxes.length;
+        const selectedKeys = [];
+
+        $checkboxes.each(function() {
+            const $cb   = $(this);
+            const $row  = $cb.closest('tr.woocommerce-cart-form__cart-item');
+            const $tag  = $row.find('.paris-unselected-tag');
+            const key   = $cb.data('cart-key');
+            const total = parseFloat($cb.data('line-total')) || 0;
+
+            if ($cb.is(':checked')) {
+                selectedCount++;
+                selectedTotal += total;
+                selectedKeys.push(key);
+                $row.removeClass('paris-item-unselected');
+                $tag.hide();
+            } else {
+                $row.addClass('paris-item-unselected');
+                $tag.show();
+            }
+        });
+
+        // تحديث أرقام الشريط
+        $('.paris-selected-count').text(selectedCount);
+        const allSelected = (selectedCount === totalCount);
+        $('#paris-select-all-toggle').prop('checked', allSelected);
+        $('#paris-btn-toggle-all').text(allSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل');
+
+        // تحديث المجموع الفرعي المعروض
+        const formattedTotal = Math.round(selectedTotal) + ' ج.م';
+        $('tr.cart-subtotal td').html('<span class="woocommerce-Price-amount amount">' + formattedTotal + '</span>');
+        $('tr.order-total td').html('<strong><span class="woocommerce-Price-amount amount">' + formattedTotal + '</span></strong>');
+
+        // تحديث زر إتمام الطلب والتحكم فيه
+        const $checkoutBtn = $('.checkout-button');
+        if ($checkoutBtn.length) {
+            if (selectedCount > 0) {
+                $checkoutBtn.removeClass('paris-disabled-checkout');
+                $checkoutBtn.css({ 'pointer-events': '', 'opacity': '' });
+                let countLabel = selectedCount + ' ' + (selectedCount === 1 ? 'منتج' : (selectedCount === 2 ? 'منتجين' : 'منتجات'));
+                $checkoutBtn.html('متابعة الشراء (' + countLabel + ') ←');
+                $('#paris-cart-zero-notice').remove();
+            } else {
+                $checkoutBtn.addClass('paris-disabled-checkout');
+                $checkoutBtn.css({ 'pointer-events': 'none', 'opacity': '0.5' });
+                $checkoutBtn.html('اختر منتجاً واحداً على الأقل للشراء');
+                if ($('#paris-cart-zero-notice').length === 0) {
+                    $checkoutBtn.after('<div id="paris-cart-zero-notice" style="color:#d9534f;font-size:13px;font-weight:700;margin-top:8px;text-align:center;">⚠️ يرجى تحديد منتج واحد على الأقل للمتابعة إلى الدفع.</div>');
+                }
+            }
+        }
+
+        // إرسال التحديد في الخلفية عبر AJAX لحفظه في الجلسة
+        if (typeof parisAjax !== 'undefined' && parisAjax.ajaxurl) {
+            $.post(parisAjax.ajaxurl, {
+                action: 'paris_save_cart_selection',
+                selected_keys: selectedKeys,
+                nonce: parisAjax.nonce
+            });
+        }
+    }
+
+    // تبديل اختيار عنصر واحد
+    $(document).on('change', '.paris-cart-item-checkbox', function() {
+        updateCartSelectionUI();
+    });
+
+    // تبديل اختيار الكل من الـ Checkbox الرئيسي
+    $(document).on('change', '#paris-select-all-toggle', function() {
+        const isChecked = $(this).is(':checked');
+        $('.paris-cart-item-checkbox').prop('checked', isChecked);
+        updateCartSelectionUI();
+    });
+
+    // تبديل اختيار الكل من زر الأكشن النصي
+    $(document).on('click', '#paris-btn-toggle-all', function(e) {
+        e.preventDefault();
+        const $toggle = $('#paris-select-all-toggle');
+        const newState = !$toggle.is(':checked');
+        $toggle.prop('checked', newState);
+        $('.paris-cart-item-checkbox').prop('checked', newState);
+        updateCartSelectionUI();
+    });
+
+    // تشغيل التحديث فور تحميل الصفحة
+    $(function() {
+        if ($('body').hasClass('woocommerce-cart')) {
+            updateCartSelectionUI();
+        }
+    });
+
 })(jQuery);
+

@@ -8,6 +8,13 @@ class PWO_Thank_You {
 
     public static function init(): void {
         add_action( 'woocommerce_thankyou_paris_whatsapp', [ __CLASS__, 'render' ], 1 );
+
+        // إخفاء جدول تفاصيل الطلب الافتراضي من ووكومرس على صفحة الاستلام حتى لا يرى العميل تفاصيل مكررة أو يظن أن الطلب مكتمل
+        add_action( 'template_redirect', function () {
+            if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+                remove_action( 'woocommerce_thankyou', 'woocommerce_order_details_table', 10 );
+            }
+        } );
     }
 
     public static function render( int $order_id ): void {
@@ -28,6 +35,14 @@ class PWO_Thank_You {
         // ── 2. إذا كان الطلب لقسم واحد (تحويل فوري احتياطي) ──
         $wa_url = PWO_Message::get_whatsapp_url_for_dept( $order, $analysis['type'] );
         ?>
+        <style>
+        .woocommerce-order-received .woocommerce-notice--success.woocommerce-thankyou-order-received,
+        .woocommerce-order-received .woocommerce-order-overview,
+        .woocommerce-order-received .woocommerce-order-details,
+        .woocommerce-order-received .woocommerce-customer-details {
+            display: none !important;
+        }
+        </style>
         <div class="pwo-thankyou" dir="rtl" style="text-align:center;padding:3rem 1rem;font-family:'Cairo',sans-serif;">
             <div style="font-size:3rem;margin-bottom:1rem;animation:spin 1s linear infinite;">⏳</div>
             <h2 style="color:#133e29;margin-bottom:.5rem;">جاري تحويلك إلى واتساب لتأكيد الطلب...</h2>
@@ -79,13 +94,24 @@ class PWO_Thank_You {
             $home_subtotal += $item->get_total();
         }
         ?>
+        <!-- إخفاء بلوك شكراً لك وجدول WooCommerce الافتراضي تماماً لكي لا يظن العميل أن الطلب انتهى -->
+        <style>
+        .woocommerce-order-received .woocommerce-notice--success.woocommerce-thankyou-order-received,
+        .woocommerce-order-received .woocommerce-order-overview,
+        .woocommerce-order-received .woocommerce-order-details,
+        .woocommerce-order-received .woocommerce-customer-details {
+            display: none !important;
+        }
+        </style>
+
         <div class="pwo-split-container" dir="rtl">
-            <div class="pwo-split-header">
-                <div class="pwo-success-icon">🎉</div>
-                <h2>تم تسجيل طلبك بنجاح! رقم الطلب #<?php echo esc_html( $order_number ); ?></h2>
+            <!-- الهيدر التنبيهي المباشر بدون شكراً تم استلام طلبك -->
+            <div class="pwo-split-header pwo-alert-header">
+                <div class="pwo-urgent-tag">⚠️ خطوة أخيرة ومهمة لتأكيد طلبك</div>
+                <h2 class="pwo-urgent-title">طلبك لم يُرسل بعد! يجب تأكيده عبر واتساب 📱</h2>
                 <p class="pwo-split-subtitle">
-                    نظراً لأن متجر <strong>مول باريس</strong> يضم فرعين مستقلين للتجهيز والشحن، تم تقسيم فاتورتك لتصل لكل فرع مباشرة على رقمه الخاص.<br>
-                    <strong>يُرجى الضغط على الزرّين أدناه لإرسال تفاصيل كل قسم لفرعه المخصص:</strong>
+                    طلبك رقم <strong>#<?php echo esc_html( $order_number ); ?></strong> يضم منتجات من فرعين مستقلين (<strong>مول الملابس 👗</strong> و<strong>مول الأدوات المنزلية 🏠</strong>).<br>
+                    <span class="pwo-callout-bold">⚠️ المحلات لا تبدأ في تجهيز الطلب إلا بعد إرساله عبر واتساب! اضغط على الزر الأخضر لكل قسم بالأسفل لإرسال طلبك فوراً:</span>
                 </p>
             </div>
 
@@ -170,8 +196,8 @@ class PWO_Thank_You {
             </div>
 
             <!-- رسالة الإتمام الكلي عند إرسال الاثنين -->
-            <div id="pwo-all-done-banner" style="display:none;background:#eaf5ee;border:1.5px solid #133e29;border-radius:14px;padding:16px 20px;text-align:center;margin:25px auto;max-width:600px;color:#133e29;font-weight:700;font-size:15px;">
-                🎉 ممتاز! تم إرسال تفاصيل الطلب بنجاح لكلا الفرعين. سيقوم فريق خدمة العملاء بالتواصل معك وتأكيد الشحن فوراً.
+            <div id="pwo-all-done-banner" style="display:none;background:#eaf5ee;border:2px solid #133e29;border-radius:16px;padding:20px 24px;text-align:center;margin:30px auto;max-width:640px;color:#133e29;font-weight:700;font-size:16px;box-shadow:0 6px 20px rgba(19,62,41,0.08);">
+                🎉 رائع جداً! تم إرسال تفاصيل الطلب بنجاح لكلا الفرعين. سيقوم فريق خدمة العملاء بكل فرع بمراجعة طلبك وتأكيد الشحن فوراً.
             </div>
 
             <div class="pwo-split-footer">
@@ -183,38 +209,54 @@ class PWO_Thank_You {
 
         <style>
         .pwo-split-container {
-            max-width: 900px;
-            margin: 30px auto 60px;
+            max-width: 920px;
+            margin: 25px auto 60px;
             padding: 0 15px;
             font-family: 'Cairo', Arial, sans-serif;
             text-align: right;
             direction: rtl;
         }
-        .pwo-split-header {
-            background: #ffffff;
-            border: 1.5px solid #ede8de;
-            border-radius: 20px;
-            padding: 30px 24px;
-            text-align: center;
-            box-shadow: 0 4px 18px rgba(19,62,41,0.05);
-            margin-bottom: 30px;
+        .pwo-alert-header {
+            background: #fffcf5 !important;
+            border: 2px solid #e0ad30 !important;
+            border-radius: 20px !important;
+            padding: 30px 24px !important;
+            text-align: center !important;
+            box-shadow: 0 6px 24px rgba(224, 173, 48, 0.12) !important;
+            margin-bottom: 30px !important;
         }
-        .pwo-success-icon {
-            font-size: 44px;
-            margin-bottom: 10px;
-        }
-        .pwo-split-header h2 {
-            font-size: 24px;
+        .pwo-urgent-tag {
+            display: inline-block;
+            background: #d9534f;
+            color: #ffffff;
+            font-size: 13.5px;
             font-weight: 800;
+            padding: 5px 18px;
+            border-radius: 50px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(217, 83, 79, 0.3);
+        }
+        .pwo-urgent-title {
+            font-size: 24px;
+            font-weight: 900;
             color: #133e29;
-            margin-bottom: 12px;
+            margin: 0 0 14px 0;
+            line-height: 1.4;
         }
         .pwo-split-subtitle {
             font-size: 15px;
-            color: #555e58;
-            line-height: 1.7;
-            max-width: 720px;
+            color: #495057;
+            line-height: 1.8;
+            max-width: 760px;
             margin: 0 auto;
+        }
+        .pwo-callout-bold {
+            display: block;
+            margin-top: 12px;
+            font-size: 15.5px;
+            font-weight: 800;
+            color: #c0392b;
+            line-height: 1.6;
         }
         .pwo-split-cards {
             display: grid;
@@ -236,10 +278,10 @@ class PWO_Thank_You {
             flex-direction: column;
         }
         .pwo-branch-card.clothes-card {
-            border-top: 4px solid #133e29;
+            border-top: 5px solid #133e29;
         }
         .pwo-branch-card.home-card {
-            border-top: 4px solid #eb6b47;
+            border-top: 5px solid #eb6b47;
         }
         .pwo-branch-top {
             display: flex;
@@ -260,51 +302,55 @@ class PWO_Thank_You {
             color: #133e29;
         }
         .pwo-branch-badge.home {
-            background: #fdf1ed;
-            color: #eb6b47;
+            background: #fdf5e6;
+            color: #b58117;
         }
         .pwo-items-count {
-            font-size: 12.5px;
-            color: #79837d;
-            font-weight: 700;
+            font-size: 13px;
+            color: #777;
+            font-weight: 600;
         }
         .pwo-items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            flex: 1;
             margin-bottom: 20px;
-            flex-grow: 1;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-left: 4px;
         }
         .pwo-item-row {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #fbf9f5;
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid #f0eae0;
+            padding: 10px 0;
+            border-bottom: 1px solid #f4f1ea;
+        }
+        .pwo-item-row:last-child {
+            border-bottom: none;
         }
         .pwo-item-thumb {
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
+            width: 48px;
+            height: 48px;
             object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #eee;
             flex-shrink: 0;
-            border: 1px solid #e8e3d8;
         }
         .pwo-item-meta {
-            flex-grow: 1;
-            line-height: 1.35;
+            flex: 1;
+            min-width: 0;
         }
         .pwo-item-name {
             font-size: 13.5px;
             font-weight: 700;
-            color: #1b231e;
+            color: #222;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .pwo-item-qty {
             font-size: 12px;
-            color: #66726b;
-            margin-top: 2px;
+            color: #666;
+            margin-top: 3px;
         }
         .pwo-item-price {
             font-size: 14px;
@@ -317,79 +363,88 @@ class PWO_Thank_You {
             justify-content: space-between;
             align-items: center;
             padding: 14px 0;
-            border-top: 1px solid #eee8dc;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
+            border-top: 1.5px solid #ede8de;
             font-size: 14.5px;
-            font-weight: 700;
-            color: #333;
+            color: #444;
         }
         .pwo-branch-total strong {
-            font-size: 18px;
+            font-size: 17px;
             color: #133e29;
+            font-weight: 800;
         }
         .pwo-branch-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            width: 100%;
-            height: 48px;
-            border-radius: 12px;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: 50px;
             color: #ffffff !important;
-            font-size: 15px;
+            font-size: 14.5px;
             font-weight: 800;
             text-decoration: none !important;
-            box-shadow: 0 4px 14px rgba(37,211,102,0.25);
             transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+            cursor: pointer;
         }
         .pwo-branch-btn.clothes-btn {
             background: #25D366;
         }
+        .pwo-branch-btn.clothes-btn:hover {
+            background: #20ba59;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,211,102,0.35);
+        }
         .pwo-branch-btn.home-btn {
             background: #25D366;
         }
-        .pwo-branch-btn:hover {
+        .pwo-branch-btn.home-btn:hover {
+            background: #20ba59;
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(37,211,102,0.35);
+            box-shadow: 0 6px 20px rgba(37,211,102,0.35);
         }
-        .pwo-branch-btn.sent {
+        .pwo-branch-btn.is-sent {
             background: #133e29 !important;
-            box-shadow: none !important;
+            opacity: 0.88;
         }
         .pwo-split-footer {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 36px;
         }
         .pwo-back-home-btn {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             padding: 10px 24px;
-            border-radius: 999px;
             background: #ffffff;
-            border: 1.5px solid #133e29;
+            border: 1.5px solid #dcd7ce;
+            border-radius: 50px;
             color: #133e29;
+            font-size: 13.5px;
             font-weight: 700;
-            font-size: 14px;
             text-decoration: none;
             transition: all 0.2s ease;
         }
         .pwo-back-home-btn:hover {
-            background: #133e29;
-            color: #ffffff;
+            background: #f4f8f5;
+            border-color: #133e29;
         }
         </style>
 
         <script>
-        var pwoSentBranches = { clothes: false, home: false };
-        function pwoMarkSent(btn, branch) {
-            pwoSentBranches[branch] = true;
-            btn.classList.add('sent');
-            btn.innerHTML = '<span>✓ تم إرسال طلب ' + (branch === 'clothes' ? 'الملابس' : 'الأدوات') + '</span>';
-            if (pwoSentBranches.clothes && pwoSentBranches.home) {
+        var pwoSentState = { clothes: false, home: false };
+
+        function pwoMarkSent(btn, dept) {
+            btn.classList.add('is-sent');
+            btn.innerHTML = '<span>✓ تم إرسال طلب ' + (dept === 'clothes' ? 'الملابس' : 'الأدوات') + ' بنجاح</span>';
+            pwoSentState[dept] = true;
+
+            if (pwoSentState.clothes && pwoSentState.home) {
                 var banner = document.getElementById('pwo-all-done-banner');
                 if (banner) {
                     banner.style.display = 'block';
+                    banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
         }

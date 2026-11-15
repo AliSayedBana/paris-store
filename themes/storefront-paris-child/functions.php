@@ -444,4 +444,114 @@ add_filter('woocommerce_cart_item_name', function($name, $cart_item, $cart_item_
     return $name . ' ' . $badge;
 }, 10, 3);
 
+// ============================================================
+// 13. AMAZON-STYLE SELECTIVE CART & CHECKOUT
+// ============================================================
+add_action( 'wp_ajax_paris_save_cart_selection', 'paris_ajax_save_cart_selection' );
+add_action( 'wp_ajax_nopriv_paris_save_cart_selection', 'paris_ajax_save_cart_selection' );
+function paris_ajax_save_cart_selection() {
+    check_ajax_referer( 'paris_cart_nonce', 'nonce' );
+
+    $keys = isset( $_POST['selected_keys'] ) && is_array( $_POST['selected_keys'] )
+        ? array_map( 'sanitize_text_field', $_POST['selected_keys'] )
+        : [];
+
+    if ( WC()->session ) {
+        WC()->session->set( 'paris_cart_selected_keys', $keys );
+    }
+
+    wp_send_json_success( [ 'count' => count( $keys ) ] );
+}
+
+function paris_filter_cart_items_on_checkout() {
+    if ( ! WC()->session ) return;
+
+    $selected_keys = WC()->session->get( 'paris_cart_selected_keys' );
+    if ( ! is_array( $selected_keys ) ) return;
+
+    $cart = WC()->cart;
+    if ( ! $cart || $cart->is_empty() ) return;
+
+    $saved_items = WC()->session->get( 'paris_saved_for_later', [] );
+    if ( ! is_array( $saved_items ) ) $saved_items = [];
+    $modified    = false;
+
+    foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
+        if ( ! in_array( $cart_item_key, $selected_keys, true ) ) {
+            $saved_items[ $cart_item_key ] = [
+                'product_id'     => $cart_item['product_id'],
+                'quantity'       => $cart_item['quantity'],
+                'variation_id'   => $cart_item['variation_id'] ?? 0,
+                'variation'      => $cart_item['variation'] ?? [],
+                'cart_item_data' => array_diff_key( $cart_item, array_flip( [
+                    'product_id', 'variation_id', 'variation', 'quantity', 'data',
+                    'line_total', 'line_subtotal', 'line_tax', 'line_subtotal_tax'
+                ] ) ),
+            ];
+            $cart->remove_cart_item( $cart_item_key );
+            $modified = true;
+        }
+    }
+
+    if ( $modified ) {
+        WC()->session->set( 'paris_saved_for_later', $saved_items );
+        $cart->calculate_totals();
+    }
+}
+
+add_action( 'template_redirect', function () {
+    if ( ! WC()->session ) return;
+
+    // 1. إذا كان في صفحة السلة، استعد أي عناصر محفوظة فوراً
+    if ( function_exists( 'is_cart' ) && is_cart() ) {
+        paris_restore_unselected_cart_items();
+        return;
+    }
+
+    // 2. إذا كان في صفحة الدفع (وليس صفحة الاستلام)
+    if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_order_received_page() ) {
+        paris_filter_cart_items_on_checkout();
+    }
+}, 5 );
+
+add_action( 'woocommerce_checkout_init', 'paris_filter_cart_items_on_checkout', 5 );
+add_action( 'woocommerce_before_checkout_process', 'paris_filter_cart_items_on_checkout', 5 );
+
+
+function paris_restore_unselected_cart_items() {
+    if ( ! WC()->session ) return;
+    $saved_items = WC()->session->get( 'paris_saved_for_later' );
+    if ( ! empty( $saved_items ) && is_array( $saved_items ) ) {
+        $unselected_new_keys = [];
+        foreach ( $saved_items as $item ) {
+            $new_key = WC()->cart->add_to_cart(
+                $item['product_id'],
+                $item['quantity'],
+                $item['variation_id'] ?? 0,
+                $item['variation'] ?? [],
+                $item['cart_item_data'] ?? []
+            );
+            if ( $new_key ) {
+                $unselected_new_keys[] = $new_key;
+            }
+        }
+        WC()->session->__unset( 'paris_saved_for_later' );
+
+        $selected_keys = WC()->session->get( 'paris_cart_selected_keys', [] );
+        if ( is_array( $selected_keys ) ) {
+            $selected_keys = array_values( array_diff( $selected_keys, $unselected_new_keys ) );
+            WC()->session->set( 'paris_cart_selected_keys', $selected_keys );
+        }
+    }
+}
+
+add_action( 'woocommerce_thankyou', function ( $order_id ) {
+    paris_restore_unselected_cart_items();
+}, 5 );
+
+add_action( 'woocommerce_payment_complete', function ( $order_id ) {
+    paris_restore_unselected_cart_items();
+}, 5 );
+
+
 
