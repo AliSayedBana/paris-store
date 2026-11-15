@@ -347,5 +347,79 @@
         }
     });
 
+    // ============================================================
+    // SIDE CART DRAWER SELECTION INTERACTION
+    // ============================================================
+    function updateDrawerSelectionUI() {
+        const $checkboxes = $('.paris-drawer-item-checkbox');
+        if ($checkboxes.length === 0) return;
+
+        let selectedCount = 0;
+        let selectedTotal = 0;
+        const totalCount  = $checkboxes.length;
+        const selectedKeys = [];
+
+        $checkboxes.each(function() {
+            const $cb   = $(this);
+            const $row  = $cb.closest('.paris-cart-item');
+            const $note = $row.find('.paris-drawer-unselected-note');
+            const key   = $cb.data('key');
+            const total = parseFloat($cb.data('line-total')) || 0;
+
+            if ($cb.is(':checked')) {
+                selectedCount++;
+                selectedTotal += total;
+                selectedKeys.push(key);
+                $row.removeClass('is-unselected');
+                $note.hide();
+            } else {
+                $row.addClass('is-unselected');
+                $note.show();
+            }
+        });
+
+        $('.paris-drawer-sel-num').text(selectedCount);
+        const allSelected = (selectedCount === totalCount);
+        $('#paris-drawer-select-all').prop('checked', allSelected);
+
+        const formattedTotal = Math.round(selectedTotal) + ' ج.م';
+        $('.paris-cart-total-value').text(formattedTotal);
+
+        const $checkoutBtn = $('.paris-cart-checkout-btn');
+        if ($checkoutBtn.length) {
+            if (selectedCount > 0) {
+                $checkoutBtn.css({ 'pointer-events': '', 'opacity': '' });
+                let countLabel = selectedCount + ' ' + (selectedCount === 1 ? 'منتج' : (selectedCount === 2 ? 'منتجين' : 'منتجات'));
+                $checkoutBtn.html('كمّل طلبك (' + countLabel + ') &larr;');
+                $('#paris-drawer-zero-notice').remove();
+            } else {
+                $checkoutBtn.css({ 'pointer-events': 'none', 'opacity': '0.5' });
+                $checkoutBtn.html('اختر منتجاً واحداً للشراء');
+                if ($('#paris-drawer-zero-notice').length === 0) {
+                    $checkoutBtn.after('<div id="paris-drawer-zero-notice" style="color:#d9534f;font-size:12.5px;font-weight:700;margin-top:8px;text-align:center;">⚠️ يرجى تحديد منتج واحد على الأقل للشراء.</div>');
+                }
+            }
+        }
+
+        if (typeof parisAjax !== 'undefined' && parisAjax.ajaxurl) {
+            $.post(parisAjax.ajaxurl, {
+                action: 'paris_save_cart_selection',
+                selected_keys: selectedKeys,
+                nonce: parisAjax.nonce
+            });
+        }
+    }
+
+    $(document).on('change', '.paris-drawer-item-checkbox', function() {
+        updateDrawerSelectionUI();
+    });
+
+    $(document).on('change', '#paris-drawer-select-all', function() {
+        const isChecked = $(this).is(':checked');
+        $('.paris-drawer-item-checkbox').prop('checked', isChecked);
+        updateDrawerSelectionUI();
+    });
+
 })(jQuery);
+
 

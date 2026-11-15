@@ -114,13 +114,12 @@ class PWO_Gateway extends WC_Payment_Gateway {
             __( 'الطلب بانتظار تأكيد الزبون عبر واتساب.', 'paris-whatsapp-orders' )
         );
 
-        // تفريغ السلة
-        WC()->cart->empty_cart();
-
         require_once dirname( __FILE__ ) . '/class-pwo-message.php';
         $analysis = PWO_Message::analyze_order_departments( $order );
 
         // إذا كان الطلب مختلطاً (ملابس + أدوات): نوجهه لصفحة تأكيد الطلب المقسمة
+        // لا نفرغ السلة هنا إطلاقاً! تظل محتويات السلة محفوظة بأمان حتى يؤكد العميل عبر أزرار واتساب
+        // فإذا تراجع أو عاد للسلة تظل منتجاته موجودة ولا تختفي
         if ( $analysis['type'] === 'mixed' ) {
             return [
                 'result'   => 'success',
@@ -128,7 +127,9 @@ class PWO_Gateway extends WC_Payment_Gateway {
             ];
         }
 
-        // إذا كان الطلب لقسم واحد فقط: تحويل مباشر وفوري لواتساب الفرع المختص
+        // إذا كان الطلب لقسم واحد فقط: تفريغ السلة فوراً لأن الزبون يُحوّل مباشرة إلى واتساب
+        WC()->cart->empty_cart();
+
         $whatsapp_url = PWO_Message::get_whatsapp_url_for_dept( $order, $analysis['type'] );
 
         return [

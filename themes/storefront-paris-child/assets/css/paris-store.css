@@ -3383,4 +3383,68 @@ tr.woocommerce-cart-form__cart-item.paris-item-unselected {
   box-shadow: none !important;
 }
 
+/* ── Side Cart Drawer Selection Styles ── */
+.paris-drawer-selection-bar {
+  background: #fbf9f5 !important;
+  border: 1px solid #ede8de !important;
+  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  margin: 0 16px 14px 16px !important;
+}
+
+.paris-drawer-select-all-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #133e29 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+.paris-drawer-select-all-label input[type="checkbox"],
+.paris-drawer-item-checkbox-wrap input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: #133e29 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+.paris-drawer-item-checkbox-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 4px !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.paris-cart-item.is-unselected {
+  opacity: 0.52 !important;
+  background: #fdfaf6 !important;
+  filter: grayscale(20%) !important;
+  transition: all 0.25s ease !important;
+}
+
+.paris-drawer-unselected-note {
+  display: inline-block !important;
+  background: #fff3cd !important;
+  color: #856404 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  border-radius: 8px !important;
+  margin-top: 3px !important;
+  border: 1px solid #ffeeba !important;
+}
+
+.paris-drawer-view-cart-btn:hover {
+  color: #eb6b47 !important;
+  text-decoration: underline !important;
+}
+
+
 

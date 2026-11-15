@@ -79,7 +79,7 @@ $search_scope = isset($_GET['product_cat']) ? sanitize_title(wp_unslash($_GET['p
   </div>
   <div class="paris-cart-panel-footer">
     <div class="paris-cart-total-row">
-      <span class="paris-cart-total-label">الإجمالي</span>
+      <span class="paris-cart-total-label">المجموع للشراء</span>
       <span class="paris-cart-total-value">
         <?php echo WC()->cart ? WC()->cart->get_cart_total() : '0 ج.م'; ?>
       </span>
@@ -88,7 +88,9 @@ $search_scope = isset($_GET['product_cat']) ? sanitize_title(wp_unslash($_GET['p
     <a href="<?php echo wc_get_checkout_url(); ?>" class="paris-cart-checkout-btn">
       كمّل طلبك &larr;
     </a>
-    <span class="paris-cart-continue">راجع بياناتك قبل تأكيد الطلب</span>
+    <a href="<?php echo esc_url( wc_get_cart_url() ); ?>" class="paris-drawer-view-cart-btn" style="display:block;text-align:center;margin-top:10px;font-size:13.5px;color:#133e29;font-weight:700;text-decoration:none;">
+      📋 فتح صفحة السلة الكاملة
+    </a>
   </div>
 </div>
 <!-- ===================== / SIDE CART DRAWER ===================== -->

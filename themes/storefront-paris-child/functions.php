@@ -177,20 +177,36 @@ add_filter('loop_shop_columns', function() { return 4; });
 add_filter('loop_shop_per_page', function() { return 12; }, 20);
 
 // ============================================================
-// 11. AJAX CART HANDLER
+// 11. AJAX CART HANDLER (مع دعم التحديد الجزئي للشراء)
 // ============================================================
 add_action('wp_ajax_paris_get_cart', 'paris_get_cart_html');
 add_action('wp_ajax_nopriv_paris_get_cart', 'paris_get_cart_html');
 function paris_get_cart_html() {
     check_ajax_referer('paris_cart_nonce', 'nonce');
     ob_start();
-    $cart_items = WC()->cart->get_cart();
-    $total = WC()->cart->get_cart_total();
-    $count = WC()->cart->get_cart_contents_count();
+    $cart_items    = WC()->cart->get_cart();
+    $selected_keys = WC()->session ? WC()->session->get('paris_cart_selected_keys') : null;
+    if (!is_array($selected_keys)) {
+        $selected_keys = array_keys($cart_items);
+    }
+
+    $selected_total = 0;
+    $selected_count = 0;
+    foreach ($cart_items as $k => $item) {
+        if (in_array($k, $selected_keys, true)) {
+            $selected_total += $item['line_total'];
+            $selected_count++;
+        }
+    }
+
+    $total_formatted = html_entity_decode(wp_strip_all_tags(wc_price($selected_total)), ENT_QUOTES, 'UTF-8');
+    $count           = WC()->cart->get_cart_contents_count();
+
     echo json_encode([
-        'count' => $count,
-        'total' => strip_tags($total),
-        'html'  => paris_render_cart_items($cart_items),
+        'count'          => $count,
+        'selected_count' => $selected_count,
+        'total'          => $total_formatted,
+        'html'           => paris_render_cart_items($cart_items),
     ]);
     wp_die();
 }
@@ -199,28 +215,68 @@ function paris_render_cart_items($cart_items) {
     if (empty($cart_items)) {
         return '<div class="paris-cart-empty"><span>🛒</span><p>سلتك فاضية</p></div>';
     }
+
+    $selected_keys = WC()->session ? WC()->session->get('paris_cart_selected_keys') : null;
+    if (!is_array($selected_keys)) {
+        $selected_keys = array_keys($cart_items);
+    }
+
+    $total_items    = count($cart_items);
+    $selected_count = 0;
+    foreach (array_keys($cart_items) as $k) {
+        if (in_array($k, $selected_keys, true)) {
+            $selected_count++;
+        }
+    }
+    $all_selected = ($selected_count === $total_items && $total_items > 0);
+
     $html = '';
+
+    // شريط تحديد الكل في أعلى الدرج الجانبي
+    $html .= '<div class="paris-drawer-selection-bar" dir="rtl">';
+    $html .= '<label class="paris-drawer-select-all-label">';
+    $html .= '<input type="checkbox" id="paris-drawer-select-all" ' . checked($all_selected, true, false) . '>';
+    $html .= '<span class="paris-drawer-select-all-text">تحديد الكل للشراء (<span class="paris-drawer-sel-num">' . $selected_count . '</span> من ' . $total_items . ')</span>';
+    $html .= '</label>';
+    $html .= '</div>';
+
     foreach ($cart_items as $key => $item) {
-        $product  = $item['data'];
-        $img      = get_the_post_thumbnail_url($item['product_id'], 'thumbnail') ?: wc_placeholder_img_src();
-        $name     = $product->get_name();
-        $price    = wc_price($product->get_price());
-        $qty      = $item['quantity'];
-        $html .= '<div class="paris-cart-item" data-key="' . esc_attr($key) . '">';
+        $product     = $item['data'];
+        $img         = get_the_post_thumbnail_url($item['product_id'], 'thumbnail') ?: wc_placeholder_img_src();
+        $name        = $product->get_name();
+        $price       = wc_price($product->get_price());
+        $line_total  = $item['line_total'];
+        $qty         = $item['quantity'];
+        $is_selected = in_array($key, $selected_keys, true);
+
+        $unselected_class = $is_selected ? '' : ' is-unselected';
+
+        $html .= '<div class="paris-cart-item' . $unselected_class . '" data-key="' . esc_attr($key) . '" data-line-total="' . esc_attr($line_total) . '">';
+
+        // مربع الاختيار للشراء في السلة الجانبية
+        $html .= '<label class="paris-drawer-item-checkbox-wrap" title="تحديد / إلغاء تحديد هذا المنتج للشراء">';
+        $html .= '<input type="checkbox" class="paris-drawer-item-checkbox" data-key="' . esc_attr($key) . '" data-line-total="' . esc_attr($line_total) . '" ' . checked($is_selected, true, false) . '>';
+        $html .= '</label>';
+
         $html .= '<img src="' . esc_url($img) . '" alt="' . esc_attr($name) . '">';
         $html .= '<div class="paris-cart-item-info">';
         $html .= '<p class="paris-cart-item-name">' . esc_html($name) . '</p>';
         $html .= '<p class="paris-cart-item-price">' . $price . '</p>';
+
+        $display_note = $is_selected ? 'display:none;' : '';
+        $html .= '<span class="paris-drawer-unselected-note" style="' . $display_note . '">⏳ غير محدد للشراء (محفوظ)</span>';
+
         $html .= '<div class="paris-cart-qty">';
         $html .= '<button class="paris-qty-btn paris-qty-minus" data-key="' . esc_attr($key) . '">−</button>';
         $html .= '<span class="paris-qty-val">' . $qty . '</span>';
         $html .= '<button class="paris-qty-btn paris-qty-plus" data-key="' . esc_attr($key) . '">+</button>';
         $html .= '</div></div>';
-        $html .= '<button class="paris-cart-remove" data-key="' . esc_attr($key) . '">×</button>';
+        $html .= '<button class="paris-cart-remove" data-key="' . esc_attr($key) . '" title="حذف من السلة">×</button>';
         $html .= '</div>';
     }
     return $html;
 }
+
 
 add_action('wp_ajax_paris_update_cart', 'paris_update_cart');
 add_action('wp_ajax_nopriv_paris_update_cart', 'paris_update_cart');

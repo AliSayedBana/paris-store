@@ -9,12 +9,40 @@ class PWO_Thank_You {
     public static function init(): void {
         add_action( 'woocommerce_thankyou_paris_whatsapp', [ __CLASS__, 'render' ], 1 );
 
-        // إخفاء جدول تفاصيل الطلب الافتراضي من ووكومرس على صفحة الاستلام حتى لا يرى العميل تفاصيل مكررة أو يظن أن الطلب مكتمل
+        // إخفاء جدول تفاصيل الطلب الافتراضي من ووكومرس على صفحة الاستلام
         add_action( 'template_redirect', function () {
             if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
                 remove_action( 'woocommerce_thankyou', 'woocommerce_order_details_table', 10 );
             }
         } );
+
+        // معالج AJAX لتفريغ قسم محدد من السلة فقط عند ضغط الزبون على زر الواتساب الخاص به
+        add_action( 'wp_ajax_pwo_confirm_department_sent', [ __CLASS__, 'ajax_confirm_department_sent' ] );
+        add_action( 'wp_ajax_nopriv_pwo_confirm_department_sent', [ __CLASS__, 'ajax_confirm_department_sent' ] );
+    }
+
+    public static function ajax_confirm_department_sent(): void {
+        $dept = isset( $_POST['dept'] ) ? sanitize_text_field( $_POST['dept'] ) : '';
+
+        if ( ! WC()->cart || WC()->cart->is_empty() ) {
+            wp_send_json_success( [ 'cleared' => true, 'remaining' => 0 ] );
+        }
+
+        require_once dirname( __FILE__ ) . '/class-pwo-message.php';
+
+        foreach ( WC()->cart->get_cart() as $cart_item_key => $item ) {
+            $is_home = PWO_Message::is_home_product( (int) $item['product_id'] );
+            if ( $dept === 'clothes' && ! $is_home ) {
+                WC()->cart->remove_cart_item( $cart_item_key );
+            } elseif ( $dept === 'home' && $is_home ) {
+                WC()->cart->remove_cart_item( $cart_item_key );
+            } elseif ( $dept === 'all' ) {
+                WC()->cart->remove_cart_item( $cart_item_key );
+            }
+        }
+
+        $remaining = count( WC()->cart->get_cart() );
+        wp_send_json_success( [ 'remaining' => $remaining ] );
     }
 
     public static function render( int $order_id ): void {
@@ -201,6 +229,9 @@ class PWO_Thank_You {
             </div>
 
             <div class="pwo-split-footer">
+                <a href="<?php echo esc_url( wc_get_cart_url() ); ?>" class="pwo-back-cart-btn">
+                    <span>✏️ لم ترسل بعد؟ العودة لتعديل السلة</span>
+                </a>
                 <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="pwo-back-home-btn">
                     <span>← العودة للرئيسية وتصفح المتجر</span>
                 </a>
@@ -409,18 +440,42 @@ class PWO_Thank_You {
             opacity: 0.88;
         }
         .pwo-split-footer {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
             margin-top: 36px;
+        }
+        .pwo-back-cart-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 24px;
+            background: #ffffff;
+            border: 1.5px solid #133e29;
+            border-radius: 50px;
+            color: #133e29;
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(19,62,41,0.06);
+        }
+        .pwo-back-cart-btn:hover {
+            background: #133e29;
+            color: #ffffff !important;
+            transform: translateY(-1px);
         }
         .pwo-back-home-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 24px;
+            padding: 11px 24px;
             background: #ffffff;
             border: 1.5px solid #dcd7ce;
             border-radius: 50px;
-            color: #133e29;
+            color: #555;
             font-size: 13.5px;
             font-weight: 700;
             text-decoration: none;
@@ -429,6 +484,7 @@ class PWO_Thank_You {
         .pwo-back-home-btn:hover {
             background: #f4f8f5;
             border-color: #133e29;
+            color: #133e29;
         }
         </style>
 
@@ -439,6 +495,17 @@ class PWO_Thank_You {
             btn.classList.add('is-sent');
             btn.innerHTML = '<span>✓ تم إرسال طلب ' + (dept === 'clothes' ? 'الملابس' : 'الأدوات') + ' بنجاح</span>';
             pwoSentState[dept] = true;
+
+            // إرسال تنبيه للسيرفر بحذف عناصر هذا الفرع من السلة لأنها تم تأكيدها على الواتساب
+            if (window.fetch) {
+                var formData = new FormData();
+                formData.append('action', 'pwo_confirm_department_sent');
+                formData.append('dept', dept);
+                fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+            }
 
             if (pwoSentState.clothes && pwoSentState.home) {
                 var banner = document.getElementById('pwo-all-done-banner');
