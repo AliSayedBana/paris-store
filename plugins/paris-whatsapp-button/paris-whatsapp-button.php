@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Paris WhatsApp Button
  * Plugin URI:  https://example.com
- * Description: زر واتساب عائم في كل الصفحات، وزر "اسأل عن المنتج" في صفحة كل منتج.
- * Version:     1.0.0
+ * Description: زر واتساب عائم في كل الصفحات، وزر "اسأل عن المنتج" في صفحة كل منتج مع توجيه ذكي حسب القسم (ملابس / أدوات منزلية).
+ * Version:     1.1.0
  * Author:      Paris Store
  * Text Domain: paris-wa-btn
  * Requires at least: 6.0
@@ -21,7 +21,7 @@ add_action( 'wp_enqueue_scripts', function (): void {
         'paris-wa-button',
         PWB_URL . 'assets/css/button.css',
         [],
-        '1.0.0'
+        '1.1.0'
     );
 } );
 
@@ -45,32 +45,36 @@ add_action( 'admin_init', function (): void {
 
 function pwb_defaults(): array {
     return [
-        'whatsapp_number'       => '201065968425',
-        'floating_text'         => 'تواصل معنا',
-        'product_text'          => 'اسأل عن المنتج 💬',
-        'product_message_tpl'   => 'مرحباً، أريد الاستفسار عن المنتج: {product_name} ({product_url})',
-        'floating_message'      => 'مرحباً، أريد الاستفسار 😊',
-        'show_floating'         => '1',
-        'show_product_btn'      => '1',
-        'button_color'          => '#25D366',
-        'position'              => 'bottom-right', // أو bottom-left
+        'whatsapp_number_clothes' => '201065968425',
+        'whatsapp_number_home'    => '201065968425',
+        'whatsapp_number'         => '201065968425',
+        'floating_text'           => 'تواصل معنا',
+        'product_text'            => 'اسأل عن المنتج 💬',
+        'product_message_tpl'     => 'مرحباً، أريد الاستفسار عن المنتج: {product_name} ({product_url})',
+        'floating_message'        => 'مرحباً، أريد الاستفسار 😊',
+        'show_floating'           => '1',
+        'show_product_btn'        => '1',
+        'button_color'            => '#25D366',
+        'position'                => 'bottom-right', // أو bottom-left
     ];
 }
 
 function pwb_sanitize_options( array $input ): array {
     $defaults = pwb_defaults();
     return [
-        'whatsapp_number'     => preg_replace( '/\D/', '', $input['whatsapp_number'] ?? $defaults['whatsapp_number'] ),
-        'floating_text'       => sanitize_text_field( $input['floating_text'] ?? $defaults['floating_text'] ),
-        'product_text'        => sanitize_text_field( $input['product_text'] ?? $defaults['product_text'] ),
-        'product_message_tpl' => sanitize_textarea_field( $input['product_message_tpl'] ?? $defaults['product_message_tpl'] ),
-        'floating_message'    => sanitize_textarea_field( $input['floating_message'] ?? $defaults['floating_message'] ),
-        'show_floating'       => ! empty( $input['show_floating'] ) ? '1' : '0',
-        'show_product_btn'    => ! empty( $input['show_product_btn'] ) ? '1' : '0',
-        'button_color'        => sanitize_hex_color( $input['button_color'] ?? $defaults['button_color'] ),
-        'position'            => in_array( $input['position'] ?? '', [ 'bottom-right', 'bottom-left' ], true )
-                                    ? $input['position']
-                                    : 'bottom-right',
+        'whatsapp_number_clothes' => preg_replace( '/\D/', '', $input['whatsapp_number_clothes'] ?? $defaults['whatsapp_number_clothes'] ),
+        'whatsapp_number_home'    => preg_replace( '/\D/', '', $input['whatsapp_number_home'] ?? $defaults['whatsapp_number_home'] ),
+        'whatsapp_number'         => preg_replace( '/\D/', '', $input['whatsapp_number'] ?? $defaults['whatsapp_number'] ),
+        'floating_text'           => sanitize_text_field( $input['floating_text'] ?? $defaults['floating_text'] ),
+        'product_text'            => sanitize_text_field( $input['product_text'] ?? $defaults['product_text'] ),
+        'product_message_tpl'     => sanitize_textarea_field( $input['product_message_tpl'] ?? $defaults['product_message_tpl'] ),
+        'floating_message'        => sanitize_textarea_field( $input['floating_message'] ?? $defaults['floating_message'] ),
+        'show_floating'           => ! empty( $input['show_floating'] ) ? '1' : '0',
+        'show_product_btn'        => ! empty( $input['show_product_btn'] ) ? '1' : '0',
+        'button_color'            => sanitize_hex_color( $input['button_color'] ?? $defaults['button_color'] ),
+        'position'                => in_array( $input['position'] ?? '', [ 'bottom-right', 'bottom-left' ], true )
+                                        ? $input['position']
+                                        : 'bottom-right',
     ];
 }
 
@@ -78,12 +82,31 @@ function pwb_settings_page(): void {
     $opts = get_option( 'pwb_options', pwb_defaults() );
     ?>
     <div class="wrap" dir="rtl">
-        <h1>إعدادات زر واتساب</h1>
+        <h1>إعدادات زر واتساب — مول باريس</h1>
+        <p style="color:#666;">يمكنك ضبط أرقام واتساب لكل فرع على حدة (فرع الملابس وفرع الأدوات المنزلية).</p>
         <form method="post" action="options.php">
             <?php settings_fields( 'pwb_settings_group' ); ?>
             <table class="form-table" role="presentation">
                 <tr>
-                    <th scope="row"><label for="pwb_number">رقم واتساب</label></th>
+                    <th scope="row"><label for="pwb_number_clothes">رقم واتساب فرع الملابس 👗</label></th>
+                    <td>
+                        <input type="text" id="pwb_number_clothes" name="pwb_options[whatsapp_number_clothes]"
+                               value="<?php echo esc_attr( $opts['whatsapp_number_clothes'] ?? '201065968425' ); ?>" class="regular-text"
+                               placeholder="201065968425">
+                        <p class="description">يتم التحويل إليه عند الاستفسار عن أي منتج ملابس.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="pwb_number_home">رقم واتساب فرع الأدوات المنزلية 🏠</label></th>
+                    <td>
+                        <input type="text" id="pwb_number_home" name="pwb_options[whatsapp_number_home]"
+                               value="<?php echo esc_attr( $opts['whatsapp_number_home'] ?? '201065968425' ); ?>" class="regular-text"
+                               placeholder="201065968425">
+                        <p class="description">يتم التحويل إليه عند الاستفسار عن أي منتج من قسم الأدوات المنزلية والديكور.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="pwb_number">الرقم العام الاحتياطي</label></th>
                     <td>
                         <input type="text" id="pwb_number" name="pwb_options[whatsapp_number]"
                                value="<?php echo esc_attr( $opts['whatsapp_number'] ); ?>" class="regular-text"
@@ -145,6 +168,33 @@ function pwb_settings_page(): void {
     <?php
 }
 
+// ── فحص قسم المنتج أو الصفحة ────────────────────────────────────────────────
+function pwb_is_home_context( $product_id = 0 ): bool {
+    if ( $product_id && class_exists( 'PWO_Message' ) ) {
+        return PWO_Message::is_home_product( (int) $product_id );
+    }
+
+    $home_slugs = [ 'home', 'kitchen', 'decor', 'textiles', 'cleaning', 'organization', 'appliances', 'cookware' ];
+
+    if ( $product_id ) {
+        $terms = get_the_terms( $product_id, 'product_cat' );
+        if ( $terms && ! is_wp_error( $terms ) ) {
+            foreach ( $terms as $term ) {
+                if ( in_array( $term->slug, $home_slugs, true ) ) {
+                    return true;
+                }
+            }
+        }
+    } elseif ( is_product_category() ) {
+        $current = get_queried_object();
+        if ( $current && in_array( $current->slug, $home_slugs, true ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // ── الزر العائم (كل الصفحات) ─────────────────────────────────────────────────
 add_action( 'wp_footer', function (): void {
     $opts = get_option( 'pwb_options', pwb_defaults() );
@@ -152,7 +202,23 @@ add_action( 'wp_footer', function (): void {
         return;
     }
 
-    $number  = esc_attr( $opts['whatsapp_number'] );
+    // تحديد الرقم المناسب حسب الصفحة الحالية
+    $is_home = false;
+    if ( is_product() ) {
+        global $product;
+        $is_home = $product ? pwb_is_home_context( $product->get_id() ) : false;
+    } elseif ( is_product_category() ) {
+        $is_home = pwb_is_home_context();
+    }
+
+    if ( $is_home && ! empty( $opts['whatsapp_number_home'] ) ) {
+        $number = esc_attr( $opts['whatsapp_number_home'] );
+    } elseif ( ! empty( $opts['whatsapp_number_clothes'] ) ) {
+        $number = esc_attr( $opts['whatsapp_number_clothes'] );
+    } else {
+        $number = esc_attr( $opts['whatsapp_number'] );
+    }
+
     $text    = esc_html( $opts['floating_text'] );
     $message = rawurlencode( $opts['floating_message'] );
     $url     = "https://wa.me/{$number}?text={$message}";
@@ -181,10 +247,20 @@ add_action( 'woocommerce_after_add_to_cart_button', function (): void {
     }
 
     global $product;
-    $number      = esc_attr( $opts['whatsapp_number'] );
-    $btn_text    = esc_html( $opts['product_text'] );
-    $product_name = $product instanceof WC_Product ? $product->get_name() : get_the_title();
-    $product_url  = get_permalink();
+    $product_id = $product instanceof \WC_Product ? $product->get_id() : get_the_ID();
+    $is_home    = pwb_is_home_context( $product_id );
+
+    if ( $is_home && ! empty( $opts['whatsapp_number_home'] ) ) {
+        $number = esc_attr( $opts['whatsapp_number_home'] );
+    } elseif ( ! empty( $opts['whatsapp_number_clothes'] ) ) {
+        $number = esc_attr( $opts['whatsapp_number_clothes'] );
+    } else {
+        $number = esc_attr( $opts['whatsapp_number'] );
+    }
+
+    $btn_text     = esc_html( $opts['product_text'] );
+    $product_name = $product instanceof \WC_Product ? $product->get_name() : get_the_title();
+    $product_url  = get_permalink( $product_id );
 
     $message_raw = str_replace(
         [ '{product_name}', '{product_url}' ],
@@ -207,4 +283,3 @@ add_action( 'woocommerce_after_add_to_cart_button', function (): void {
     </a>
     <?php
 } );
-

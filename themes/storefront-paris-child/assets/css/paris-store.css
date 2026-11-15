@@ -3274,3 +3274,30 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ── Department Badges in Cart / Checkout ── */
+.paris-cart-dept-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 9px !important;
+  border-radius: 20px !important;
+  margin-right: 8px !important;
+  vertical-align: middle !important;
+  line-height: 1.4 !important;
+}
+
+.paris-cart-dept-badge.clothes {
+  background: #eaf5ee !important;
+  color: #133e29 !important;
+  border: 1px solid rgba(19, 62, 41, 0.22) !important;
+}
+
+.paris-cart-dept-badge.home {
+  background: #fdf5e6 !important;
+  color: #a87212 !important;
+  border: 1px solid rgba(197, 155, 39, 0.3) !important;
+}
+

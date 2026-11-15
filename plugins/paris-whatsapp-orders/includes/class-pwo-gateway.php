@@ -11,15 +11,15 @@ class PWO_Gateway extends WC_Payment_Gateway {
         $this->icon               = PWO_PLUGIN_URL . 'assets/images/whatsapp-icon.svg';
         $this->has_fields         = false;
         $this->method_title       = __( 'واتساب', 'paris-whatsapp-orders' );
-        $this->method_description = __( 'الزبون يؤكد طلبه عبر واتساب، والدفع يتم خارج الموقع (فودافون كاش أو عند الاستلام).', 'paris-whatsapp-orders' );
+        $this->method_description = __( 'الزبون يؤكد طلبه عبر واتساب، مع توجيه ذكي لرقم محل الملابس أو رقم محل الأدوات المنزلية.', 'paris-whatsapp-orders' );
 
         $this->init_form_fields();
         $this->init_settings();
 
-        $this->title       = $this->get_option( 'title', 'تأكيد الطلب عبر واتساب 📲' );
+        $this->title       = $this->get_option( 'title', 'تأكيد الطلب عبر واتساب 📱' );
         $this->description = $this->get_option(
             'description',
-            'سيتم إرسال تفاصيل طلبك لنا على واتساب. سنتواصل معك لتأكيد التوفر وطريقة الدفع (فودافون كاش / عند الاستلام).'
+            'سيتم إرسال تفاصيل طلبك مباشرة للفرع المختص على واتساب لتأكيد التوفر والشحن الفوري.'
         );
         $this->enabled = $this->get_option( 'enabled', 'yes' );
 
@@ -35,65 +35,80 @@ class PWO_Gateway extends WC_Payment_Gateway {
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
     }
 
-    // ── حقول الإعداد في لوحة WooCommerce ────────────────────────────────────
+    // ── حقول الإعداد في لوحة تحكم WooCommerce ──────────────────────────────
     public function init_form_fields(): void {
         $this->form_fields = [
-            'enabled'          => [
+            'enabled'                  => [
                 'title'   => __( 'تفعيل', 'paris-whatsapp-orders' ),
                 'type'    => 'checkbox',
                 'label'   => __( 'تفعيل بوابة واتساب', 'paris-whatsapp-orders' ),
                 'default' => 'yes',
             ],
-            'title'            => [
+            'title'                    => [
                 'title'       => __( 'العنوان', 'paris-whatsapp-orders' ),
                 'type'        => 'text',
                 'description' => __( 'يظهر للزبون عند إتمام الطلب.', 'paris-whatsapp-orders' ),
-                'default'     => 'تأكيد الطلب عبر واتساب 📲',
+                'default'     => 'تأكيد الطلب عبر واتساب 📱',
                 'desc_tip'    => true,
             ],
-            'description'      => [
+            'description'              => [
                 'title'   => __( 'الوصف', 'paris-whatsapp-orders' ),
                 'type'    => 'textarea',
-                'default' => 'سيتم إرسال تفاصيل طلبك لنا على واتساب. سنتواصل معك لتأكيد التوفر وطريقة الدفع.',
+                'default' => 'سيتم إرسال تفاصيل طلبك مباشرة للفرع المختص على واتساب لتأكيد التوفر والشحن الفوري.',
             ],
-            'whatsapp_number'  => [
-                'title'       => __( 'رقم واتساب المحل', 'paris-whatsapp-orders' ),
+            'whatsapp_number_clothes'  => [
+                'title'       => __( 'رقم واتساب مول الملابس 👗', 'paris-whatsapp-orders' ),
                 'type'        => 'text',
-                'description' => __( 'بالصيغة الدولية بدون + مثال: 201065968425', 'paris-whatsapp-orders' ),
+                'description' => __( 'رقم واتساب فرع الملابس بالصيغة الدولية بدون + (مثال: 201065968425)', 'paris-whatsapp-orders' ),
                 'default'     => '201065968425',
                 'desc_tip'    => true,
                 'placeholder' => '201XXXXXXXXX',
             ],
-            'admin_email'      => [
+            'whatsapp_number_home'     => [
+                'title'       => __( 'رقم واتساب مول الأدوات المنزلية 🏠', 'paris-whatsapp-orders' ),
+                'type'        => 'text',
+                'description' => __( 'رقم واتساب فرع الأدوات المنزلية بالصيغة الدولية بدون + (مثال: 201065968425)', 'paris-whatsapp-orders' ),
+                'default'     => '201065968425',
+                'desc_tip'    => true,
+                'placeholder' => '201XXXXXXXXX',
+            ],
+            'whatsapp_number'          => [
+                'title'       => __( 'الرقم الاحتياطي / الإدارة', 'paris-whatsapp-orders' ),
+                'type'        => 'text',
+                'description' => __( 'يستخدم كاحتياطي في حال عدم تعيين رقم للقسم.', 'paris-whatsapp-orders' ),
+                'default'     => '201065968425',
+                'desc_tip'    => true,
+                'placeholder' => '201XXXXXXXXX',
+            ],
+            'admin_email'              => [
                 'title'       => __( 'إيميل الإشعارات', 'paris-whatsapp-orders' ),
                 'type'        => 'email',
                 'description' => __( 'يصله إشعار بكل طلب جديد كنسخة احتياطية.', 'paris-whatsapp-orders' ),
                 'default'     => get_option( 'admin_email' ),
                 'desc_tip'    => true,
             ],
-            'redirect_delay'   => [
+            'redirect_delay'           => [
                 'title'       => __( 'تأخير التحويل (ثواني)', 'paris-whatsapp-orders' ),
                 'type'        => 'number',
-                'description' => __( 'ثواني قبل فتح واتساب تلقائياً (0 = فوري).', 'paris-whatsapp-orders' ),
-                'default'     => '2',
+                'description' => __( 'ثواني قبل فتح واتساب تلقائياً للطلبات الفردية (0 = فوري).', 'paris-whatsapp-orders' ),
+                'default'     => '0',
                 'desc_tip'    => true,
                 'custom_attributes' => [ 'min' => '0', 'max' => '10' ],
             ],
         ];
     }
 
-    // حفظ الإعدادات في جدول مخصص (نفس اسم get_option الذي يستخدمه PWO_Message)
     public function process_payment_fields(): void {
         $this->process_admin_options();
         $opts = $this->settings;
         update_option( 'woocommerce_paris_whatsapp_settings', $opts );
     }
 
-    // ── معالجة الدفع ─────────────────────────────────────────────────────────
+    // ── معالجة الدفع ────────────────────────────────────────────────────────
     public function process_payment( $order_id ): array {
         $order = wc_get_order( $order_id );
 
-        // ✅ تسجيل الطلب بحالة "بانتظار التأكيد"
+        // تسجيل الطلب بحالة "بانتظار التأكيد"
         $order->update_status(
             'whatsapp-pending',
             __( 'الطلب بانتظار تأكيد الزبون عبر واتساب.', 'paris-whatsapp-orders' )
@@ -102,9 +117,19 @@ class PWO_Gateway extends WC_Payment_Gateway {
         // تفريغ السلة
         WC()->cart->empty_cart();
 
-        // ✅ التحويل مباشرة إلى واتساب بدون المرور بصفحة الشكر
         require_once dirname( __FILE__ ) . '/class-pwo-message.php';
-        $whatsapp_url = PWO_Message::get_whatsapp_url( $order );
+        $analysis = PWO_Message::analyze_order_departments( $order );
+
+        // إذا كان الطلب مختلطاً (ملابس + أدوات): نوجهه لصفحة تأكيد الطلب المقسمة
+        if ( $analysis['type'] === 'mixed' ) {
+            return [
+                'result'   => 'success',
+                'redirect' => $order->get_checkout_order_received_url(),
+            ];
+        }
+
+        // إذا كان الطلب لقسم واحد فقط: تحويل مباشر وفوري لواتساب الفرع المختص
+        $whatsapp_url = PWO_Message::get_whatsapp_url_for_dept( $order, $analysis['type'] );
 
         return [
             'result'   => 'success',
@@ -112,4 +137,3 @@ class PWO_Gateway extends WC_Payment_Gateway {
         ];
     }
 }
-

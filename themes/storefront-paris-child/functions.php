@@ -414,3 +414,34 @@ add_filter('woocommerce_single_product_image_thumbnail_html', function($html, $p
     return $html;
 }, 10, 2);
 
+// ============================================================
+// 12. DEPARTMENT BADGES IN CART & CHECKOUT
+// ============================================================
+add_filter('woocommerce_cart_item_name', function($name, $cart_item, $cart_item_key) {
+    if (!isset($cart_item['product_id'])) return $name;
+    $product_id = $cart_item['product_id'];
+
+    $is_home = false;
+    if (class_exists('PWO_Message')) {
+        $is_home = PWO_Message::is_home_product($product_id);
+    } else {
+        $home_slugs = ['home', 'kitchen', 'decor', 'textiles', 'cleaning', 'organization', 'appliances', 'cookware'];
+        $terms      = get_the_terms($product_id, 'product_cat');
+        if ($terms && !is_wp_error($terms)) {
+            foreach ($terms as $term) {
+                if (in_array($term->slug, $home_slugs, true)) {
+                    $is_home = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    $badge = $is_home
+        ? '<span class="paris-cart-dept-badge home" title="منتج من فرع الأدوات المنزلية">🏠 أدوات منزلية</span>'
+        : '<span class="paris-cart-dept-badge clothes" title="منتج من فرع الملابس">👗 ملابس</span>';
+
+    return $name . ' ' . $badge;
+}, 10, 3);
+
+
