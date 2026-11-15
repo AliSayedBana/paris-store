@@ -558,17 +558,18 @@ function paris_filter_cart_items_on_checkout() {
 add_action( 'template_redirect', function () {
     if ( ! WC()->session ) return;
 
-    // 1. إذا كان في صفحة السلة، استعد أي عناصر محفوظة فوراً
-    if ( function_exists( 'is_cart' ) && is_cart() ) {
-        paris_restore_unselected_cart_items();
-        return;
-    }
-
-    // 2. إذا كان في صفحة الدفع (وليس صفحة الاستلام)
+    // 1. إذا كان في صفحة الدفع (وليس صفحة الاستلام): عزل المنتجات غير المحددة
     if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_order_received_page() ) {
         paris_filter_cart_items_on_checkout();
+    } else {
+        // 2. في جميع الصفحات الأخرى (صفحة الشكر، السلة، الرئيسية، المتجر): استعادة المنتجات غير المحددة فوراً
+        paris_restore_unselected_cart_items();
     }
 }, 5 );
+
+add_action( 'woocommerce_checkout_order_processed', function ( $order_id, $posted_data, $order ) {
+    paris_restore_unselected_cart_items();
+}, 5, 3 );
 
 add_action( 'woocommerce_checkout_init', 'paris_filter_cart_items_on_checkout', 5 );
 add_action( 'woocommerce_before_checkout_process', 'paris_filter_cart_items_on_checkout', 5 );

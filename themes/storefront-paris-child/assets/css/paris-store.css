@@ -3446,5 +3446,15 @@ tr.woocommerce-cart-form__cart-item.paris-item-unselected {
   text-decoration: underline !important;
 }
 
+/* ── Hide default WooCommerce order overview on thank you page for WhatsApp orders ── */
+.woocommerce-order > .woocommerce-notice,
+.woocommerce-order > .woocommerce-order-overview,
+.woocommerce-order-overview,
+.woocommerce-thankyou-order-received,
+ul.order_details {
+  display: none !important;
+}
+
+
 
 

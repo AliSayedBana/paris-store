@@ -1,48 +1,140 @@
 <?php
 /**
- * صفحة الشكر — التحويل التلقائي للطلبات الفردية أو العرض المقسم للطلبات المختلطة
+ * صفحة الشكر — التحويل التلقائي للطلبات الفردية أو العرض المقسم للطلبات المختلطة مع حارس السلة
  */
 defined( 'ABSPATH' ) || exit;
 
 class PWO_Thank_You {
 
+    public static $allow_cart_empty = false;
+    private static $cart_in_memory_backup = null;
+
     public static function init(): void {
         add_action( 'woocommerce_thankyou_paris_whatsapp', [ __CLASS__, 'render' ], 1 );
 
-        // إخفاء جدول تفاصيل الطلب الافتراضي من ووكومرس على صفحة الاستلام
+        // 1. حارس السلة: منع تفريغ السلة تلقائياً عند تأكيد الطلب أو زيارة صفحة الشكر
+        add_action( 'woocommerce_before_cart_emptied', [ __CLASS__, 'on_before_cart_emptied' ], 1 );
+        add_action( 'woocommerce_cart_emptied', [ __CLASS__, 'on_cart_emptied' ], 999 );
+
+        // 2. إخفاء جداول WooCommerce الافتراضية
         add_action( 'template_redirect', function () {
             if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
                 remove_action( 'woocommerce_thankyou', 'woocommerce_order_details_table', 10 );
+                self::ensure_cart_preserved();
             }
         } );
 
-        // معالج AJAX لتفريغ قسم محدد من السلة فقط عند ضغط الزبون على زر الواتساب الخاص به
+        // 3. استعادة السلة في صفحة الشكر للتأكد بنسبة 100%
+        add_action( 'woocommerce_thankyou', [ __CLASS__, 'ensure_cart_preserved' ], 1 );
+
+        // 4. معالج AJAX لتفريغ قسم محدد من السلة فقط عند ضغط الزبون على زر الواتساب الخاص به
         add_action( 'wp_ajax_pwo_confirm_department_sent', [ __CLASS__, 'ajax_confirm_department_sent' ] );
         add_action( 'wp_ajax_nopriv_pwo_confirm_department_sent', [ __CLASS__, 'ajax_confirm_department_sent' ] );
     }
 
+    public static function on_before_cart_emptied( $clear_persistent_cart = true ): void {
+        if ( ! self::$allow_cart_empty && WC()->cart && ! WC()->cart->is_empty() ) {
+            self::$cart_in_memory_backup = WC()->cart->get_cart();
+            if ( WC()->session ) {
+                WC()->session->set( 'pwo_cart_guardian_backup', self::$cart_in_memory_backup );
+                WC()->session->set( 'paris_preserved_cart', self::$cart_in_memory_backup );
+            }
+        }
+    }
+
+    public static function on_cart_emptied( $clear_persistent_cart = true ): void {
+        if ( ! self::$allow_cart_empty ) {
+            $backup = self::$cart_in_memory_backup;
+            if ( empty( $backup ) && WC()->session ) {
+                $backup = WC()->session->get( 'pwo_cart_guardian_backup' );
+            }
+            if ( empty( $backup ) && WC()->session ) {
+                $backup = WC()->session->get( 'paris_preserved_cart' );
+            }
+            if ( ! empty( $backup ) && is_array( $backup ) && WC()->cart ) {
+                WC()->cart->cart_contents = $backup;
+                WC()->cart->set_session();
+                WC()->cart->calculate_totals();
+                if ( is_user_logged_in() && WC()->cart->session && method_exists( WC()->cart->session, 'persistent_cart_update' ) ) {
+                    WC()->cart->session->persistent_cart_update();
+                }
+            }
+        }
+    }
+
+    public static function ensure_cart_preserved(): void {
+        if ( ! WC()->session || ! WC()->cart ) return;
+
+        if ( WC()->cart->is_empty() ) {
+            $backup = WC()->session->get( 'pwo_cart_guardian_backup' );
+            if ( empty( $backup ) ) {
+                $backup = WC()->session->get( 'paris_preserved_cart' );
+            }
+            if ( ! empty( $backup ) && is_array( $backup ) ) {
+                foreach ( $backup as $item ) {
+                    WC()->cart->add_to_cart(
+                        $item['product_id'],
+                        $item['quantity'],
+                        $item['variation_id'] ?? 0,
+                        $item['variation'] ?? [],
+                        $item['cart_item_data'] ?? []
+                    );
+                }
+                WC()->cart->set_session();
+                WC()->cart->calculate_totals();
+                if ( is_user_logged_in() && WC()->cart->session && method_exists( WC()->cart->session, 'persistent_cart_update' ) ) {
+                    WC()->cart->session->persistent_cart_update();
+                }
+            }
+        }
+    }
+
+    /**
+     * تفريغ قسم محدد من السلة فقط بعد ضغط الزبون على زر الواتساب
+     */
     public static function ajax_confirm_department_sent(): void {
         $dept = isset( $_POST['dept'] ) ? sanitize_text_field( $_POST['dept'] ) : '';
 
-        if ( ! WC()->cart || WC()->cart->is_empty() ) {
-            wp_send_json_success( [ 'cleared' => true, 'remaining' => 0 ] );
-        }
-
         require_once dirname( __FILE__ ) . '/class-pwo-message.php';
 
-        foreach ( WC()->cart->get_cart() as $cart_item_key => $item ) {
-            $is_home = PWO_Message::is_home_product( (int) $item['product_id'] );
-            if ( $dept === 'clothes' && ! $is_home ) {
-                WC()->cart->remove_cart_item( $cart_item_key );
-            } elseif ( $dept === 'home' && $is_home ) {
-                WC()->cart->remove_cart_item( $cart_item_key );
-            } elseif ( $dept === 'all' ) {
-                WC()->cart->remove_cart_item( $cart_item_key );
+        self::$allow_cart_empty = true;
+
+        if ( WC()->cart && ! WC()->cart->is_empty() ) {
+            foreach ( WC()->cart->get_cart() as $cart_item_key => $item ) {
+                $is_home = PWO_Message::is_home_product( (int) $item['product_id'] );
+                if ( $dept === 'clothes' && ! $is_home ) {
+                    WC()->cart->remove_cart_item( $cart_item_key );
+                } elseif ( $dept === 'home' && $is_home ) {
+                    WC()->cart->remove_cart_item( $cart_item_key );
+                } elseif ( $dept === 'all' ) {
+                    WC()->cart->remove_cart_item( $cart_item_key );
+                }
+            }
+            WC()->cart->set_session();
+            WC()->cart->calculate_totals();
+            if ( is_user_logged_in() && WC()->cart->session && method_exists( WC()->cart->session, 'persistent_cart_update' ) ) {
+                WC()->cart->session->persistent_cart_update();
             }
         }
 
-        $remaining = count( WC()->cart->get_cart() );
-        wp_send_json_success( [ 'remaining' => $remaining ] );
+        // تحديث النسخة المحفوظة في الجلسة أيضاً
+        if ( WC()->session ) {
+            if ( $dept === 'all' || ( WC()->cart && WC()->cart->is_empty() ) ) {
+                WC()->session->__unset( 'paris_preserved_cart' );
+                WC()->session->__unset( 'pwo_cart_guardian_backup' );
+                WC()->session->__unset( 'paris_cart_selected_keys' );
+                self::$cart_in_memory_backup = null;
+            } else {
+                $remaining_backup = WC()->cart->get_cart();
+                WC()->session->set( 'paris_preserved_cart', $remaining_backup );
+                WC()->session->set( 'pwo_cart_guardian_backup', $remaining_backup );
+                self::$cart_in_memory_backup = $remaining_backup;
+            }
+        }
+
+        self::$allow_cart_empty = false;
+
+        wp_send_json_success();
     }
 
     public static function render( int $order_id ): void {
@@ -50,6 +142,8 @@ class PWO_Thank_You {
         if ( ! $order ) {
             return;
         }
+
+        self::ensure_cart_preserved();
 
         require_once dirname( __FILE__ ) . '/class-pwo-message.php';
         $analysis = PWO_Message::analyze_order_departments( $order );
@@ -60,14 +154,17 @@ class PWO_Thank_You {
             return;
         }
 
-        // ── 2. إذا كان الطلب لقسم واحد (تحويل فوري احتياطي) ──
+        // ── 2. إذا كان الطلب لقسم واحد (تحويل فوري) ──
         $wa_url = PWO_Message::get_whatsapp_url_for_dept( $order, $analysis['type'] );
         ?>
         <style>
-        .woocommerce-order-received .woocommerce-notice--success.woocommerce-thankyou-order-received,
-        .woocommerce-order-received .woocommerce-order-overview,
-        .woocommerce-order-received .woocommerce-order-details,
-        .woocommerce-order-received .woocommerce-customer-details {
+        .woocommerce-order > .woocommerce-notice,
+        .woocommerce-order > .woocommerce-order-overview,
+        .woocommerce-order-overview,
+        .woocommerce-thankyou-order-received,
+        .woocommerce-order-details,
+        .woocommerce-customer-details,
+        ul.order_details {
             display: none !important;
         }
         </style>
@@ -80,6 +177,7 @@ class PWO_Thank_You {
             <a
                 id="pwo-wa-btn"
                 href="<?php echo esc_url( $wa_url ); ?>"
+                onclick="pwoMarkSingleSent('<?php echo esc_url( $wa_url ); ?>')"
                 style="
                     display:inline-flex;align-items:center;gap:.6rem;
                     background:#25D366;color:#fff;
@@ -93,8 +191,17 @@ class PWO_Thank_You {
         </div>
 
         <script>
+        function pwoMarkSingleSent(url) {
+            if (window.fetch) {
+                var fd = new FormData();
+                fd.append('action', 'pwo_confirm_department_sent');
+                fd.append('dept', 'all');
+                fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', { method: 'POST', body: fd, keepalive: true });
+            }
+        }
         (function () {
             var waUrl = <?php echo wp_json_encode( $wa_url ); ?>;
+            pwoMarkSingleSent(waUrl);
             window.location.replace(waUrl);
         }());
         </script>
@@ -124,16 +231,19 @@ class PWO_Thank_You {
         ?>
         <!-- إخفاء بلوك شكراً لك وجدول WooCommerce الافتراضي تماماً لكي لا يظن العميل أن الطلب انتهى -->
         <style>
-        .woocommerce-order-received .woocommerce-notice--success.woocommerce-thankyou-order-received,
-        .woocommerce-order-received .woocommerce-order-overview,
-        .woocommerce-order-received .woocommerce-order-details,
-        .woocommerce-order-received .woocommerce-customer-details {
+        .woocommerce-order > .woocommerce-notice,
+        .woocommerce-order > .woocommerce-order-overview,
+        .woocommerce-order-overview,
+        .woocommerce-thankyou-order-received,
+        .woocommerce-order-details,
+        .woocommerce-customer-details,
+        ul.order_details {
             display: none !important;
         }
         </style>
 
         <div class="pwo-split-container" dir="rtl">
-            <!-- الهيدر التنبيهي المباشر بدون شكراً تم استلام طلبك -->
+            <!-- الهيدر التنبيهي المباشر -->
             <div class="pwo-split-header pwo-alert-header">
                 <div class="pwo-urgent-tag">⚠️ خطوة أخيرة ومهمة لتأكيد طلبك</div>
                 <h2 class="pwo-urgent-title">طلبك لم يُرسل بعد! يجب تأكيده عبر واتساب 📱</h2>
@@ -165,21 +275,27 @@ class PWO_Thank_You {
                                 <?php endif; ?>
                                 <div class="pwo-item-meta">
                                     <div class="pwo-item-name"><?php echo esc_html( $item->get_name() ); ?></div>
-                                    <div class="pwo-item-qty">الكمية: <strong><?php echo esc_html( $item->get_quantity() ); ?></strong></div>
+                                    <div class="pwo-item-qty">الكمية: <?php echo esc_html( $item->get_quantity() ); ?></div>
                                 </div>
-                                <div class="pwo-item-price"><?php echo wc_price( $item->get_total() ); ?></div>
+                                <div class="pwo-item-price"><?php echo wp_strip_all_tags( wc_price( $item->get_total() ) ); ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
 
                     <div class="pwo-branch-total">
-                        <span>مجموع منتجات الملابس:</span>
-                        <strong><?php echo wc_price( $clothes_subtotal ); ?></strong>
+                        <span>إجمالي قسم الملابس:</span>
+                        <strong><?php echo wp_strip_all_tags( wc_price( $clothes_subtotal ) ); ?></strong>
                     </div>
 
-                    <a href="<?php echo esc_url( $clothes_url ); ?>" target="_blank" rel="noopener noreferrer" class="pwo-branch-btn clothes-btn" onclick="pwoMarkSent(this, 'clothes')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        <span>إرسال طلب الملابس لواتساب المحل 👗</span>
+                    <a
+                        href="<?php echo esc_url( $clothes_url ); ?>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="pwo-branch-btn clothes-btn"
+                        id="btn-clothes"
+                        onclick="pwoMarkSent(this, 'clothes')"
+                    >
+                        <span>📱 تأكيد طلب الملابس عبر واتساب ←</span>
                     </a>
                 </div>
 
@@ -204,28 +320,35 @@ class PWO_Thank_You {
                                 <?php endif; ?>
                                 <div class="pwo-item-meta">
                                     <div class="pwo-item-name"><?php echo esc_html( $item->get_name() ); ?></div>
-                                    <div class="pwo-item-qty">الكمية: <strong><?php echo esc_html( $item->get_quantity() ); ?></strong></div>
+                                    <div class="pwo-item-qty">الكمية: <?php echo esc_html( $item->get_quantity() ); ?></div>
                                 </div>
-                                <div class="pwo-item-price"><?php echo wc_price( $item->get_total() ); ?></div>
+                                <div class="pwo-item-price"><?php echo wp_strip_all_tags( wc_price( $item->get_total() ) ); ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
 
                     <div class="pwo-branch-total">
-                        <span>مجموع منتجات الأدوات:</span>
-                        <strong><?php echo wc_price( $home_subtotal ); ?></strong>
+                        <span>إجمالي قسم الأدوات:</span>
+                        <strong><?php echo wp_strip_all_tags( wc_price( $home_subtotal ) ); ?></strong>
                     </div>
 
-                    <a href="<?php echo esc_url( $home_url ); ?>" target="_blank" rel="noopener noreferrer" class="pwo-branch-btn home-btn" onclick="pwoMarkSent(this, 'home')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        <span>إرسال طلب الأدوات لواتساب المحل 🏠</span>
+                    <a
+                        href="<?php echo esc_url( $home_url ); ?>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="pwo-branch-btn home-btn"
+                        id="btn-home"
+                        onclick="pwoMarkSent(this, 'home')"
+                    >
+                        <span>📱 تأكيد طلب الأدوات عبر واتساب ←</span>
                     </a>
                 </div>
             </div>
 
-            <!-- رسالة الإتمام الكلي عند إرسال الاثنين -->
-            <div id="pwo-all-done-banner" style="display:none;background:#eaf5ee;border:2px solid #133e29;border-radius:16px;padding:20px 24px;text-align:center;margin:30px auto;max-width:640px;color:#133e29;font-weight:700;font-size:16px;box-shadow:0 6px 20px rgba(19,62,41,0.08);">
-                🎉 رائع جداً! تم إرسال تفاصيل الطلب بنجاح لكلا الفرعين. سيقوم فريق خدمة العملاء بكل فرع بمراجعة طلبك وتأكيد الشحن فوراً.
+            <div class="pwo-split-banner-done" id="pwo-all-done-banner" style="display:none;">
+                <div class="pwo-done-icon">🎉</div>
+                <h3 class="pwo-done-title">تم إرسال الطلب للفرعين بنجاح!</h3>
+                <p class="pwo-done-desc">شكراً لك، سيتواصل معك مسؤولو الفروع على واتساب لمتابعة التوصيل بأقرب وقت.</p>
             </div>
 
             <div class="pwo-split-footer">
@@ -240,87 +363,81 @@ class PWO_Thank_You {
 
         <style>
         .pwo-split-container {
-            max-width: 920px;
-            margin: 25px auto 60px;
-            padding: 0 15px;
-            font-family: 'Cairo', Arial, sans-serif;
-            text-align: right;
-            direction: rtl;
+            max-width: 960px;
+            margin: 20px auto 40px;
+            padding: 0 16px;
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #222;
         }
-        .pwo-alert-header {
-            background: #fffcf5 !important;
-            border: 2px solid #e0ad30 !important;
-            border-radius: 20px !important;
-            padding: 30px 24px !important;
-            text-align: center !important;
-            box-shadow: 0 6px 24px rgba(224, 173, 48, 0.12) !important;
-            margin-bottom: 30px !important;
+        .pwo-split-header.pwo-alert-header {
+            background: linear-gradient(135deg, #fff9f0 0%, #fff4e5 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 18px;
+            padding: 24px 20px;
+            text-align: center;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 18px rgba(245, 158, 11, 0.12);
         }
         .pwo-urgent-tag {
             display: inline-block;
-            background: #d9534f;
+            background: #f59e0b;
             color: #ffffff;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 800;
-            padding: 5px 18px;
+            padding: 4px 14px;
             border-radius: 50px;
-            margin-bottom: 14px;
-            box-shadow: 0 2px 8px rgba(217, 83, 79, 0.3);
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
         }
         .pwo-urgent-title {
             font-size: 24px;
-            font-weight: 900;
-            color: #133e29;
-            margin: 0 0 14px 0;
-            line-height: 1.4;
+            font-weight: 800;
+            color: #b45309;
+            margin: 0 0 10px;
+            line-height: 1.35;
         }
         .pwo-split-subtitle {
-            font-size: 15px;
-            color: #495057;
-            line-height: 1.8;
-            max-width: 760px;
-            margin: 0 auto;
+            font-size: 14.5px;
+            color: #4b5563;
+            margin: 0;
+            line-height: 1.7;
         }
         .pwo-callout-bold {
             display: block;
-            margin-top: 12px;
-            font-size: 15.5px;
+            margin-top: 8px;
             font-weight: 800;
-            color: #c0392b;
-            line-height: 1.6;
+            color: #92400e;
         }
         .pwo-split-cards {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-        @media (max-width: 720px) {
-            .pwo-split-cards {
-                grid-template-columns: 1fr;
-            }
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
         }
         .pwo-branch-card {
             background: #ffffff;
-            border: 1.5px solid #ede8de;
             border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            padding: 22px 20px;
             display: flex;
             flex-direction: column;
+            border: 2px solid #eee;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+            position: relative;
+            transition: all 0.25s ease;
         }
         .pwo-branch-card.clothes-card {
-            border-top: 5px solid #133e29;
+            border-color: #cde4d6;
         }
         .pwo-branch-card.home-card {
-            border-top: 5px solid #eb6b47;
+            border-color: #f7e7c4;
         }
         .pwo-branch-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px dashed #ede8de;
+            border-bottom: 1.5px solid #f0eee9;
         }
         .pwo-branch-badge {
             font-size: 14.5px;
@@ -496,14 +613,15 @@ class PWO_Thank_You {
             btn.innerHTML = '<span>✓ تم إرسال طلب ' + (dept === 'clothes' ? 'الملابس' : 'الأدوات') + ' بنجاح</span>';
             pwoSentState[dept] = true;
 
-            // إرسال تنبيه للسيرفر بحذف عناصر هذا الفرع من السلة لأنها تم تأكيدها على الواتساب
+            // إرسال تنبيه للسيرفر بحذف عناصر هذا الفرع من السلة فقط لأنها أُرسلت فعلياً للواتساب
             if (window.fetch) {
                 var formData = new FormData();
                 formData.append('action', 'pwo_confirm_department_sent');
                 formData.append('dept', dept);
                 fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    keepalive: true
                 });
             }
 
