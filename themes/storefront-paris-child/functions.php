@@ -258,9 +258,19 @@ function paris_render_cart_items($cart_items) {
         $html .= '<input type="checkbox" class="paris-drawer-item-checkbox" data-key="' . esc_attr($key) . '" data-line-total="' . esc_attr($line_total) . '" ' . checked($is_selected, true, false) . '>';
         $html .= '</label>';
 
+        if (! class_exists('PWO_Message')) {
+            $pwo_file = defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR . '/paris-whatsapp-orders/includes/class-pwo-message.php' : WP_CONTENT_DIR . '/plugins/paris-whatsapp-orders/includes/class-pwo-message.php';
+            if (file_exists($pwo_file)) require_once $pwo_file;
+        }
+        $item_is_home = class_exists('PWO_Message') ? PWO_Message::is_home_product($item['product_id']) : false;
+        $dept_badge   = $item_is_home
+            ? '<span class="paris-cart-dept-badge home" style="display:inline-block;margin-top:3px;font-size:11px;padding:2px 7px;border-radius:6px;background:#fdf5e6;color:#b58117;font-weight:700;">🏠 أدوات منزلية</span>'
+            : '<span class="paris-cart-dept-badge clothes" style="display:inline-block;margin-top:3px;font-size:11px;padding:2px 7px;border-radius:6px;background:#eaf3ed;color:#133e29;font-weight:700;">👗 ملابس</span>';
+
         $html .= '<img src="' . esc_url($img) . '" alt="' . esc_attr($name) . '">';
         $html .= '<div class="paris-cart-item-info">';
         $html .= '<p class="paris-cart-item-name">' . esc_html($name) . '</p>';
+        $html .= $dept_badge;
         $html .= '<p class="paris-cart-item-price">' . $price . '</p>';
 
         $display_note = $is_selected ? 'display:none;' : '';
@@ -389,12 +399,20 @@ function paris_single_product_breadcrumb() {
     global $product;
     if (! $product) return;
 
+    if (! class_exists('PWO_Message')) {
+        $pwo_file = defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR . '/paris-whatsapp-orders/includes/class-pwo-message.php' : WP_CONTENT_DIR . '/plugins/paris-whatsapp-orders/includes/class-pwo-message.php';
+        if (file_exists($pwo_file)) require_once $pwo_file;
+    }
+    $is_home   = class_exists('PWO_Message') ? PWO_Message::is_home_product($product->get_id()) : false;
+    $mall_name = $is_home ? 'مول الأدوات المنزلية 🏠' : 'مول الملابس 👗';
+    $mall_url  = $is_home ? home_url('/product-category/home/') : home_url('/');
+
     $terms = get_the_terms($product->get_id(), 'product_cat');
     $cat_name = '';
-    $cat_link = home_url('/');
+    $cat_link = $mall_url;
     if ($terms && ! is_wp_error($terms)) {
         foreach ($terms as $term) {
-            if ($term->slug !== 'uncategorized') {
+            if (! in_array($term->slug, ['clothes', 'home', 'uncategorized'], true)) {
                 $cat_name = $term->name;
                 $cat_link = get_term_link($term);
                 break;
@@ -402,10 +420,10 @@ function paris_single_product_breadcrumb() {
         }
     }
 
-    echo '<div class="paris-sp-breadcrumb-bar">';
-    echo '  <a href="' . esc_url(home_url('/')) . '" class="paris-sp-back-btn">';
-    echo '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
-    echo '    <span>العودة للمتجر</span>';
+    echo '<div class="paris-sp-breadcrumb-bar" dir="rtl">';
+    echo '  <a href="' . esc_url($mall_url) . '" class="paris-sp-back-btn">';
+    echo '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+    echo '    <span>العودة إلى ' . esc_html($mall_name) . '</span>';
     echo '  </a>';
     if ($cat_name) {
         echo '  <span class="paris-sp-bread-sep">/</span>';
