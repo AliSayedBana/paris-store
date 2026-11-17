@@ -3201,21 +3201,39 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   content: "" !important;
 }
 
-.single-product .woocommerce-tabs .woocommerce-noreviews {
-  background: #fbf9f4 !important;
-  color: #133e29 !important;
-  border: 1px solid #e8e3d8 !important;
-  border-radius: 12px !important;
-  padding: 16px 20px !important;
-  font-size: 14.5px !important;
-  font-weight: 700 !important;
-  margin: 0 0 24px 0 !important;
+/* ── Full Width Single Product Page & Hide Admin Edit Link ── */
+.single-product #primary.content-area,
+.single-product .content-area {
+  width: 100% !important;
+  max-width: 1240px !important;
+  float: none !important;
+  margin: 0 auto !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
 }
 
-.single-product .woocommerce-tabs .woocommerce-noreviews::before {
-  content: "💬 " !important;
-  font-size: 18px !important;
-  margin-left: 8px !important;
+.single-product #secondary,
+.single-product .post-edit-link,
+.single-product .edit-link {
+  display: none !important;
+}
+
+/* ── Product Gallery Image Visibility & Wrapper ── */
+.single-product div.product .woocommerce-product-gallery {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.single-product div.product .woocommerce-product-gallery .woocommerce-product-gallery__wrapper {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: #fbf9f5 !important;
+  border: 1.5px solid #ede8df !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04) !important;
+  min-height: 420px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .single-product div.product .woocommerce-tabs .panel {
@@ -3224,55 +3242,257 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   margin: 0 !important;
 }
 
-/* Related Products */
+/* ── Ultra-Modern Reviews Container & Empty State ── */
+.paris-reviews-container {
+  padding: 8px 0 24px 0 !important;
+}
+
+.paris-reviews-main-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #133e29 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 0 22px 0 !important;
+  border-bottom: none !important;
+}
+
+.paris-reviews-count-badge {
+  font-size: 13px !important;
+  background: #eaf3ed !important;
+  color: #133e29 !important;
+  padding: 3px 12px !important;
+  border-radius: 50px !important;
+  font-weight: 700 !important;
+}
+
+.paris-empty-reviews-card {
+  background: linear-gradient(135deg, #fdfbf7 0%, #f7f3eb 100%) !important;
+  border: 1.5px dashed #dfd7c7 !important;
+  border-radius: 18px !important;
+  padding: 36px 24px !important;
+  text-align: center !important;
+  margin-bottom: 32px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.02) !important;
+}
+
+.paris-erc-icon-badge {
+  font-size: 24px !important;
+  letter-spacing: 5px !important;
+  margin-bottom: 12px !important;
+}
+
+.paris-erc-heading {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #133e29 !important;
+  margin: 0 0 10px 0 !important;
+}
+
+.paris-erc-subtext {
+  font-size: 14.5px !important;
+  color: #555555 !important;
+  max-width: 540px !important;
+  margin: 0 auto 20px auto !important;
+  line-height: 1.65 !important;
+}
+
+.paris-erc-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: #133e29 !important;
+  color: #ffffff !important;
+  padding: 10px 24px !important;
+  border-radius: 50px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 4px 14px rgba(19,62,41,0.2) !important;
+}
+
+.paris-erc-action-btn:hover {
+  background: #1b5338 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(19,62,41,0.3) !important;
+}
+
+/* ── Review Submission Form ── */
+.paris-review-form-wrapper {
+  background: #ffffff !important;
+  border: 1.5px solid #ede8df !important;
+  border-radius: 18px !important;
+  padding: 28px 24px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03) !important;
+  margin-top: 10px !important;
+}
+
+.paris-reply-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #133e29 !important;
+  margin: 0 0 18px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.paris-reply-title::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 4px !important;
+  height: 18px !important;
+  background: #c59b27 !important;
+  border-radius: 3px !important;
+}
+
+.paris-form-group {
+  margin-bottom: 18px !important;
+}
+
+.paris-form-group label {
+  display: block !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #333333 !important;
+  margin-bottom: 6px !important;
+}
+
+.paris-form-group input[type="text"],
+.paris-form-group input[type="email"],
+.paris-form-group textarea,
+.paris-rating-picker select {
+  width: 100% !important;
+  border: 1.5px solid #ded9ce !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  background: #fdfcf9 !important;
+  color: #222222 !important;
+  transition: border-color 0.2s ease !important;
+  box-sizing: border-box !important;
+}
+
+.paris-form-group input:focus,
+.paris-form-group textarea:focus,
+.paris-rating-picker select:focus {
+  border-color: #133e29 !important;
+  outline: none !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(19,62,41,0.08) !important;
+}
+
+#review_form #submit,
+.paris-review-form-wrapper input[type="submit"] {
+  background: linear-gradient(135deg, #133e29 0%, #1c553a 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 13px 34px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 4px 14px rgba(19,62,41,0.25) !important;
+  font-family: inherit !important;
+}
+
+#review_form #submit:hover,
+.paris-review-form-wrapper input[type="submit"]:hover {
+  background: #0d2b1c !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(19,62,41,0.35) !important;
+}
+
+/* ── Modern Related Products Full-Width Grid ── */
+.paris-related-section.related.products,
 .single-product .related.products {
+  width: 100% !important;
   max-width: 1240px !important;
-  margin: 40px auto 0 auto !important;
-  padding: 0 20px !important;
+  margin: 50px auto 30px auto !important;
+  padding: 0 !important;
   clear: both !important;
   direction: rtl !important;
 }
 
+.paris-related-header {
+  margin-bottom: 24px !important;
+  border-bottom: 2px solid #ede8df !important;
+  padding-bottom: 14px !important;
+  text-align: right !important;
+}
+
+.paris-related-badge {
+  display: inline-block !important;
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 3px 12px !important;
+  border-radius: 50px !important;
+  margin-bottom: 8px !important;
+}
+
+.paris-related-title,
 .single-product .related.products > h2 {
   font-size: 24px !important;
   font-weight: 900 !important;
   color: #133e29 !important;
-  margin-bottom: 24px !important;
-  text-align: right !important;
-  position: relative !important;
-  padding-right: 16px !important;
+  margin: 0 0 6px 0 !important;
 }
 
-.single-product .related.products > h2::before {
-  content: "" !important;
-  position: absolute !important;
-  right: 0 !important;
-  top: 4px !important;
-  bottom: 4px !important;
-  width: 5px !important;
-  background: #c59b27 !important;
-  border-radius: 4px !important;
+.paris-related-subtitle {
+  font-size: 14px !important;
+  color: #6c757d !important;
+  margin: 0 !important;
 }
 
+.paris-related-grid,
 .single-product .related.products ul.products {
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
-  gap: 22px !important;
-  list-style: none !important;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  gap: 24px !important;
+  width: 100% !important;
+  max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  list-style: none !important;
+  float: none !important;
 }
 
-@media (max-width: 992px) {
-  .single-product .related.products ul.products {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
+.paris-related-grid::before,
+.paris-related-grid::after,
+.single-product .related.products ul.products::before,
+.single-product .related.products ul.products::after {
+  display: none !important;
 }
 
-@media (max-width: 576px) {
-  .single-product .related.products ul.products {
-    grid-template-columns: 1fr !important;
-  }
+.paris-related-grid li.product,
+.paris-related-grid li.product.paris-modern-card,
+.single-product .related.products ul.products li.product {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  float: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.paris-related-grid .paris-product-img-wrap,
+.single-product .related.products .paris-product-img-wrap {
+  height: 250px !important;
+  width: 100% !important;
+}
+
+.paris-related-grid .paris-product-img-wrap img,
+.single-product .related.products .paris-product-img-wrap img {
+  height: 100% !important;
+  width: 100% !important;
+  object-fit: cover !important;
 }
 
 /* ── Department Badges in Cart / Checkout ── */
