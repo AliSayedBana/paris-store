@@ -1,0 +1,49 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: paris_store_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: paris
+      MYSQL_PASSWORD: paris_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./paris-store-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "33066:3306"
+    networks:
+      - paris_network
+
+  wordpress:
+    image: wordpress:php8.2-apache
+    container_name: paris_store_app
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: paris
+      WORDPRESS_DB_PASSWORD: paris_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8080'));
+        define('WP_SITEURL', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8080'));
+    volumes:
+      - ./themes/storefront-paris-child:/var/www/html/wp-content/themes/storefront-paris-child
+      - ./plugins/paris-whatsapp-orders:/var/www/html/wp-content/plugins/paris-whatsapp-orders
+      - ./plugins/paris-whatsapp-button:/var/www/html/wp-content/plugins/paris-whatsapp-button
+      - ./plugins/paris-checkout-customizer:/var/www/html/wp-content/plugins/paris-checkout-customizer
+      - ./uploads/paris-custom:/var/www/html/wp-content/uploads/paris-custom
+    networks:
+      - paris_network
+
+volumes:
+  db_data:
+
+networks:
+  paris_network:
+    driver: bridge
