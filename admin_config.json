@@ -1,0 +1,105 @@
+{
+  "adminEmail": "admin@paris-store.com",
+  "adminName": "مدير متجر باريس",
+  "salt": "8b5b7b72ea05ee9a0e709dbf030d06e9",
+  "passwordHash": "5b9bf554340a2b0382776d5187ccab791dcfbdbcb6e9ef6da62da9de0b1b177f657a7d4d36a97d63e0e1c0a86f2dd290e4d5523cf15cdf07b34bf795803f0c63",
+  "sessions": {
+    "b98af64e09e1c636d3abba20925c8b230c241f42abad1d49cf3edbb7a05e90f0": {
+      "email": "admin@paris-store.com",
+      "createdAt": "2026-11-22T13:10:43.919Z",
+      "expiresAt": "2026-12-06T13:10:43.919Z"
+    },
+    "19fe508297fe6d7c773d658961f2046f7355788a95648d8deb2a3c9ffb4b670a": {
+      "email": "admin@paris-store.com",
+      "createdAt": "2026-11-22T13:21:44.999Z",
+      "expiresAt": "2026-12-06T13:21:44.999Z"
+    },
+    "a7fb6847eef3429fc3ff4f36d5b86a1b735657a627d9a68abd03d4c63fa44908": {
+      "adminId": "clothes",
+      "email": "clothes-admin@paris-store.com",
+      "name": "مشرف قسم الملابس والأزياء",
+      "role": "clothes_admin",
+      "mall": "clothes",
+      "departmentName": "مول باريس للملابس",
+      "createdAt": "2026-11-23T23:07:53.491Z",
+      "expiresAt": "2026-12-07T23:07:53.491Z"
+    },
+    "f9e119b083ec3b80c321d0538a469a900e635780586fcf7560e65130a4207424": {
+      "adminId": "shoes",
+      "email": "shoes-admin@paris-store.com",
+      "name": "مشرف قسم الأحذية والأحذية الرياضية",
+      "role": "shoes_admin",
+      "mall": "shoes",
+      "departmentName": "مول باريس للأحذية",
+      "createdAt": "2026-11-23T23:38:44.454Z",
+      "expiresAt": "2026-12-07T23:38:44.454Z"
+    },
+    "b71e005dfb6356bd644b4b0070033bfee873dbf322ec9ece778b5d660943d0b3": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-23T23:38:44.963Z",
+      "expiresAt": "2026-12-07T23:38:44.963Z"
+    },
+    "fb7d3f0341f769ac0125598f9a87307a7ab2626f41e31011f153196fba42cd0b": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-24T07:31:08.028Z",
+      "expiresAt": "2026-12-08T07:31:08.028Z"
+    }
+  },
+  "lastUpdated": "2026-11-24T07:31:08.352Z",
+  "admins": {
+    "super": {
+      "id": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "salt": "b4a67673ad1dac2f515002750bd4c05f",
+      "passwordHash": "d17f5da3f3cc37f1993a97fc078db2d1f4afd078b289984df22739194400de1ef332b09a2e82282827ce5a43ca08fa97bc3acf37684877766e6b0b4335917b09",
+      "lastLogin": "2026-11-24T07:31:08.028Z"
+    },
+    "clothes": {
+      "id": "clothes",
+      "email": "clothes-admin@paris-store.com",
+      "name": "مشرف قسم الملابس والأزياء",
+      "role": "clothes_admin",
+      "mall": "clothes",
+      "departmentName": "مول باريس للملابس",
+      "salt": "6137a117c34591b45f956fca07323174",
+      "passwordHash": "48bfc2711e895ae0ece7861d4c2e80263d42f8be02c9dc3f4dc3e298090ba2773a847bbc53f01d8ca377e62ee537e4175f051729889666ac9d063ecb7fcfadb7",
+      "lastLogin": "2026-11-23T23:07:53.491Z"
+    },
+    "home": {
+      "id": "home",
+      "email": "home-admin@paris-store.com",
+      "name": "مشرف قسم الأدوات المنزلية والديكور",
+      "role": "home_admin",
+      "mall": "home",
+      "departmentName": "مول باريس للأدوات المنزلية",
+      "salt": "fa7f0af639aedcc77cc6c2ba7ae98efa",
+      "passwordHash": "6e86c5e91bc16b1df4f47314e3376b6e395787039f0a659b0e245c2237ce5be5a39b9fb2d8385e5967e17f2576950ceb50db3313d28c4a2bf922ec9a525a7614",
+      "lastLogin": null
+    },
+    "shoes": {
+      "id": "shoes",
+      "email": "shoes-admin@paris-store.com",
+      "name": "مشرف قسم الأحذية والأحذية الرياضية",
+      "role": "shoes_admin",
+      "mall": "shoes",
+      "departmentName": "مول باريس للأحذية",
+      "salt": "a1b9f991c7398552cf353d0be4694e84",
+      "passwordHash": "f55e90e1f74e07c822e9628bb379645da033aaa8d757047aa9626de346b72f3d0796cb8bc0e2827f2cbe7fa8dcb5b9e026f7afc52c453304c7d3a6f0133d6b1f",
+      "lastLogin": "2026-11-23T23:38:44.454Z"
+    }
+  }
+}

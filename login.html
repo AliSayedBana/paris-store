@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل دخول الأدمن | متجر باريس التجاري</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paris-forest: #133e29;
+      --paris-forest-dark: #0a2417;
+      --paris-gold: #c59b27;
+      --paris-coral: #eb6b47;
+      --paris-bg: #f4f6f4;
+      --paris-border: #e2ddd2;
+      --paris-text: #242926;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', Arial, sans-serif;
+      background: radial-gradient(circle at 50% 20%, #f9fbf9 0%, #ebf0eb 100%);
+      color: var(--paris-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 25px 15px;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* Brand Header */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .brand-icon {
+      width: 68px;
+      height: 68px;
+      background: #ffffff;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(19, 62, 41, 0.1);
+      border: 1px solid var(--paris-border);
+      margin-bottom: 12px;
+    }
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--paris-forest);
+      letter-spacing: -0.5px;
+    }
+    .brand-subtitle {
+      font-size: 13.5px;
+      color: #6d7a72;
+      font-weight: 600;
+    }
+
+    /* Card */
+    .login-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 35px 32px;
+      box-shadow: 0 20px 50px rgba(19, 62, 41, 0.08);
+      border: 1px solid rgba(226, 221, 210, 0.8);
+    }
+    .card-heading {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--paris-forest);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #7b8881;
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* Alert Banner */
+    .error-banner {
+      background: #fdf2f2;
+      border: 1px solid #f8b4b4;
+      color: #9b1c1c;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.3s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-icon {
+      position: absolute;
+      right: 14px;
+      color: #9ca3af;
+      font-size: 16px;
+      pointer-events: none;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 42px 12px 42px;
+      border: 1.5px solid var(--paris-border);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14.5px;
+      outline: none;
+      transition: all 0.2s;
+      background: #fafafa;
+    }
+    .form-control:focus {
+      background: #fff;
+      border-color: var(--paris-forest);
+      box-shadow: 0 0 0 3px rgba(19, 62, 41, 0.12);
+    }
+    .toggle-pass-btn {
+      position: absolute;
+      left: 12px;
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .toggle-pass-btn:hover { color: var(--paris-forest); }
+
+    .form-row-remember {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 22px;
+      color: #4b5563;
+    }
+    .remember-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .remember-checkbox {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--paris-forest);
+      cursor: pointer;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--paris-forest);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 15.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 20px rgba(19, 62, 41, 0.25);
+    }
+    .btn-submit:hover {
+      background: var(--paris-forest-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(19, 62, 41, 0.35);
+    }
+    .btn-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Default Credentials Notice */
+    .notice-card {
+      background: #fbf9f4;
+      border: 1px dashed #d5c8ad;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 22px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #5d533e;
+    }
+    .badge-key {
+      background: #efe8d9;
+      color: #4c3f25;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #d5c8ad;
+      user-select: all;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13.5px;
+    }
+    .footer-links a {
+      color: var(--paris-forest);
+      text-decoration: none;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <div class="brand-icon">
+        <svg viewBox="0 0 48 48" width="44" height="44" fill="none">
+          <path d="M14 36V16C14 12.6863 16.6863 10 20 10C23.3137 10 26 12.6863 26 16V36" stroke="#c59b27" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M26 22C26 18.6863 28.6863 16 32 16C35.3137 16 38 18.6863 38 22V36" stroke="#16432f" stroke-width="4.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="brand-title">مول باريس التجاري</h1>
+      <p class="brand-subtitle">بوابة الدخول والإدارة الرسمية للمشرفين</p>
+    </div>
+
+    <!-- Main Login Card -->
+    <div class="login-card">
+      <h2 class="card-heading">تسجيل دخول الأدمن</h2>
+      <p class="card-desc">سجّل دخولك ببريدك الإلكتروني والرقم السري لإدارة المنتجات وتحديد ما يتم رفعه وعرضه بالمتجر.</p>
+
+      <!-- Error message banner -->
+      <div class="error-banner" id="errorBanner">
+        <span>⚠️</span>
+        <span id="errorMsg">البريد الإلكتروني أو الرقم السري غير صحيح.</span>
+      </div>
+
+      <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();">
+        <!-- Email Input -->
+        <div class="form-group">
+          <label class="form-label" for="adminEmail">البريد الإلكتروني للأدمن:</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="adminEmail" class="form-control" placeholder="admin@paris-store.com" required autocomplete="username">
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label class="form-label" for="adminPassword">الرقم السري (Password):</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="adminPassword" class="form-control" placeholder="أدخل الرقم السري" required autocomplete="current-password">
+            <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility()" title="إظهار / إخفاء كلمة السر">
+              <span id="passEyeIcon">👁️</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me -->
+        <div class="form-row-remember">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMe" class="remember-checkbox" checked>
+            <span>تذكر تسجيل دخولي على هذا الجهاز</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span class="spinner" id="btnSpinner"></span>
+          <span id="btnText">تسجيل الدخول الآمن &larr;</span>
+        </button>
+      </form>
+
+      <!-- Department Admins Credentials Card -->
+      <div class="notice-card" style="margin-top:20px; text-align:right;">
+        <strong style="color:var(--paris-forest); font-size:13.5px;">🔑 حسابات مشرفي الأقسام (انقر لتعبئة أي حساب تلقائياً):</strong>
+        <div style="display:grid; grid-template-columns:1fr; gap:8px; margin-top:10px;">
+          <div onclick="fillCreds('admin@paris-store.com', 'paris2026')" style="background:#fff; border:1px solid #e2ddd2; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--paris-gold)'" onmouseout="this.style.borderColor='#e2ddd2'">
+            <div style="font-weight:800; font-size:12.5px; color:var(--paris-forest);">👑 المدير العام (جميع الأقسام)</div>
+            <div style="font-size:11.5px; color:#666;">الإيميل: <code style="color:#133e29; font-weight:700;">admin@paris-store.com</code> | الرقم السري: <code>paris2026</code></div>
+          </div>
+
+          <div onclick="fillCreds('clothes-admin@paris-store.com', 'clothes2026')" style="background:#fff; border:1px solid #e2ddd2; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--paris-gold)'" onmouseout="this.style.borderColor='#e2ddd2'">
+            <div style="font-weight:800; font-size:12.5px; color:var(--paris-forest);">👗 مشرف قسم الملابس والأزياء</div>
+            <div style="font-size:11.5px; color:#666;">الإيميل: <code style="color:#133e29; font-weight:700;">clothes-admin@paris-store.com</code> | الرقم السري: <code>clothes2026</code></div>
+          </div>
+
+          <div onclick="fillCreds('home-admin@paris-store.com', 'home2026')" style="background:#fff; border:1px solid #e2ddd2; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--paris-gold)'" onmouseout="this.style.borderColor='#e2ddd2'">
+            <div style="font-weight:800; font-size:12.5px; color:var(--paris-forest);">🍳 مشرف قسم الأدوات المنزلية والمطبخ</div>
+            <div style="font-size:11.5px; color:#666;">الإيميل: <code style="color:#133e29; font-weight:700;">home-admin@paris-store.com</code> | الرقم السري: <code>home2026</code></div>
+          </div>
+
+          <div onclick="fillCreds('shoes-admin@paris-store.com', 'shoes2026')" style="background:#fff; border:1px solid #e2ddd2; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--paris-gold)'" onmouseout="this.style.borderColor='#e2ddd2'">
+            <div style="font-weight:800; font-size:12.5px; color:var(--paris-forest);">👟 مشرف قسم الأحذية والرياضة</div>
+            <div style="font-size:11.5px; color:#666;">الإيميل: <code style="color:#133e29; font-weight:700;">shoes-admin@paris-store.com</code> | الرقم السري: <code>shoes2026</code></div>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:11.5px; color:#786948;">
+          💡 <em>كل مشرف قسم يدير منتجات قسمه المخصص فقط، بينما المدير العام يتحكم بجميع الأقسام.</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- Return to Store Link -->
+    <div class="footer-links">
+      <a href="/">
+        <span>&rarr;</span>
+        <span>العودة لتصفح المتجر</span>
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    function togglePassVisibility() {
+      const passInput = document.getElementById('adminPassword');
+      const eyeIcon = document.getElementById('passEyeIcon');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeIcon.innerText = '🙈';
+      } else {
+        passInput.type = 'password';
+        eyeIcon.innerText = '👁️';
+      }
+    }
+
+    function fillCreds(email, pass) {
+      document.getElementById('adminEmail').value = email;
+      document.getElementById('adminPassword').value = pass;
+    }
+
+    async function submitLogin() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const rememberMe = document.getElementById('rememberMe').checked;
+      const errorBanner = document.getElementById('errorBanner');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btnText = document.getElementById('btnText');
+
+      errorBanner.style.display = 'none';
+
+      if (!email || !password) {
+        document.getElementById('errorMsg').innerText = 'يرجى إدخال البريد الإلكتروني والرقم السري.';
+        errorBanner.style.display = 'flex';
+        return;
+      }
+
+      // Loading state
+      submitBtn.disabled = true;
+      btnSpinner.style.display = 'inline-block';
+      btnText.innerText = 'جارٍ التحقق...';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, rememberMe })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.ok) {
+          // Store token in localStorage as well for redundancy
+          if (result.token) {
+            localStorage.setItem('paris_admin_token', result.token);
+          }
+          btnText.innerText = 'تم الدخول بنجاح! جارٍ التحويل...';
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 350);
+        } else {
+          document.getElementById('errorMsg').innerText = result.message || 'بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى.';
+          errorBanner.style.display = 'flex';
+          submitBtn.disabled = false;
+          btnSpinner.style.display = 'none';
+          btnText.innerText = 'تسجيل الدخول الآمن ←';
+        }
+      } catch (err) {
+        document.getElementById('errorMsg').innerText = 'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل السيرفر.';
+        errorBanner.style.display = 'flex';
+        submitBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.innerText = 'تسجيل الدخول الآمن ←';
+      }
+    }
+  </script>
+
+</body>
+</html>
