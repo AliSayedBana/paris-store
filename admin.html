@@ -757,7 +757,7 @@
     <div class="role-banner">
       <div class="role-info">
         <h2 id="departmentHeaderTitle">الإدارة العامة لمتجر باريس 🛍️</h2>
-        <p id="departmentHeaderDesc">لوحة تحكم كاملة للتحكم في معروضات المتجر، رفع وتحديث المنتجات على طريقة أمازون وضبط الأقسام.</p>
+        <p id="departmentHeaderDesc">لوحة تحكم سهلة وسريعة لإدارة معروضات المتجر، رفع وتحديث المنتجات وضبط الأقسام.</p>
       </div>
       <div>
         <span class="role-chip" id="departmentBadge">
@@ -777,8 +777,8 @@
 
       <button type="button" class="view-switch-btn" id="btnViewStudio" onclick="switchAdminView('studio')">
         <span>➕</span>
-        <span>استوديو رفع المنتجات بنمط أمازون (Amazon Studio)</span>
-        <span class="view-tab-badge" style="background:#25d366; color:#fff;">جديد ⚡</span>
+        <span>إضافة ورفع منتج جديد</span>
+        <span class="view-tab-badge" style="background:#25d366; color:#fff;">سريع وسهل ⚡</span>
       </button>
     </div>
 
@@ -900,44 +900,44 @@
         <div class="studio-header">
           <div>
             <h3 class="studio-title">
-              <span>🚀</span>
-              <span>استوديو رفع ونشر المنتجات بنظام أمازون (Amazon-Style Studio)</span>
+              <span>➕</span>
+              <span>إضافة منتج جديد للمتجر</span>
             </h3>
-            <p class="studio-subhead">اختر القسم، ارفع صورة المنتج مباشرة من جهازك أو من الاستوديو، وحدد المقاسات والأسعار لنشر المنتج فوراً بالمتجر.</p>
+            <p class="studio-subhead">خطوات سريعة وسهلة: حدد القسم، اكتب اسم المنتج وسعره، وارفع الصورة من جهازك بضغطة واحدة.</p>
           </div>
           <div>
             <button type="button" class="admin-btn admin-btn-outline" onclick="resetStudioForm()">
-              🔄 مسح الحقول والبدء من جديد
+              🔄 تفريغ الحقول
             </button>
           </div>
         </div>
 
         <!-- 1. Department Selection (Visual Cards) -->
-        <div class="form-group">
-          <label>1. اختر القسم الرئيسي (المول):</label>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label style="font-size:13.5px; font-weight:800; color:var(--paris-forest);">1. اختر قسم المنتج:</label>
           <div class="mall-cards-grid" id="studioMallCards">
             
             <div class="mall-select-box active" id="mallCard_clothes" onclick="selectStudioMall('clothes')">
               <div class="mall-box-icon">👗</div>
               <div>
-                <div class="mall-box-title">مول الملابس والأزياء</div>
-                <div class="mall-box-desc">رجالي، حريمي، أطفال، مقاسات S إلى 3XL</div>
+                <div class="mall-box-title">قسم الملابس والأزياء</div>
+                <div class="mall-box-desc">رجالي، حريمي، أطفال</div>
               </div>
             </div>
 
             <div class="mall-select-box" id="mallCard_home" onclick="selectStudioMall('home')">
               <div class="mall-box-icon">🏠</div>
               <div>
-                <div class="mall-box-title">مول الأدوات والديكور</div>
-                <div class="mall-box-desc">أدوات مطبخ، ديكور، مفروشات، منظمات</div>
+                <div class="mall-box-title">قسم الأدوات والديكور</div>
+                <div class="mall-box-desc">أدوات مطبخ، مفروشات، منظمات</div>
               </div>
             </div>
 
             <div class="mall-select-box" id="mallCard_shoes" onclick="selectStudioMall('shoes')">
               <div class="mall-box-icon">👟</div>
               <div>
-                <div class="mall-box-title">مول الأحذية والرياضة</div>
-                <div class="mall-box-desc">أحذية كلاسيك، سنيكرز، مقاسات 38 إلى 45</div>
+                <div class="mall-box-title">قسم الأحذية والرياضة</div>
+                <div class="mall-box-desc">أحذية كلاسيك، سنيكرز، أطفال</div>
               </div>
             </div>
 
@@ -952,108 +952,49 @@
             <input type="hidden" id="studioEditId" value="">
             <input type="hidden" id="studioSelectedMall" value="clothes">
 
-            <!-- Title & Brand -->
+            <!-- 2. اسم المنتج -->
             <div class="form-group">
-              <label>2. اسم وموديل المنتج الكامل (Amazon Title):</label>
-              <input type="text" id="studioTitle" class="form-control" placeholder="مثال: حذاء كلاسيك رجالي جلد طبيعي فاخر طبي ومريح" oninput="updateStudioLivePreview()" required>
+              <label style="font-size:13.5px; font-weight:800;">2. اسم وموديل المنتج:</label>
+              <input type="text" id="studioTitle" class="form-control" placeholder="مثال: قميص كتان صيفي فاخر أو طقم سكاكين مطبخ ياباني" oninput="updateStudioLivePreview()" required>
             </div>
 
-            <div class="form-row">
+            <!-- 3. التصنيف والأسعار -->
+            <div class="form-row-3" style="margin-bottom:14px;">
               <div class="form-group">
-                <label>الماركة / البراند (Brand):</label>
-                <input type="text" id="studioBrand" class="form-control" placeholder="مثال: Paris Collection" oninput="updateStudioLivePreview()">
-              </div>
-              <div class="form-group">
-                <label>شارة أمازون الترويجية (Amazon Badge):</label>
-                <select id="studioBadge" class="form-control" onchange="updateStudioLivePreview()">
-                  <option value="">بدون شارة إضافية</option>
-                  <option value="الأكثر مبيعاً #1">الأكثر مبيعاً (#1 Best Seller)</option>
-                  <option value="أمازون تشويس">أمازون تشويس (Amazon's Choice)</option>
-                  <option value="شحن مجاني Prime">شحن مجاني وسريع (Prime)</option>
-                  <option value="عرض حصري">عرض حصري لفترة محدودة</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Subcategory & Chip -->
-            <div class="form-row">
-              <div class="form-group">
-                <label>التصنيف الفرعي:</label>
-                <select id="studioCategory" class="form-control" onchange="updateStudioLivePreview()">
+                <label style="font-size:13px; font-weight:700;">التصنيف الفرعي:</label>
+                <select id="studioCategory" class="form-control" onchange="onStudioCategoryChange()">
                   <!-- Dynamically populated -->
                 </select>
               </div>
+
               <div class="form-group">
-                <label>الوسم القصير (Chip):</label>
-                <input type="text" id="studioChip" class="form-control" placeholder="مثال: أحذية رجالي" oninput="updateStudioLivePreview()">
-              </div>
-            </div>
-
-            <!-- Sizes Variations -->
-            <div class="form-group">
-              <label>3. المقاسات المتاحة (انقر للتحديد السريع):</label>
-              <div class="variation-pill-group" id="studioQuickSizesPills">
-                <!-- Injected based on mall -->
-              </div>
-              <input type="text" id="studioSizesInput" class="form-control" style="margin-top:8px;" placeholder="المقاسات المحددة، مثال: 41, 42, 43, 44" oninput="updateStudioLivePreview()">
-            </div>
-
-            <!-- Colors Variations -->
-            <div class="form-group">
-              <label>4. الألوان المتاحة (انقر للتحديد السريع):</label>
-              <div class="variation-pill-group" id="studioQuickColorsPills">
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أسود')">⚫ أسود</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'بني')">🟤 بني</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'كحلي')">🔵 كحلي</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أبيض')">⚪ أبيض</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'رمادي')">🔘 رمادي</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'هافان')">🟠 هافان</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'بيج')">🟡 بيج</span>
-                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أزرق')">🔷 أزرق</span>
-              </div>
-              <input type="text" id="studioColorsInput" class="form-control" style="margin-top:8px;" placeholder="الألوان المحددة، مثال: أسود, بني, كحلي" oninput="updateStudioLivePreview()">
-            </div>
-
-            <!-- Pricing & Auto Discount -->
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>سعر البيع المخفض (ج.م):</label>
-                <input type="number" id="studioPrice" class="form-control" placeholder="380" oninput="autoCalculateStudioDiscount()" required>
+                <label style="font-size:13px; font-weight:700;">سعر البيع (ج.م):</label>
+                <input type="number" id="studioPrice" class="form-control" placeholder="مثال: 350" oninput="autoCalculateStudioDiscount()" required>
               </div>
 
               <div class="form-group">
-                <label>السعر الأصلي (قبل الخصم):</label>
-                <input type="number" id="studioRegularPrice" class="form-control" placeholder="450" oninput="autoCalculateStudioDiscount()">
-              </div>
-
-              <div class="form-group">
-                <label>شارة الخصم (تلقائية):</label>
-                <input type="text" id="studioDiscountBadge" class="form-control" placeholder="مثال: خصم 15%" oninput="updateStudioLivePreview()">
+                <label style="font-size:13px; font-weight:700;">السعر قبل الخصم (اختياري):</label>
+                <input type="number" id="studioRegularPrice" class="form-control" placeholder="مثال: 450" oninput="autoCalculateStudioDiscount()">
               </div>
             </div>
 
-            <!-- 5. Highlights Bullet Points -->
-            <div class="form-group">
-              <label>5. أهم مواصفات ومميزات المنتج (Bullet Points):</label>
-              <input type="text" id="studioHighlight1" class="form-control" placeholder="نقطة 1: خامة فاخرة ممتازة ومريحة في الاستخدام" style="margin-bottom:6px;">
-              <input type="text" id="studioHighlight2" class="form-control" placeholder="نقطة 2: فرش طبي مريح للقدمين مانع للانزلاق" style="margin-bottom:6px;">
-              <input type="text" id="studioHighlight3" class="form-control" placeholder="نقطة 3: ضمان استبدال واسترجاع لمدة 14 يوماً">
-            </div>
+            <input type="hidden" id="studioDiscountBadge" value="">
+            <input type="hidden" id="studioChip" value="">
 
-            <!-- 6. IMAGE UPLOAD SECTION (The 3 Options) -->
+            <!-- 4. صورة المنتج (رفع من الجهاز كخيار أول وأساسي) -->
             <div class="form-group">
-              <label>6. صورة المنتج — اختر الطريقة المناسبة:</label>
+              <label style="font-size:13.5px; font-weight:800;">3. صورة المنتج:</label>
               
               <div class="image-uploader-box">
                 <div class="image-source-nav">
                   <button type="button" class="img-source-tab-btn active" id="imgTabBtn_device" onclick="switchStudioImageTab('device')">
-                    📁 رفع صورة من جهازك (كمبيوتر / هاتف)
+                    📁 رفع صورة من جهازك (مباشر)
                   </button>
                   <button type="button" class="img-source-tab-btn" id="imgTabBtn_gallery" onclick="switchStudioImageTab('gallery')">
-                    📸 صور الاستوديو الجاهزة (83 صورة)
+                    🖼️ من مكتبة الصور الجاهزة
                   </button>
                   <button type="button" class="img-source-tab-btn" id="imgTabBtn_url" onclick="switchStudioImageTab('url')">
-                    🔗 إدخال رابط خارجي (URL)
+                    🔗 إدخال رابط خارجي
                   </button>
                 </div>
 
@@ -1062,23 +1003,23 @@
                   <div class="device-dropzone" id="studioDropzone" onclick="document.getElementById('studioFileInput').click()" ondragover="onDropzoneDragOver(event)" ondragleave="onDropzoneDragLeave(event)" ondrop="onDropzoneDrop(event)">
                     <input type="file" id="studioFileInput" accept="image/*" style="display:none;" onchange="onStudioFileSelected(this)">
                     <div class="dropzone-icon">📷</div>
-                    <div class="dropzone-text"><strong>انقر لاختيار صورة من جهازك</strong> أو اسحب الصورة وأفلتها هنا</div>
-                    <div class="dropzone-hint">يدعم JPG, PNG, WEBP, GIF (يتم رفعها وحفظها على السيرفر فوراً)</div>
+                    <div class="dropzone-text"><strong>اضغط لاختيار صورة من جهازك / هاتفك</strong> أو اسحب الصورة وأفلتها هنا</div>
+                    <div class="dropzone-hint">يدعم JPG, PNG, WebP (تُحفظ في المتجر فوراً)</div>
                   </div>
                   <div id="studioUploadStatus" class="upload-spinner-bar" style="display:none;"></div>
                 </div>
 
                 <!-- Option B: Studio Gallery -->
                 <div id="imgPanel_gallery" style="display:none; text-align:center; padding:15px; background:#fff; border-radius:10px;">
-                  <p style="font-size:13px; color:#555; margin-bottom:12px;">اختر من بين 83 صورة احترافية من الاستوديو الداخلي لمتجر باريس:</p>
+                  <p style="font-size:13px; color:#555; margin-bottom:12px;">اختر من بين 83 صورة احترافية جاهزة بمتجر باريس:</p>
                   <button type="button" class="admin-btn admin-btn-gold" onclick="openStudioGalleryModal('studio')">
-                    🖼️ فتح معرض صور الاستوديو (83 صورة)
+                    🖼️ فتح معرض صور المتجر (83 صورة)
                   </button>
                 </div>
 
                 <!-- Option C: Direct URL -->
                 <div id="imgPanel_url" style="display:none;">
-                  <input type="url" id="studioImageUrlInput" class="form-control" placeholder="https://images.unsplash.com/..." oninput="onStudioUrlInput(this.value)">
+                  <input type="url" id="studioImageUrlInput" class="form-control" placeholder="https://..." oninput="onStudioUrlInput(this.value)">
                 </div>
 
                 <!-- Hidden Input holding Final Image URL -->
@@ -1086,17 +1027,74 @@
               </div>
             </div>
 
+            <!-- 5. المقاسات (تظهر للملابس والأحذية وتختفي تلقائياً للأدوات المنزلية) -->
+            <div class="form-group" id="studioSizesSection" style="margin-top:12px;">
+              <label style="font-size:13px; font-weight:700;">المقاسات المتاحة (انقر للتحديد، اختياري):</label>
+              <div class="variation-pill-group" id="studioQuickSizesPills">
+                <!-- Injected based on mall -->
+              </div>
+              <input type="hidden" id="studioSizesInput" value="">
+            </div>
+
+            <!-- 6. الألوان المتاحة (اختياري) -->
+            <div class="form-group" id="studioColorsSection" style="margin-top:10px;">
+              <label style="font-size:13px; font-weight:700;">الألوان المتاحة (انقر للتحديد، اختياري):</label>
+              <div class="variation-pill-group" id="studioQuickColorsPills">
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أسود')">⚫ أسود</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أبيض')">⚪ أبيض</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'كحلي')">🔵 كحلي</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'بني')">🟤 بني</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'رمادي')">🔘 رمادي</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'بيج')">🟡 بيج</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'هافان')">🟠 هافان</span>
+                <span class="color-btn-pill" onclick="toggleStudioColorPill(this, 'أزرق')">🔷 أزرق</span>
+              </div>
+              <input type="hidden" id="studioColorsInput" value="">
+            </div>
+
+            <!-- 7. خيارات وتفاصيل إضافية (أكورديون اختياري غير معقد) -->
+            <details style="margin-top:14px; background:#f9fbf9; border:1px solid #e1e9e3; border-radius:10px; padding:10px 14px;">
+              <summary style="font-size:13px; font-weight:700; color:var(--paris-forest); cursor:pointer; user-select:none;">
+                ⚙️ خيارات ومواصفات إضافية (اختياري)
+              </summary>
+              <div style="margin-top:12px;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label style="font-size:12.5px; font-weight:700;">الماركة / البراند (اختياري):</label>
+                    <input type="text" id="studioBrand" class="form-control" placeholder="مثال: Paris Collection" oninput="updateStudioLivePreview()">
+                  </div>
+                  <div class="form-group">
+                    <label style="font-size:12.5px; font-weight:700;">شارة تميز ترويجية (اختياري):</label>
+                    <select id="studioBadge" class="form-control" onchange="updateStudioLivePreview()">
+                      <option value="">بدون شارة إضافية</option>
+                      <option value="الأكثر مبيعاً #1">الأكثر مبيعاً 🔥</option>
+                      <option value="مميز وموصى به">مميز وموصى به ⭐</option>
+                      <option value="شحن مجاني وسريع">شحن مجاني وسريع ⚡</option>
+                      <option value="عرض حصري">عرض حصري لفترة محدودة 🏷️</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label style="font-size:12.5px; font-weight:700;">أهم مميزات المنتج (اختياري):</label>
+                  <input type="text" id="studioHighlight1" class="form-control" placeholder="ميزة 1: خامة ممتازة ومريحة في الاستخدام" style="margin-bottom:6px;">
+                  <input type="text" id="studioHighlight2" class="form-control" placeholder="ميزة 2: ضمان استبدال واسترجاع لمدة 14 يوماً">
+                  <input type="hidden" id="studioHighlight3" value="">
+                </div>
+              </div>
+            </details>
+
             <!-- Publish Active Checkbox -->
-            <div class="form-group">
+            <div class="form-group" style="margin-top:16px;">
               <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="studioPublished" checked style="width:18px; height:18px;">
-                <span style="font-weight:800; color:var(--paris-forest);">نشر المنتج بالمتجر فوراً لجميع العملاء (Active)</span>
+                <input type="checkbox" id="studioPublished" checked style="width:18px; height:18px; accent-color:#0d5c3a;">
+                <span style="font-weight:800; color:var(--paris-forest); font-size:13.5px;">نشر المنتج بالمتجر فوراً لجميع العملاء (نشط ومتاح للطلب)</span>
               </label>
             </div>
 
             <!-- Save / Publish Button -->
-            <div style="margin-top:25px;">
-              <button type="button" class="admin-btn admin-btn-primary" style="padding:15px 36px; font-size:16px; width:100%; justify-content:center;" onclick="saveStudioProduct()">
+            <div style="margin-top:20px;">
+              <button type="button" class="admin-btn admin-btn-primary" style="padding:15px 36px; font-size:16px; width:100%; justify-content:center; background:#0d5c3a; border-radius:10px; font-weight:800;" onclick="saveStudioProduct()">
                 <span>🚀 حفظ ونشر المنتج فوراً بالمتجر</span>
               </button>
             </div>
@@ -1174,13 +1172,13 @@
           <input type="text" id="prodBrand" class="form-control">
         </div>
         <div class="form-group">
-          <label>شارة أمازون:</label>
+          <label>شارة تميز ترويجية (اختياري):</label>
           <select id="prodBadge" class="form-control">
             <option value="">بدون شارة</option>
-            <option value="الأكثر مبيعاً #1">الأكثر مبيعاً (#1 Best Seller)</option>
-            <option value="أمازون تشويس">أمازون تشويس (Amazon's Choice)</option>
-            <option value="شحن مجاني Prime">شحن مجاني وسريع (Prime)</option>
-            <option value="عرض حصري">عرض حصري</option>
+            <option value="الأكثر مبيعاً #1">الأكثر مبيعاً 🔥</option>
+            <option value="مميز وموصى به">مميز وموصى به ⭐</option>
+            <option value="شحن مجاني وسريع">شحن مجاني وسريع ⚡</option>
+            <option value="عرض حصري">عرض حصري 🏷️</option>
           </select>
         </div>
       </div>
@@ -1582,9 +1580,22 @@
         <span class="size-btn-pill" onclick="toggleStudioSizePill(this, '${s}')">${s}</span>
       `).join('');
 
+      // Show/Hide Sizes Section (Clothes and Shoes have sizes, Home Tools do not)
+      const sizesSec = document.getElementById('studioSizesSection');
+      if (sizesSec) {
+        sizesSec.style.display = (mall === 'home') ? 'none' : 'block';
+      }
+
       // Update chip placeholder
       document.getElementById('studioChip').value = cats[0] ? cats[0].label : '';
 
+      updateStudioLivePreview();
+    }
+
+    function onStudioCategoryChange() {
+      const catSelect = document.getElementById('studioCategory');
+      const selectedText = catSelect.selectedOptions[0] ? catSelect.selectedOptions[0].text : '';
+      document.getElementById('studioChip').value = selectedText;
       updateStudioLivePreview();
     }
 

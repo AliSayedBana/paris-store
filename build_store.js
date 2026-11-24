@@ -73,7 +73,7 @@ function buildStore() {
 
     // Badges
     const badgePromo = p.badge 
-      ? `<span class="badge-amazon-prime">${p.badge}</span>` 
+      ? `<span class="badge-promo-highlight">${p.badge}</span>` 
       : '<span class="badge-featured">⭐ مميز</span>';
 
     const safeTitle = p.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -939,9 +939,9 @@ function buildStore() {
       border-radius: 50px;
       box-shadow: 0 4px 12px rgba(235, 107, 71, 0.35);
     }
-    .badge-amazon-prime {
-      background: #232f3e;
-      color: #ff9900;
+    .badge-promo-highlight {
+      background: #0d5c3a;
+      color: #fff;
       font-size: 11px;
       font-weight: 900;
       padding: 4px 9px;

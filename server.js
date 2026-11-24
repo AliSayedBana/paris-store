@@ -279,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // POST /api/products (Add product - Protected & Amazon-style fields)
+  // POST /api/products (Add product - Protected & Multi-department fields)
   if (reqPath === '/api/products' && method === 'POST') {
     const session = auth.verifySession(req);
     if (!session) {
@@ -299,7 +299,7 @@ const server = http.createServer(async (req, res) => {
     newProd.id = nextId;
     if (newProd.published === undefined) newProd.published = true;
 
-    // Amazon-style variations cleanup
+    // Product variations cleanup
     if (Array.isArray(newProd.sizes)) {
       newProd.sizes = newProd.sizes.filter(s => s && s.trim());
     }
