@@ -816,13 +816,15 @@ img {
   color: var(--paris-coral-orange) !important;
 }
 
-/* Category Filter Pills */
-.paris-filter-pills {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin-bottom: 28px !important;
-  flex-wrap: wrap !important;
+/* Category Filter Pills (Permanently hidden - Clean Top Bar Navigation Only) */
+.paris-filter-pills,
+.paris-filter-pills .paris-pill {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
 }
 
 .paris-pill {
@@ -929,6 +931,15 @@ li.product.paris-modern-card {
   box-sizing: border-box !important;
   clear: none !important;
   overflow: hidden !important;
+}
+
+.paris-products-section ul.products li.product[style*="display: none"],
+.paris-products-section ul.products li.product[style*="display:none"],
+.paris-products-section ul.products li.product.is-hidden,
+li.product.paris-modern-card[style*="display: none"],
+li.product.paris-modern-card[style*="display:none"],
+li.product.paris-modern-card.is-hidden {
+  display: none !important;
 }
 
 .paris-products-section ul.products li.product:hover,
@@ -3408,15 +3419,19 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   box-shadow: 0 6px 18px rgba(19,62,41,0.35) !important;
 }
 
-/* ── Modern Related Products Full-Width Grid ── */
+/* ── Modern Related Products Full-Width Grid (2 Columns) ── */
+.single-product div.product .paris-related-section.related.products,
+.single-product div.product .related.products,
 .paris-related-section.related.products,
 .single-product .related.products {
+  grid-column: 1 / -1 !important;
   width: 100% !important;
-  max-width: 1240px !important;
+  max-width: 100% !important;
   margin: 50px auto 30px auto !important;
   padding: 0 !important;
   clear: both !important;
   direction: rtl !important;
+  box-sizing: border-box !important;
 }
 
 .paris-related-header {
@@ -3454,7 +3469,7 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
 .paris-related-grid,
 .single-product .related.products ul.products {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 24px !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -3462,6 +3477,7 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   padding: 0 !important;
   list-style: none !important;
   float: none !important;
+  box-sizing: border-box !important;
 }
 
 .paris-related-grid::before,
@@ -3493,6 +3509,14 @@ body.woocommerce-checkout table.shop_table_responsive tr th::after,
   height: 100% !important;
   width: 100% !important;
   object-fit: cover !important;
+}
+
+@media (max-width: 640px) {
+  .paris-related-grid,
+  .single-product .related.products ul.products {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
 }
 
 /* ── Department Badges in Cart / Checkout ── */

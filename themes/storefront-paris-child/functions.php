@@ -348,24 +348,9 @@ add_filter('woocommerce_add_to_cart_fragments', function($fragments) {
 });
 
 // ============================================================
-// 16. CUSTOM SHOP HEADER (Category Filter Pills)
+// 16. SHOP HEADER (Secondary Filter Pills removed as requested - Clean Top-Nav only)
 // ============================================================
-add_action('woocommerce_before_shop_loop', 'paris_shop_category_pills', 5);
-function paris_shop_category_pills() {
-    $cats = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0]);
-    if (empty($cats) || is_wp_error($cats)) return;
-    $current_cat = get_queried_object();
-    $current_slug = isset($current_cat->slug) ? $current_cat->slug : '';
-    echo '<div class="paris-filter-pills">';
-    $all_active = empty($current_slug) ? 'active' : '';
-    echo '<a href="' . get_permalink(wc_get_page_id('shop')) . '" class="paris-pill ' . $all_active . '">كل المنتجات</a>';
-    foreach ($cats as $cat) {
-        if ($cat->slug === 'uncategorized') continue;
-        $active = ($cat->slug === $current_slug) ? 'active' : '';
-        echo '<a href="' . get_term_link($cat) . '" class="paris-pill ' . $active . '">' . esc_html($cat->name) . ' <em>' . $cat->count . '</em></a>';
-    }
-    echo '</div>';
-}
+// Secondary pills removed to prevent clutter and keep focus strictly on main top categories.
 
 // ============================================================
 // 17. REMOVE STOREFRONT UNNECESSARY HOOKS
@@ -464,10 +449,10 @@ function paris_single_product_trust_perks() {
     <?php
 }
 
-// Related products count
+// Related products count (2 columns per row)
 add_filter('woocommerce_output_related_products_args', function($args) {
     $args['posts_per_page'] = 4;
-    $args['columns'] = 4;
+    $args['columns'] = 2;
     return $args;
 });
 
