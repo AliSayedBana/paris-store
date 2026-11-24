@@ -53,6 +53,46 @@ function parseBody(req) {
   });
 }
 
+// Helper to communicate with local WordPress WooCommerce REST API
+function wpRequest(endpoint, method = 'GET', data = null) {
+  return new Promise((resolve) => {
+    const postData = data ? JSON.stringify(data) : null;
+    const options = {
+      hostname: 'paris-store.local',
+      port: 80,
+      path: endpoint,
+      method: method,
+      headers: {
+        'Accept': 'application/json',
+      }
+    };
+    if (postData) {
+      options.headers['Content-Type'] = 'application/json';
+      options.headers['Content-Length'] = Buffer.byteLength(postData);
+    }
+
+    const req = http.request(options, (res) => {
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, data: JSON.parse(raw) });
+        } catch (e) {
+          resolve({ status: res.statusCode, data: raw });
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.warn('[WP Bridge Warning]', err.message);
+      resolve({ status: 500, error: err.message });
+    });
+
+    if (postData) req.write(postData);
+    req.end();
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   let reqPath = decodeURI(req.url.split('?')[0]);
   const method = req.method.toUpperCase();
@@ -209,6 +249,20 @@ const server = http.createServer(async (req, res) => {
       const destPath = path.join(uploadDir, filename);
       fs.writeFileSync(destPath, buffer);
 
+      // Also copy to LocalWP directories so WordPress can serve it immediately
+      const wpUploadDirs = [
+        'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\wp-content\\uploads\\paris-custom',
+        'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\uploads\\paris-custom'
+      ];
+      for (const d of wpUploadDirs) {
+        try {
+          if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+          fs.writeFileSync(path.join(d, filename), buffer);
+        } catch (e) {
+          console.warn('[Image Sync Warning] Could not copy to', d, e.message);
+        }
+      }
+
       const publicUrl = `/uploads/paris-custom/${filename}`;
       console.log(`[Upload API] Image uploaded successfully from device: ${publicUrl} (${buffer.length} bytes)`);
 
@@ -267,7 +321,22 @@ const server = http.createServer(async (req, res) => {
   // GET /api/products
   if (reqPath === '/api/products' && method === 'GET') {
     const session = auth.verifySession(req);
-    let products = readJSON(PRODUCTS_FILE, []);
+    let products = [];
+    
+    // Attempt live fetch from WordPress REST API
+    try {
+      const wpRes = await wpRequest('/wp-json/paris/v1/products', 'GET');
+      if (wpRes.status === 200 && Array.isArray(wpRes.data) && wpRes.data.length > 0) {
+        products = wpRes.data;
+        // Keep products.json synced as offline/static cache
+        writeJSON(PRODUCTS_FILE, products);
+      } else {
+        products = readJSON(PRODUCTS_FILE, []);
+      }
+    } catch (e) {
+      console.warn('[WP Fetch Warning] Falling back to products.json:', e.message);
+      products = readJSON(PRODUCTS_FILE, []);
+    }
     
     // If admin has restricted mall scope
     if (session && session.mall && session.mall !== 'all') {
@@ -294,9 +363,6 @@ const server = http.createServer(async (req, res) => {
       newProd.mall = session.mall;
     }
 
-    const products = readJSON(PRODUCTS_FILE, []);
-    const nextId = products.reduce((max, p) => Math.max(max, p.id || 0), 0) + 1;
-    newProd.id = nextId;
     if (newProd.published === undefined) newProd.published = true;
 
     // Product variations cleanup
@@ -310,7 +376,25 @@ const server = http.createServer(async (req, res) => {
       newProd.highlights = newProd.highlights.filter(h => h && h.trim());
     }
 
-    products.push(newProd);
+    // Sync to WordPress WooCommerce REST API
+    try {
+      const wpRes = await wpRequest('/wp-json/paris/v1/sync-product', 'POST', newProd);
+      if (wpRes.status === 200 && wpRes.data && wpRes.data.ok) {
+        newProd.wp_id = wpRes.data.product_id;
+        newProd.id = wpRes.data.product_id;
+        console.log(`[WP Sync] Product created in WooCommerce with ID: ${newProd.id}`);
+      }
+    } catch (e) {
+      console.error('[WP Sync Error] Failed to sync new product to WooCommerce:', e);
+    }
+
+    const products = readJSON(PRODUCTS_FILE, []);
+    if (!newProd.id) {
+      const nextId = products.reduce((max, p) => Math.max(max, p.id || 0), 0) + 1;
+      newProd.id = nextId;
+    }
+
+    products.unshift(newProd);
     writeJSON(PRODUCTS_FILE, products);
     buildStore();
     res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -329,7 +413,7 @@ const server = http.createServer(async (req, res) => {
     const id = parseInt(reqPath.replace('/api/products/', ''), 10);
     const updateData = await parseBody(req);
     const products = readJSON(PRODUCTS_FILE, []);
-    const idx = products.findIndex(p => p.id === id);
+    const idx = products.findIndex(p => p.id === id || p.wp_id === id);
 
     if (idx !== -1) {
       // Permission check
@@ -340,6 +424,18 @@ const server = http.createServer(async (req, res) => {
       }
 
       products[idx] = { ...products[idx], ...updateData, id };
+
+      // Sync to WordPress WooCommerce REST API
+      try {
+        const syncPayload = { ...products[idx], wp_id: id };
+        const wpRes = await wpRequest('/wp-json/paris/v1/sync-product', 'POST', syncPayload);
+        if (wpRes.status === 200) {
+          console.log(`[WP Sync] Product updated in WooCommerce ID: ${id}`);
+        }
+      } catch (e) {
+        console.error('[WP Sync Error] Failed to sync update to WooCommerce:', e);
+      }
+
       writeJSON(PRODUCTS_FILE, products);
       buildStore();
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -361,7 +457,7 @@ const server = http.createServer(async (req, res) => {
     }
     const id = parseInt(reqPath.replace('/api/products/', ''), 10);
     let products = readJSON(PRODUCTS_FILE, []);
-    const prod = products.find(p => p.id === id);
+    const prod = products.find(p => p.id === id || p.wp_id === id);
 
     if (prod) {
       if (session.mall && session.mall !== 'all' && prod.mall !== session.mall) {
@@ -369,7 +465,18 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ ok: false, message: 'غير مصرح: لا يمكنك حذف منتج يتبع قسماً آخر.' }));
         return;
       }
-      products = products.filter(p => p.id !== id);
+
+      // Sync delete to WordPress WooCommerce REST API
+      try {
+        const wpRes = await wpRequest('/wp-json/paris/v1/delete-product', 'POST', { id: id });
+        if (wpRes.status === 200) {
+          console.log(`[WP Sync] Product deleted from WooCommerce ID: ${id}`);
+        }
+      } catch (e) {
+        console.error('[WP Sync Error] Failed to sync delete to WooCommerce:', e);
+      }
+
+      products = products.filter(p => p.id !== id && p.wp_id !== id);
       writeJSON(PRODUCTS_FILE, products);
       buildStore();
       res.writeHead(200, { 'Content-Type': 'application/json' });

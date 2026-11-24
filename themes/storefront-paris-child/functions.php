@@ -613,5 +613,221 @@ add_action( 'woocommerce_payment_complete', function ( $order_id ) {
     paris_restore_unselected_cart_items();
 }, 5 );
 
+// ============================================================
+// 19. REST API BRIDGE FOR CUSTOM ADMIN PANEL (Paris Store Sync)
+// ============================================================
+add_action('rest_api_init', function () {
+    register_rest_route('paris/v1', '/sync-product', [
+        'methods'             => 'POST',
+        'callback'            => 'paris_api_sync_product',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('paris/v1', '/delete-product', [
+        'methods'             => 'POST',
+        'callback'            => 'paris_api_delete_product',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('paris/v1', '/products', [
+        'methods'             => 'GET',
+        'callback'            => 'paris_api_get_products',
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+function paris_api_sync_product($request) {
+    $params = $request->get_json_params();
+    if (empty($params)) {
+        $params = $request->get_params();
+    }
+
+    $title = sanitize_text_field($params['title'] ?? '');
+    if (empty($title)) {
+        return new WP_Error('missing_title', 'اسم المنتج مطلوب', ['status' => 400]);
+    }
+
+    $product_id = !empty($params['wp_id']) ? (int)$params['wp_id'] : 0;
+    if ($product_id <= 0 && !empty($params['id']) && is_numeric($params['id']) && (int)$params['id'] > 1000) {
+        $product_id = (int)$params['id'];
+    }
+
+    $product = null;
+    if ($product_id > 0) {
+        $product = wc_get_product($product_id);
+    }
+    if (empty($product)) {
+        $product = new WC_Product_Simple();
+    }
+
+    // Basic fields
+    $product->set_name($title);
+    $status = (!empty($params['published']) && ($params['published'] === false || $params['published'] === 'false')) || (!empty($params['status']) && $params['status'] === 'hidden') ? 'draft' : 'publish';
+    $product->set_status($status);
+    
+    $regular_price = !empty($params['regularPrice']) ? floatval($params['regularPrice']) : (!empty($params['regular_price']) ? floatval($params['regular_price']) : floatval($params['price'] ?? 0));
+    $price = !empty($params['price']) ? floatval($params['price']) : $regular_price;
+    
+    if ($regular_price > $price && $price > 0) {
+        $product->set_regular_price($regular_price);
+        $product->set_sale_price($price);
+        $product->set_price($price);
+    } else {
+        $product->set_regular_price($price);
+        $product->set_sale_price('');
+        $product->set_price($price);
+    }
+
+    if (!empty($params['description'])) {
+        $product->set_description(wp_kses_post($params['description']));
+    }
+    if (!empty($params['short_description'])) {
+        $product->set_short_description(wp_kses_post($params['short_description']));
+    }
+
+    // Save product to get ID
+    $saved_id = $product->save();
+
+    // Discount badge
+    if ($regular_price > $price && $price > 0) {
+        $pct = round((($regular_price - $price) / $regular_price) * 100);
+        update_post_meta($saved_id, '_paris_discount_tag', 'خصم ' . $pct . '%');
+    } else {
+        delete_post_meta($saved_id, '_paris_discount_tag');
+    }
+
+    // Map Categories
+    $mall = sanitize_text_field($params['mall'] ?? 'clothes');
+    $category_slug = sanitize_text_field($params['category_slug'] ?? $params['category'] ?? '');
+    
+    if (strpos($category_slug, ' ') !== false) {
+        $parts = explode(' ', $category_slug);
+        $category_slug = end($parts);
+    }
+
+    $cat_ids = [];
+    $mall_term = get_term_by('slug', $mall, 'product_cat');
+    if ($mall_term) {
+        $cat_ids[] = (int)$mall_term->term_id;
+    }
+
+    $sub_term = null;
+    if (!empty($category_slug) && $category_slug !== $mall) {
+        $sub_term = get_term_by('slug', $category_slug, 'product_cat');
+        if ($sub_term) {
+            $cat_ids[] = (int)$sub_term->term_id;
+        }
+    }
+
+    if (!empty($cat_ids)) {
+        wp_set_post_terms($saved_id, $cat_ids, 'product_cat');
+    }
+
+    // Meta labels
+    $parent_label = ($mall === 'clothes') ? 'قسم الملابس' : 'قسم الأدوات المنزلية';
+    update_post_meta($saved_id, '_paris_parent_label', $parent_label);
+
+    if ($sub_term) {
+        update_post_meta($saved_id, '_paris_cat_name', $sub_term->name);
+    } else {
+        update_post_meta($saved_id, '_paris_cat_name', $parent_label);
+    }
+
+    update_post_meta($saved_id, '_paris_is_new', 'yes');
+
+    // Image handling
+    $image_url = sanitize_text_field($params['image_url'] ?? $params['image'] ?? '');
+    if (!empty($image_url)) {
+        if (strpos($image_url, 'http') === false) {
+            $image_url = 'http://paris-store.local' . $image_url;
+        }
+        update_post_meta($saved_id, '_paris_external_img', $image_url);
+    }
+
+    return rest_ensure_response([
+        'ok'          => true,
+        'product_id'  => $saved_id,
+        'permalink'   => get_permalink($saved_id),
+        'title'       => $title,
+        'price'       => $price,
+        'message'     => 'تمت المزامنة بنجاح مع ووكومرس!'
+    ]);
+}
+
+function paris_api_delete_product($request) {
+    $params = $request->get_json_params();
+    if (empty($params)) $params = $request->get_params();
+    $id = (int)($params['id'] ?? $params['wp_id'] ?? 0);
+    if ($id <= 0) {
+        return new WP_Error('invalid_id', 'معرف المنتج غير صحيح', ['status' => 400]);
+    }
+    $product = wc_get_product($id);
+    if (!$product) {
+        return new WP_Error('not_found', 'المنتج غير موجود في ووكومرس', ['status' => 404]);
+    }
+    $product->delete(true);
+    return rest_ensure_response(['ok' => true, 'message' => 'تم حذف المنتج من ووكومرس']);
+}
+
+function paris_api_get_products($request) {
+    $query = new WC_Product_Query([
+        'limit'   => 150,
+        'orderby' => 'date',
+        'order'   => 'DESC',
+        'status'  => ['publish', 'draft'],
+    ]);
+    $products = $query->get_products();
+    $list = [];
+
+    foreach ($products as $p) {
+        $id = $p->get_id();
+        $terms = get_the_terms($id, 'product_cat');
+        $cat_slugs = [];
+        $mall = 'clothes';
+        if ($terms && !is_wp_error($terms)) {
+            foreach ($terms as $t) {
+                $cat_slugs[] = $t->slug;
+                if (in_array($t->slug, ['home', 'kitchen', 'decor', 'textiles', 'cleaning', 'organization'])) {
+                    $mall = 'home';
+                }
+            }
+        }
+
+        $img = get_the_post_thumbnail_url($id, 'woocommerce_thumbnail');
+        if (!$img) {
+            $img = get_post_meta($id, '_paris_external_img', true);
+        }
+        if (!$img) {
+            $img = wc_placeholder_img_src('woocommerce_thumbnail');
+        }
+
+        $regular = floatval($p->get_regular_price());
+        $sale = floatval($p->get_sale_price());
+        $price = $sale > 0 ? $sale : floatval($p->get_price());
+
+        $discount_tag = get_post_meta($id, '_paris_discount_tag', true);
+        $badge = $discount_tag ? $discount_tag : '';
+
+        $list[] = [
+            'id'            => $id,
+            'wp_id'         => $id,
+            'title'         => $p->get_name(),
+            'mall'          => $mall,
+            'category'      => implode(' ', $cat_slugs),
+            'chip'          => get_post_meta($id, '_paris_cat_name', true) ?: ($mall === 'home' ? 'أدوات منزلية' : 'ملابس'),
+            'price'         => $price,
+            'regularPrice'  => $regular > $price ? $regular : null,
+            'badge'         => $badge,
+            'discountBadge' => $badge,
+            'image'         => $img,
+            'published'     => $p->get_status() === 'publish',
+            'sizes'         => [],
+            'permalink'     => get_permalink($id),
+        ];
+    }
+
+    return rest_ensure_response($list);
+}
+
 
 

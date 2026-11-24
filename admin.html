@@ -1482,12 +1482,16 @@
     }
 
     function updateStats() {
-      document.getElementById('statTotal').innerText = productsList.length;
-      document.getElementById('statPublished').innerText = productsList.filter(p => p.published !== false).length;
-      document.getElementById('statHidden').innerText = productsList.filter(p => p.published === false).length;
-      document.getElementById('statClothes').innerText = productsList.filter(p => p.mall === 'clothes').length;
-      document.getElementById('statHome').innerText = productsList.filter(p => p.mall === 'home').length;
-      document.getElementById('statShoes').innerText = productsList.filter(p => p.mall === 'shoes').length;
+      const elTotal = document.getElementById('statTotal');
+      if (elTotal) elTotal.innerText = productsList.length;
+      const elPub = document.getElementById('statPublished');
+      if (elPub) elPub.innerText = productsList.filter(p => p.published !== false).length;
+      const elHid = document.getElementById('statHidden');
+      if (elHid) elHid.innerText = productsList.filter(p => p.published === false).length;
+      const elClothes = document.getElementById('statClothes');
+      if (elClothes) elClothes.innerText = productsList.filter(p => p.mall === 'clothes').length;
+      const elHome = document.getElementById('statHome');
+      if (elHome) elHome.innerText = productsList.filter(p => p.mall === 'home').length;
     }
 
     function renderProductsTable(prods) {
