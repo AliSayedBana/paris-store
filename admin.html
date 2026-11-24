@@ -1508,7 +1508,7 @@
               <span style="background:#f4f1ea; padding:2px 8px; border-radius:4px; font-size:11.5px; font-weight:700;">${p.chip || p.category}</span>
             </td>
             <td><span style="font-size:12px; color:#555;">${sizesStr}</span></td>
-            <td><strong style="font-size:15px; color:var(--paris-forest);">${p.price} ج.م</strong></td>
+            <td><strong style="font-size:15px; color:var(--paris-forest);">${Number(p.price).toLocaleString('en-US')} ج.م</strong></td>
             <td>${p.discountBadge ? `<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800;">${p.discountBadge}</span>` : '-'}</td>
             <td>${statusBtn}</td>
             <td style="text-align:left;">
@@ -1754,7 +1754,7 @@
 
       document.getElementById('livePreviewTitle').innerText = title;
       document.getElementById('livePreviewChip').innerText = chip;
-      document.getElementById('livePreviewPrice').innerText = price ? (price + ' ج.م') : '0 ج.م';
+      document.getElementById('livePreviewPrice').innerText = price ? (Number(price).toLocaleString('en-US') + ' ج.م') : '0 ج.م';
       
       let deptText = 'قسم الأزياء والملابس';
       if (mall === 'home') deptText = 'قسم الأدوات المنزلية';
@@ -1762,8 +1762,8 @@
       document.getElementById('livePreviewDept').innerText = deptText;
 
       if (reg > price && price > 0) {
-        document.getElementById('livePreviewOldPrice').innerText = reg + ' ج.م';
-        document.getElementById('livePreviewSave').innerText = 'وفّر ' + (reg - price) + ' ج.م';
+        document.getElementById('livePreviewOldPrice').innerText = Number(reg).toLocaleString('en-US') + ' ج.م';
+        document.getElementById('livePreviewSave').innerText = 'وفّر ' + Number(reg - price).toLocaleString('en-US') + ' ج.م';
         document.getElementById('livePreviewBadge').style.display = 'inline-block';
         document.getElementById('livePreviewBadge').innerText = discBadge || 'خصم';
       } else {

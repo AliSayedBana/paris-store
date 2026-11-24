@@ -36,14 +36,28 @@ function buildStore() {
 
     const saleStr = p.sale ? 'true' : 'false';
     const discountAmount = (p.regularPrice && p.regularPrice > p.price) ? (p.regularPrice - p.price) : 0;
-    
+    const formattedPrice = Number(p.price).toLocaleString('en-US');
+    const formattedReg = (p.regularPrice && p.regularPrice > p.price) ? Number(p.regularPrice).toLocaleString('en-US') : '';
+    const formattedSave = discountAmount > 0 ? Number(discountAmount).toLocaleString('en-US') : '';
+
+    const isHighTicket = p.price >= 1000;
+    const installmentMonthly = Math.round(p.price / 12).toLocaleString('en-US');
+    const installmentTag = isHighTicket
+      ? `<div class="card-installment-tag">💳 أو قسط يبدأ من <strong>${installmentMonthly} ج.م</strong>/شهر</div>`
+      : '';
+    const highTicketTrustTag = isHighTicket
+      ? `<div class="card-vip-trust">🛡️ معاينة كاملة وفحص مع المندوب قبل الدفع</div>`
+      : '';
+
     // Price display
     const priceDisplay = `
       <div class="paris-card-price-row">
-        <span class="price-current">${p.price} <span class="curr">ج.م</span></span>
-        ${p.regularPrice && p.regularPrice > p.price ? `<span class="price-old">${p.regularPrice} ج.م</span>` : ''}
-        ${discountAmount > 0 ? `<span class="price-save">وفّر ${discountAmount} ج.م</span>` : ''}
+        <span class="price-current">${formattedPrice} <span class="curr">ج.م</span></span>
+        ${formattedReg ? `<span class="price-old">${formattedReg} ج.م</span>` : ''}
+        ${formattedSave ? `<span class="price-save">وفّر ${formattedSave} ج.م</span>` : ''}
       </div>
+      ${installmentTag}
+      ${highTicketTrustTag}
     `;
 
     // Sizes Chips
@@ -1128,7 +1142,7 @@ function buildStore() {
       align-items: baseline;
       gap: 10px;
       margin-top: auto;
-      margin-bottom: 16px;
+      margin-bottom: 6px;
     }
     .price-current {
       font-size: 21px;
@@ -1148,6 +1162,34 @@ function buildStore() {
       background: #e8f5e9;
       padding: 2px 7px;
       border-radius: 4px;
+    }
+    .card-installment-tag {
+      font-size: 11px;
+      color: #0d5c3a;
+      background: #edf7f0;
+      border: 1px dashed #a3d9b5;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      width: fit-content;
+    }
+    .card-vip-trust {
+      font-size: 10.5px;
+      color: #92400e;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: 2px 7px;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      width: fit-content;
     }
 
     /* Action Buttons Group */
@@ -1851,15 +1893,21 @@ function buildStore() {
         <input type="text" id="custAddress" placeholder="المدينة، الشارع، علامة مميزة" style="width:100%; padding:11px 14px; border:1.5px solid #ded7c8; border-radius:10px; font-family:inherit; font-size:14px; box-sizing:border-box; outline:none;">
       </div>
 
-      <div style="background:#f7f5ef; padding:14px; border-radius:10px; margin-bottom:20px; font-size:14px;">
+      <div style="background:#f7f5ef; padding:14px; border-radius:10px; margin-bottom:14px; font-size:14px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
           <span>إجمالي الطلب:</span>
           <strong id="modalTotalVal" style="color:var(--paris-forest);">0 ج.م</strong>
         </div>
         <div style="display:flex; justify-content:space-between; color:#107c41; font-weight:700;">
           <span>طريقة الدفع:</span>
-          <span>الدفع عند الاستلام بعد المعاينة</span>
+          <span>الدفع عند الاستلام بعد المعاينة والفحص</span>
         </div>
+      </div>
+
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px 14px; border-radius:10px; margin-bottom:18px; font-size:12.5px; color:#166534; line-height:1.6;">
+        🛡️ <strong>ضمان باريس الذهبي للمشتريات:</strong><br>
+        • حق الفحص والمعاينة والتجربة الكاملة مع المندوب قبل دفع أي مليم.<br>
+        • شحن مجاني وسريع ومؤمّن بالكامل + فاتورة معتمدة وضمان استبدال 14 يوماً.
       </div>
 
       <button type="button" class="btn-card-whatsapp-quick" onclick="submitWhatsAppOrder()" style="width:100%; padding:14px; font-size:16px; border-radius:12px;">
@@ -1944,6 +1992,11 @@ function buildStore() {
     let selectedQvSize = '';
     let selectedQvColor = '';
 
+    function formatPrice(val) {
+      if (val === undefined || val === null || isNaN(val)) return '0';
+      return Number(val).toLocaleString('en-US');
+    }
+
     const mallPillsData = {
       clothes: [
         { slug: 'all', label: 'كل الملابس', mall: 'clothes', title: 'كل تشكيلات الملابس' },
@@ -2001,7 +2054,7 @@ function buildStore() {
       }
       closeCart();
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      document.getElementById('modalTotalVal').innerText = total + ' ج.م';
+      document.getElementById('modalTotalVal').innerText = formatPrice(total) + ' ج.م';
       checkoutModal.style.display = 'flex';
     });
 
@@ -2103,7 +2156,7 @@ function buildStore() {
               <h5 style="margin:0 0 4px; font-size:14px; font-weight:800; color:var(--paris-forest); line-height:1.3;">\${item.title}</h5>
               \${item.size ? \`<span style="font-size:11px; background:#f0ece3; color:#133e29; padding:1px 6px; border-radius:4px; font-weight:700;">مقاس: \${item.size}</span>\` : ''}
               <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-                <span style="font-weight:900; color:var(--paris-forest); font-size:15px;">\${item.price} ج.م</span>
+                <span style="font-weight:900; color:var(--paris-forest); font-size:15px;">\${formatPrice(item.price)} ج.م</span>
                 <div style="display:flex; align-items:center; gap:8px;">
                   <button type="button" onclick="updateQty(\${idx}, -1)" style="width:26px; height:26px; border-radius:50%; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:bold;">-</button>
                   <span style="font-weight:800; font-size:14px;">\${item.qty}</span>
@@ -2117,8 +2170,8 @@ function buildStore() {
       });
 
       cartItemsList.innerHTML = html;
-      cartSubtotalVal.innerText = total + ' ج.م';
-      cartTotalVal.innerText = total + ' ج.م';
+      cartSubtotalVal.innerText = formatPrice(total) + ' ج.م';
+      cartTotalVal.innerText = formatPrice(total) + ' ج.م';
 
       // Free shipping progress
       const targetFree = 500;
@@ -2134,9 +2187,11 @@ function buildStore() {
     }
 
     function quickOrderWhatsApp(title, price) {
-      const msg = 'مرحباً مول باريس 👋%0Aأود الاستفسار وحجز هذا المنتج فوراً:%0A' +
-                  '• ' + encodeURIComponent(title) + '%0A' +
-                  '• السعر: ' + price + ' ج.م%0A' +
+      const msg = 'مرحباً متجر باريس 👋%0Aأود الاستفسار وحجز هذا المنتج فوراً:%0A' +
+                  '• *المنتج:* ' + encodeURIComponent(title) + '%0A' +
+                  '• *السعر:* ' + formatPrice(price) + ' ج.م%0A' +
+                  '• *المعاينة:* متاح الفحص والمعاينة قبل الدفع مع المندوب 🛡️%0A' +
+                  '• *الضمان:* فاتورة معتمدة وضمان استبدال 14 يوماً 📜%0A%0A' +
                   'يرجى تأكيد التوافر وتفاصيل الشحن.';
       window.open('https://wa.me/201065968425?text=' + msg, '_blank');
     }
@@ -2155,18 +2210,19 @@ function buildStore() {
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       let itemsText = '';
       cart.forEach((item, i) => {
-        itemsText += (i+1) + '. ' + item.title + (item.size ? ' [مقاس: ' + item.size + ']' : '') + ' (الكمية: ' + item.qty + ') - ' + (item.price * item.qty) + ' ج.م%0A';
+        itemsText += (i+1) + '. ' + item.title + (item.size ? ' [مقاس: ' + item.size + ']' : '') + ' (الكمية: ' + item.qty + ') - ' + formatPrice(item.price * item.qty) + ' ج.م%0A';
       });
 
-      const orderMsg = '🛍️ *طلب شراء جديد من متجر باريس* 🛍️%0A%0A' +
+      const orderMsg = '🛍️ *طلب شراء رسمي من متجر باريس (VIP Order)* 🛍️%0A%0A' +
                        '*بيانات العميل:*%0A' +
                        '• الاسم: ' + encodeURIComponent(name) + '%0A' +
                        '• الهاتف: ' + encodeURIComponent(phone) + '%0A' +
                        '• المحافظة: ' + encodeURIComponent(gov) + '%0A' +
                        '• العنوان: ' + encodeURIComponent(addr) + '%0A%0A' +
                        '*تفاصيل المنتجات:*%0A' + itemsText + '%0A' +
-                       '*إجمالي الفاتورة:* ' + total + ' ج.م%0A' +
-                       '*طريقة الدفع:* الدفع عند الاستلام بعد المعاينة.%0A%0A' +
+                       '*إجمالي الفاتورة:* ' + formatPrice(total) + ' ج.م%0A' +
+                       '*طريقة الدفع:* الدفع عند الاستلام بعد المعاينة والفحص التام 🛡️%0A' +
+                       '*الضمان:* فاتورة رسمية معتمدة + ضمان استبدال واسترجاع 14 يوماً مجاناً 📜%0A%0A' +
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
       window.open('https://wa.me/201065968425?text=' + orderMsg, '_blank');
@@ -2185,13 +2241,25 @@ function buildStore() {
 
       document.getElementById('qvModalImg').src = prod.image || '';
       document.getElementById('qvModalTitle').innerText = prod.title;
-      document.getElementById('qvModalPrice').innerText = prod.price + ' ج.م';
-      document.getElementById('qvModalOldPrice').innerText = (prod.regularPrice && prod.regularPrice > prod.price) ? (prod.regularPrice + ' ج.م') : '';
+      document.getElementById('qvModalPrice').innerText = formatPrice(prod.price) + ' ج.م';
+      document.getElementById('qvModalOldPrice').innerText = (prod.regularPrice && prod.regularPrice > prod.price) ? (formatPrice(prod.regularPrice) + ' ج.م') : '';
       
       let deptName = 'قسم الأدوات المنزلية';
       if (prod.mall === 'clothes') deptName = 'قسم الأزياء والملابس';
       if (prod.mall === 'shoes') deptName = 'قسم الأحذية والرياضة';
       document.getElementById('qvModalDept').innerText = deptName;
+
+      // High-Ticket Features in Highlights
+      const isHigh = prod.price >= 1000;
+      const monthly = Math.round(prod.price / 12).toLocaleString('en-US');
+      const highHighlights = isHigh
+        ? \`<div style="color:#0d5c3a; font-weight:800; margin-bottom:5px;">💳 متاح التقسيط المريح حتى 12 شهر (يبدأ من \${monthly} ج.م/شهرياً عبر ValU أو البنوك)</div>
+           <div style="color:#b45309; font-weight:800; margin-bottom:5px;">🛡️ حق المعاينة والفحص والتجربة مع المندوب قبل دفع أي مليم</div>
+           <div>📜 فاتورة ضريبية رسمية وضمان استبدال واسترجاع مجاني 14 يوماً</div>\`
+        : \`✨ خامات عالية الجودة ومضمونة 100%<br>
+           🚚 شحن سريع مع حق الفحص والمعاينة قبل الاستلام<br>
+           🔄 استبدال واسترجاع فوري خلال 14 يوماً\`;
+      document.getElementById('qvModalHighlights').innerHTML = highHighlights;
 
       // Sizes
       const sizesBox = document.getElementById('qvModalSizesList');
