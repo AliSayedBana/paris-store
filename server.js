@@ -523,8 +523,8 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Paris Store server running strictly on http://127.0.0.1:${PORT}/`);
-  console.log(`Admin Login running on http://127.0.0.1:${PORT}/login`);
-  console.log(`Admin Dashboard running strictly on http://127.0.0.1:${PORT}/admin`);
+server.listen(PORT, () => {
+  console.log(`Paris Store server running on http://localhost:${PORT}/ and http://127.0.0.1:${PORT}/`);
+  console.log(`Admin Login running on http://localhost:${PORT}/login`);
+  console.log(`Admin Dashboard running on http://localhost:${PORT}/admin`);
 });
