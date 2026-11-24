@@ -124,81 +124,26 @@ $cats = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' =
 <!-- ===================== 3. PRODUCTS SECTION ===================== -->
 <section class="paris-products-section">
   
+  <?php
+  // Determine current active mall
+  $requested_mall = isset($_GET['mall']) ? sanitize_key(wp_unslash($_GET['mall'])) : '';
+  $current_mall = ($requested_mall === 'home') ? 'home' : 'clothes';
+  ?>
+
   <!-- Header: Title & Subtitle & All Link -->
   <div class="paris-section-header">
-    <div class="paris-section-title-wrap">
+    <div class="paris-section-title-wrap" id="paris-section-title-clothes" style="<?php echo ($current_mall === 'clothes') ? '' : 'display:none;'; ?>">
+      <h2 class="paris-section-title">أناقة تليق بك وبكل العائلة.</h2>
+      <p class="paris-section-subtitle">تشكيلة مختارة من أرقى الملابس الرجالية والنسائية والأطفال.</p>
+    </div>
+    <div class="paris-section-title-wrap" id="paris-section-title-home" style="<?php echo ($current_mall === 'home') ? '' : 'display:none;'; ?>">
       <h2 class="paris-section-title">كل ركن في بيتك، له اختيار.</h2>
       <p class="paris-section-subtitle">أدوات منزلية ومستلزمات عملية لحياة يومية أسهل.</p>
     </div>
     <a href="<?php echo $shop_url; ?>" class="paris-section-link">
-      <span>كل المنتجات</span>
+      <span>تصفح كل المنتجات</span>
       <span class="link-arrow">&larr;</span>
     </a>
-  </div>
-
-  <!-- Interactive Category Filter Pills -->
-  <?php
-  // Calculate counts
-  $total_count = wp_count_posts('product')->publish;
-  $home_term = get_term_by('slug', 'home', 'product_cat');
-  $clothes_term = get_term_by('slug', 'clothes', 'product_cat');
-  $textiles_term = get_term_by('slug', 'textiles', 'product_cat');
-
-  // Count published products per category INCLUDING child categories
-  // ($term->count only counts products assigned directly to the parent term)
-  $paris_count_in = function ($term) {
-      if (!$term) {
-          return 0;
-      }
-      $count_query = new WP_Query([
-          'post_type'           => 'product',
-          'post_status'         => 'publish',
-          'fields'              => 'ids',
-          'posts_per_page'      => 1,
-          'ignore_sticky_posts' => true,
-          'tax_query'           => [[
-              'taxonomy'         => 'product_cat',
-              'field'            => 'term_id',
-              'terms'            => (int) $term->term_id,
-              'include_children' => true,
-          ]],
-      ]);
-      return (int) $count_query->found_posts;
-  };
-
-  $home_cnt = $paris_count_in($home_term);
-  $clothes_cnt = $paris_count_in($clothes_term);
-  $textiles_cnt = $paris_count_in($textiles_term);
-
-  // Default active pill: first section that actually has products (so the grid is never empty on load)
-  $default_filter = 'all';
-  foreach (['clothes' => $clothes_cnt, 'home' => $home_cnt, 'textiles' => $textiles_cnt] as $filter_slug => $filter_cnt) {
-      if ($filter_cnt > 0) {
-          $default_filter = $filter_slug;
-          break;
-      }
-  }
-  ?>
-  <div class="paris-filter-pills" id="paris-home-pills">
-    <button type="button" class="paris-pill <?php echo ($default_filter === 'clothes') ? 'active' : ''; ?>" data-filter="clothes">
-      <span>قسم الملابس</span>
-      <em class="pill-badge"><?php echo $clothes_cnt; ?></em>
-    </button>
-    
-    <button type="button" class="paris-pill <?php echo ($default_filter === 'home') ? 'active' : ''; ?>" data-filter="home">
-      <span>قسم الأدوات المنزلية</span>
-      <em class="pill-badge"><?php echo $home_cnt; ?></em>
-    </button>
-    
-    <button type="button" class="paris-pill <?php echo ($default_filter === 'textiles') ? 'active' : ''; ?>" data-filter="textiles">
-      <span>مفروشات</span>
-      <em class="pill-badge"><?php echo $textiles_cnt; ?></em>
-    </button>
-
-    <button type="button" class="paris-pill <?php echo ($default_filter === 'all') ? 'active' : ''; ?>" data-filter="all">
-      <span>كل المنتجات</span>
-      <em class="pill-badge"><?php echo $total_count; ?></em>
-    </button>
   </div>
 
   <!-- Products Grid (Modern Elegant Cards - 3 Columns Match) -->

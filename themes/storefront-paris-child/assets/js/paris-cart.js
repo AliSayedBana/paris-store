@@ -112,20 +112,33 @@
         if (mall === 'clothes') {
             $('#subnav-home').removeClass('active').hide();
             $('#subnav-clothes').addClass('active').fadeIn(200);
-            $('#paris-home-pills .paris-pill').removeClass('active');
-            $('#paris-home-pills .paris-pill[data-filter="clothes"]').addClass('active');
+
+            // Set 'كل الملابس' as active link in subnav
+            $('#subnav-clothes .subnav-link').removeClass('active');
+            $('#subnav-clothes .subnav-link').first().addClass('active');
+
+            $('#paris-section-title-home').hide();
+            $('#paris-section-title-clothes').fadeIn(200);
+
             filterProductsByMall('clothes');
         } else if (mall === 'home') {
             $('#subnav-clothes').removeClass('active').hide();
             $('#subnav-home').addClass('active').fadeIn(200);
-            $('#paris-home-pills .paris-pill').removeClass('active');
-            $('#paris-home-pills .paris-pill[data-filter="home"]').addClass('active');
+
+            // Set 'كل الأدوات المنزلية' as active link in subnav
+            $('#subnav-home .subnav-link').removeClass('active');
+            $('#subnav-home .subnav-link').first().addClass('active');
+
+            $('#paris-section-title-clothes').hide();
+            $('#paris-section-title-home').fadeIn(200);
+
             filterProductsByMall('home');
         }
 
         if (pushHistory && window.history && window.history.pushState) {
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('mall', mall);
+            currentUrl.searchParams.delete('filter');
             window.history.pushState({ mall: mall }, '', currentUrl.toString());
         }
     }
@@ -149,44 +162,61 @@
             const urlParams = new URLSearchParams(window.location.search);
             const mall = urlParams.get('mall') || (event.state && event.state.mall) || 'clothes';
             switchToMall(mall, false);
+            const filter = urlParams.get('filter') || (event.state && event.state.filter);
+            if (filter) {
+                applyCategoryFilter(filter, false);
+            }
         }
     });
 
     function filterProductsByMall(mall) {
         $('.paris-products-section ul.products li.product').each(function() {
             const cat = $(this).attr('data-category') || '';
-            const cats = cat.split(' ');
+            const cats = cat.split(/\s+/);
             if (mall === 'clothes') {
                 if (cats.indexOf('clothes') !== -1 || cats.indexOf('men') !== -1 || cats.indexOf('women') !== -1 || cats.indexOf('kids') !== -1) {
-                    $(this).fadeIn(200);
+                    $(this).removeClass('is-hidden').fadeIn(200);
                 } else {
-                    $(this).fadeOut(150);
+                    $(this).addClass('is-hidden').hide();
                 }
             } else {
                 if (cats.indexOf('home') !== -1 || cats.indexOf('kitchen') !== -1 || cats.indexOf('decor') !== -1 || cats.indexOf('textiles') !== -1 || cats.indexOf('cleaning') !== -1 || cats.indexOf('organization') !== -1) {
-                    $(this).fadeIn(200);
+                    $(this).removeClass('is-hidden').fadeIn(200);
                 } else {
-                    $(this).fadeOut(150);
+                    $(this).addClass('is-hidden').hide();
                 }
             }
         });
     }
 
-    // Instant Homepage Category Filter
-    function applyPillFilter(filter, pushHistory) {
+    // Instant Category Filter driven by the main top subnav
+    function applyCategoryFilter(filter, pushHistory) {
         if (!filter || filter === 'all') {
-            $('.paris-products-section ul.products li.product').fadeIn(200);
+            $('.paris-products-section ul.products li.product').removeClass('is-hidden').fadeIn(200);
+        } else if (filter === 'clothes') {
+            filterProductsByMall('clothes');
+        } else if (filter === 'home') {
+            filterProductsByMall('home');
         } else {
             $('.paris-products-section ul.products li.product').each(function() {
                 const cat = $(this).attr('data-category') || '';
-                const cats = cat.split(' ');
+                const cats = cat.split(/\s+/);
                 if (cats.indexOf(filter) !== -1) {
-                    $(this).fadeIn(200);
+                    $(this).removeClass('is-hidden').fadeIn(200);
                 } else {
-                    $(this).fadeOut(150);
+                    $(this).addClass('is-hidden').hide();
                 }
             });
         }
+
+        // Highlight the corresponding link in the top subnav bar
+        $('.paris-subnav-list a.subnav-link').each(function() {
+            const href = $(this).attr('href') || '';
+            if (href.indexOf('/' + filter + '/') !== -1 || href.endsWith('/' + filter) || href.endsWith('/' + filter + '/')) {
+                $('.paris-subnav-list a.subnav-link').removeClass('active');
+                $(this).addClass('active');
+            }
+        });
 
         if (pushHistory && window.history && window.history.pushState) {
             const currentUrl = new URL(window.location.href);
@@ -195,27 +225,50 @@
         }
     }
 
-    $(document).on('click', '#paris-home-pills .paris-pill', function(e) {
-        e.preventDefault();
-        const $pill = $(this);
-        const filter = $pill.data('filter');
-        
-        $('#paris-home-pills .paris-pill').removeClass('active');
-        $pill.addClass('active');
+    // Top Subnav item click on Homepage: smoothly filter products grid
+    $(document).on('click', '.paris-subnav-list a.subnav-link:not(.subnav-discount)', function(e) {
+        if ($('body').hasClass('home') || $('body').hasClass('paris-home-page')) {
+            const href = $(this).attr('href') || '';
+            let filter = '';
+            if (href.indexOf('/clothes/men') !== -1) filter = 'men';
+            else if (href.indexOf('/clothes/women') !== -1) filter = 'women';
+            else if (href.indexOf('/clothes/kids') !== -1) filter = 'kids';
+            else if (href.indexOf('/clothes') !== -1) filter = 'clothes';
+            else if (href.indexOf('/home/kitchen') !== -1) filter = 'kitchen';
+            else if (href.indexOf('/home/decor') !== -1) filter = 'decor';
+            else if (href.indexOf('/textiles') !== -1) filter = 'textiles';
+            else if (href.indexOf('/home/organization') !== -1) filter = 'organization';
+            else if (href.indexOf('/home/cleaning') !== -1) filter = 'cleaning';
+            else if (href.indexOf('/home') !== -1) filter = 'home';
 
-        if (filter === 'clothes') {
-            $('.paris-mall-tab').removeClass('active');
-            $('.paris-mall-tab[data-mall="clothes"]').addClass('active');
-            $('#subnav-home').removeClass('active').hide();
-            $('#subnav-clothes').addClass('active').fadeIn(200);
-        } else if (filter === 'home' || filter === 'textiles') {
-            $('.paris-mall-tab').removeClass('active');
-            $('.paris-mall-tab[data-mall="home"]').addClass('active');
-            $('#subnav-clothes').removeClass('active').hide();
-            $('#subnav-home').addClass('active').fadeIn(200);
+            if (filter) {
+                e.preventDefault();
+                $('.paris-subnav-list a.subnav-link').removeClass('active');
+                $(this).addClass('active');
+
+                // Determine mall
+                const isHome = ['home', 'kitchen', 'decor', 'textiles', 'organization', 'cleaning'].indexOf(filter) !== -1;
+                const targetMall = isHome ? 'home' : 'clothes';
+                
+                // Switch mall if different
+                const activeMall = $('.paris-mall-tab.active').data('mall');
+                if (activeMall !== targetMall) {
+                    switchToMall(targetMall, false);
+                    $('.paris-subnav-list a.subnav-link').removeClass('active');
+                    $(this).addClass('active');
+                }
+
+                applyCategoryFilter(filter, true);
+
+                // Smooth scroll to products section
+                const $productsSec = $('.paris-products-section');
+                if ($productsSec.length) {
+                    $('html, body').animate({
+                        scrollTop: $productsSec.offset().top - 70
+                    }, 350);
+                }
+            }
         }
-
-        applyPillFilter(filter, true);
     });
 
     // Run active filter on load and support direct ?mall= or ?filter= URLs
@@ -227,15 +280,15 @@
 
             if (mallParam) {
                 switchToMall(mallParam, false);
-            } else if (filterParam) {
-                $('#paris-home-pills .paris-pill').removeClass('active');
-                $('#paris-home-pills .paris-pill[data-filter="' + filterParam + '"]').addClass('active');
-                applyPillFilter(filterParam, false);
-            } else {
-                const initialFilter = $('#paris-home-pills .paris-pill.active').data('filter');
-                if (initialFilter && initialFilter !== 'all') {
-                    applyPillFilter(initialFilter, false);
+                if (filterParam) {
+                    applyCategoryFilter(filterParam, false);
                 }
+            } else if (filterParam) {
+                const mall = (['clothes', 'men', 'women', 'kids'].indexOf(filterParam) !== -1) ? 'clothes' : 'home';
+                switchToMall(mall, false);
+                applyCategoryFilter(filterParam, false);
+            } else {
+                switchToMall('clothes', false);
             }
         }
     });

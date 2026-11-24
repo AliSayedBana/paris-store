@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const basePath = 'C:/Users/assa/.gemini/antigravity/scratch/paris-store';
+const basePath = __dirname;
 
 function buildStore() {
   const productsPath = path.join(basePath, 'products.json');

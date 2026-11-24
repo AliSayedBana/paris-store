@@ -199,7 +199,7 @@ $paris_nav = [
     ],
 ];
 
-$paris_link_active = function ($link, $mall_key) use ($current_slug, $is_sale_view) {
+$paris_link_active = function ($link, $mall_key) use ($current_slug, $is_sale_view, $current_mall) {
     if (! empty($link['sale'])) {
         return $is_sale_view && $current_slug === $link['slug'];
     }
@@ -209,7 +209,7 @@ $paris_link_active = function ($link, $mall_key) use ($current_slug, $is_sale_vi
     if ($current_slug !== '') {
         return $current_slug === $link['slug'];
     }
-    return ! empty($link['all']) && $mall_key === 'clothes' && is_front_page();
+    return ! empty($link['all']) && $mall_key === $current_mall && is_front_page();
 };
 ?>
 <nav class="paris-nav-container" aria-label="التنقل الذكي والأقسام">

@@ -822,26 +822,16 @@
             <div class="stat-label">أدوات منزلية وديكور</div>
           </div>
         </div>
-        <div class="stat-card" id="cardShoesStat">
-          <div class="stat-icon">👟</div>
-          <div>
-            <div class="stat-number" id="statShoes">0</div>
-            <div class="stat-label">منتجات الأحذية</div>
-          </div>
-        </div>
       </div>
 
       <!-- Action Toolbar -->
       <div class="toolbar-card">
         <div class="toolbar-left" id="toolbarActionButtons">
-          <button type="button" class="admin-btn admin-btn-gold" onclick="switchAdminView('studio', 'clothes')">
-            👗 رفع منتج ملابس
+          <button type="button" class="admin-btn admin-btn-gold" id="btnUploadClothes" onclick="switchAdminView('studio', 'clothes')">
+            👗 إضافة منتج ملابس جديد
           </button>
-          <button type="button" class="admin-btn admin-btn-gold" style="background:#2e7d32; color:#fff;" onclick="switchAdminView('studio', 'home')">
-            🍳 رفع منتج أدوات منزلية
-          </button>
-          <button type="button" class="admin-btn admin-btn-gold" style="background:#1565c0; color:#fff;" onclick="switchAdminView('studio', 'shoes')">
-            👟 رفع منتج أحذية
+          <button type="button" class="admin-btn admin-btn-gold" id="btnUploadHome" style="background:#2e7d32; color:#fff;" onclick="switchAdminView('studio', 'home')">
+            🍳 إضافة منتج أدوات منزلية جديد
           </button>
           <button type="button" class="admin-btn admin-btn-outline" style="background:#f2f5f2; color:#133e29; border:1px solid #c5d1cb;" onclick="openImportModal()">
             📁 استيراد شيت CSV
@@ -857,7 +847,6 @@
             <option value="all">كل الأقسام</option>
             <option value="clothes">مول الملابس</option>
             <option value="home">مول الأدوات المنزلية</option>
-            <option value="shoes">مول الأحذية</option>
           </select>
           <select id="filterStatus" class="filter-select" onchange="filterProductsTable()">
             <option value="all">كل الحالات</option>
@@ -921,7 +910,7 @@
               <div class="mall-box-icon">👗</div>
               <div>
                 <div class="mall-box-title">قسم الملابس والأزياء</div>
-                <div class="mall-box-desc">رجالي، حريمي، أطفال</div>
+                <div class="mall-box-desc">ملابس رجالية، ملابس نسائية، أطفال</div>
               </div>
             </div>
 
@@ -929,15 +918,7 @@
               <div class="mall-box-icon">🏠</div>
               <div>
                 <div class="mall-box-title">قسم الأدوات والديكور</div>
-                <div class="mall-box-desc">أدوات مطبخ، مفروشات، منظمات</div>
-              </div>
-            </div>
-
-            <div class="mall-select-box" id="mallCard_shoes" onclick="selectStudioMall('shoes')">
-              <div class="mall-box-icon">👟</div>
-              <div>
-                <div class="mall-box-title">قسم الأحذية والرياضة</div>
-                <div class="mall-box-desc">أحذية كلاسيك، سنيكرز، أطفال</div>
+                <div class="mall-box-desc">أدوات المطبخ، ديكورات، مفروشات، تنظيم، تنظيف</div>
               </div>
             </div>
 
@@ -1334,29 +1315,22 @@
 
     const categoriesOptions = {
       clothes: [
-        { slug: 'clothes men', label: 'ملابس رجالي' },
-        { slug: 'clothes women', label: 'ملابس حريمي' },
-        { slug: 'clothes kids', label: 'ملابس أطفال' },
-        { slug: 'clothes', label: 'ملابس عامة' }
+        { slug: 'men', label: 'ملابس رجالية' },
+        { slug: 'women', label: 'ملابس نسائية' },
+        { slug: 'kids', label: 'أطفال' },
+        { slug: 'clothes', label: 'كل الملابس' }
       ],
       home: [
-        { slug: 'home kitchen', label: 'أدوات المطبخ' },
-        { slug: 'home decor', label: 'ديكور وتنظيم' },
-        { slug: 'home textiles', label: 'مفروشات ومناشف' },
-        { slug: 'home org', label: 'منظمات المنزل' },
-        { slug: 'home', label: 'أدوات منزلية عامة' }
-      ],
-      shoes: [
-        { slug: 'shoes men', label: 'أحذية رجالي' },
-        { slug: 'shoes women', label: 'أحذية حريمي' },
-        { slug: 'shoes kids', label: 'أحذية أطفال' },
-        { slug: 'shoes sports', label: 'أحذية رياضية وسنيكرز' },
-        { slug: 'shoes', label: 'أحذية عامة' }
+        { slug: 'kitchen', label: 'أدوات المطبخ' },
+        { slug: 'decor', label: 'ديكورات' },
+        { slug: 'textiles', label: 'مفروشات' },
+        { slug: 'organization', label: 'تنظيم' },
+        { slug: 'cleaning', label: 'تنظيف' },
+        { slug: 'home', label: 'كل الأدوات المنزلية' }
       ]
     };
 
     const quickSizesMap = {
-      shoes: ['38', '39', '40', '41', '42', '43', '44', '45'],
       clothes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
       home: ['ستاندرد', 'طقم 3 قطع', 'طقم 6 قطع', 'كبير', 'وسط']
     };
@@ -1392,31 +1366,72 @@
       const role = currentAdmin.role;
       const mall = currentAdmin.mall;
 
+      const btnUploadClothes = document.getElementById('btnUploadClothes');
+      const btnUploadHome = document.getElementById('btnUploadHome');
+      const mallCardClothes = document.getElementById('mallCard_clothes');
+      const mallCardHome = document.getElementById('mallCard_home');
+      const filterMall = document.getElementById('filterMall');
+
       if (role === 'clothes_admin') {
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الملابس والأزياء 👗';
-        document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة وتحديث تشكيلات الملابس الرجالية والحريمية وملابس الأطفال.';
+        document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة وتحديث تشكيلات الملابس الرجالية والنسائية وملابس الأطفال.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الملابس';
         document.getElementById('adminMallSubtext').innerText = 'مشرف قسم الملابس والأزياء';
+        
         document.getElementById('cardHomeStat').style.display = 'none';
-        document.getElementById('cardShoesStat').style.display = 'none';
+        document.getElementById('cardClothesStat').style.display = 'flex';
+        
+        if (btnUploadClothes) btnUploadClothes.style.display = 'inline-flex';
+        if (btnUploadHome) btnUploadHome.style.display = 'none';
+
+        if (mallCardClothes) mallCardClothes.style.display = 'flex';
+        if (mallCardHome) mallCardHome.style.display = 'none';
+
+        if (filterMall) {
+          filterMall.value = 'clothes';
+          filterMall.style.display = 'none';
+        }
+
         selectStudioMall('clothes', true);
       } else if (role === 'home_admin') {
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأدوات المنزلية والديكور 🍳';
-        document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة مستلزمات المطبخ، الديكورات، المفروشات، والمنظمات.';
+        document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة مستلزمات المطبخ، الديكورات، المفروشات، المنظمات وأدوات التنظيف.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأدوات المنزلية';
         document.getElementById('adminMallSubtext').innerText = 'مشرف الأدوات المنزلية والديكور';
+        
         document.getElementById('cardClothesStat').style.display = 'none';
-        document.getElementById('cardShoesStat').style.display = 'none';
+        document.getElementById('cardHomeStat').style.display = 'flex';
+
+        if (btnUploadClothes) btnUploadClothes.style.display = 'none';
+        if (btnUploadHome) btnUploadHome.style.display = 'inline-flex';
+
+        if (mallCardClothes) mallCardClothes.style.display = 'none';
+        if (mallCardHome) mallCardHome.style.display = 'flex';
+
+        if (filterMall) {
+          filterMall.value = 'home';
+          filterMall.style.display = 'none';
+        }
+
         selectStudioMall('home', true);
-      } else if (role === 'shoes_admin') {
-        document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأحذية والرياضة 👟';
-        document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة الأحذية الكلاسيك، السنيكرز، والأحذية الرياضية والطبية.';
-        document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأحذية';
-        document.getElementById('adminMallSubtext').innerText = 'مشرف قسم الأحذية والرياضة';
-        document.getElementById('cardClothesStat').style.display = 'none';
-        document.getElementById('cardHomeStat').style.display = 'none';
-        selectStudioMall('shoes', true);
       } else {
+        // Super Admin
+        document.getElementById('departmentHeaderTitle').innerText = 'الإدارة العامة لمتجر باريس 🛍️';
+        document.getElementById('departmentHeaderDesc').innerText = 'لوحة تحكم كاملة للإدارة العامة للمتجر: الملابس والأدوات المنزلية.';
+        document.getElementById('departmentBadgeText').innerText = 'المدير العام (Super Admin)';
+        document.getElementById('adminMallSubtext').innerText = 'الإدارة العامة لمتجر باريس';
+
+        document.getElementById('cardClothesStat').style.display = 'flex';
+        document.getElementById('cardHomeStat').style.display = 'flex';
+
+        if (btnUploadClothes) btnUploadClothes.style.display = 'inline-flex';
+        if (btnUploadHome) btnUploadHome.style.display = 'inline-flex';
+
+        if (mallCardClothes) mallCardClothes.style.display = 'flex';
+        if (mallCardHome) mallCardHome.style.display = 'flex';
+
+        if (filterMall) filterMall.style.display = 'inline-block';
+
         selectStudioMall('clothes', false);
       }
     }
@@ -1467,12 +1482,16 @@
     }
 
     function updateStats() {
-      document.getElementById('statTotal').innerText = productsList.length;
-      document.getElementById('statPublished').innerText = productsList.filter(p => p.published !== false).length;
-      document.getElementById('statHidden').innerText = productsList.filter(p => p.published === false).length;
-      document.getElementById('statClothes').innerText = productsList.filter(p => p.mall === 'clothes').length;
-      document.getElementById('statHome').innerText = productsList.filter(p => p.mall === 'home').length;
-      document.getElementById('statShoes').innerText = productsList.filter(p => p.mall === 'shoes').length;
+      const elTotal = document.getElementById('statTotal');
+      if (elTotal) elTotal.innerText = productsList.length;
+      const elPub = document.getElementById('statPublished');
+      if (elPub) elPub.innerText = productsList.filter(p => p.published !== false).length;
+      const elHid = document.getElementById('statHidden');
+      if (elHid) elHid.innerText = productsList.filter(p => p.published === false).length;
+      const elClothes = document.getElementById('statClothes');
+      if (elClothes) elClothes.innerText = productsList.filter(p => p.mall === 'clothes').length;
+      const elHome = document.getElementById('statHome');
+      if (elHome) elHome.innerText = productsList.filter(p => p.mall === 'home').length;
     }
 
     function renderProductsTable(prods) {
@@ -1555,15 +1574,19 @@
 
     // ===================== ON-SCREEN STUDIO LOGIC =====================
     function selectStudioMall(mall, lockRole) {
+      if (currentAdmin && currentAdmin.role === 'clothes_admin') mall = 'clothes';
+      else if (currentAdmin && currentAdmin.role === 'home_admin') mall = 'home';
+
       document.getElementById('studioSelectedMall').value = mall;
       
-      ['clothes', 'home', 'shoes'].forEach(m => {
+      ['clothes', 'home'].forEach(m => {
         const card = document.getElementById('mallCard_' + m);
         if (card) {
           card.classList.toggle('active', m === mall);
           if (lockRole && currentAdmin.role !== 'super_admin' && currentAdmin.mall !== m) {
-            card.style.opacity = '0.5';
-            card.style.pointerEvents = 'none';
+            card.style.display = 'none';
+          } else {
+            card.style.display = 'flex';
           }
         }
       });
