@@ -74,16 +74,6 @@
       "createdAt": "2026-11-24T08:55:53.963Z",
       "expiresAt": "2026-12-08T08:55:53.963Z"
     },
-    "b59fec87948dd7ffdd22061213fc15d39b85c62a4bad4102379c24686d1be129": {
-      "adminId": "home",
-      "email": "home-admin@paris-store.com",
-      "name": "مشرف قسم الأدوات المنزلية والديكور",
-      "role": "home_admin",
-      "mall": "home",
-      "departmentName": "مول باريس للأدوات المنزلية",
-      "createdAt": "2026-11-24T08:58:15.022Z",
-      "expiresAt": "2026-12-08T08:58:15.022Z"
-    },
     "0e5aa4104937b0a245dfade199b0709ca52b1bb8c483953041fd3582f1050242": {
       "adminId": "home",
       "email": "home-admin@paris-store.com",
@@ -173,9 +163,19 @@
       "departmentName": "مول باريس للأدوات المنزلية",
       "createdAt": "2026-11-24T09:26:54.422Z",
       "expiresAt": "2026-12-08T09:26:54.422Z"
+    },
+    "627ff8e01a18b732e25a6f47c8dceaf034a00f7821d5a047f70e592359b2f5c4": {
+      "adminId": "clothes",
+      "email": "clothes-admin@paris-store.com",
+      "name": "مشرف قسم الملابس والأزياء",
+      "role": "clothes_admin",
+      "mall": "clothes",
+      "departmentName": "مول باريس للملابس",
+      "createdAt": "2026-11-24T09:30:57.960Z",
+      "expiresAt": "2026-12-08T09:30:57.960Z"
     }
   },
-  "lastUpdated": "2026-11-24T09:26:54.974Z",
+  "lastUpdated": "2026-11-24T09:31:21.936Z",
   "admins": {
     "super": {
       "id": "super",
@@ -197,7 +197,7 @@
       "departmentName": "مول باريس للملابس",
       "salt": "6137a117c34591b45f956fca07323174",
       "passwordHash": "48bfc2711e895ae0ece7861d4c2e80263d42f8be02c9dc3f4dc3e298090ba2773a847bbc53f01d8ca377e62ee537e4175f051729889666ac9d063ecb7fcfadb7",
-      "lastLogin": "2026-11-24T09:11:05.643Z"
+      "lastLogin": "2026-11-24T09:30:57.960Z"
     },
     "home": {
       "id": "home",
