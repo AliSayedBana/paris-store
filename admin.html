@@ -860,6 +860,25 @@
     <!-- ===================== VIEW 1: PRODUCTS LIST ===================== -->
     <div id="productsListView">
 
+      <!-- Live Stock Alert Notification Banner -->
+      <div id="stockAlertBanner" style="display:none; background:#fef2f2; border:1.5px solid #fecaca; border-radius:14px; padding:14px 20px; margin-bottom:20px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:24px;">🚨</span>
+          <div>
+            <div id="stockAlertTitle" style="font-weight:900; color:#991b1b; font-size:14.5px;">تنبيه المخزون!</div>
+            <div id="stockAlertDesc" style="font-size:12.5px; color:#7f1d1d; margin-top:2px;"></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="admin-btn admin-btn-danger" style="padding:7px 14px; font-size:12.5px;" onclick="filterLowStockOnly()">
+            👁️ عرض المنتجات الناقصة فقط
+          </button>
+          <button type="button" class="admin-btn admin-btn-outline" style="padding:7px 12px; font-size:12px;" onclick="document.getElementById('stockAlertBanner').style.display='none'">
+            إخفاء
+          </button>
+        </div>
+      </div>
+
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -933,6 +952,7 @@
             <option value="all">كل الحالات</option>
             <option value="published">المعروض فقط ✅</option>
             <option value="hidden">المخفي فقط 🚫</option>
+            <option value="low_stock">نواقص المخزون (≤ 3) 🚨</option>
           </select>
           <details style="position:relative;">
             <summary style="list-style:none; cursor:pointer; background:#f4f1ea; border:1px solid #e2ddd2; padding:8px 14px; border-radius:50px; font-size:12.5px; font-weight:800; color:var(--paris-forest); white-space:nowrap;">
@@ -1034,8 +1054,8 @@
               <input type="text" id="studioTitle" class="form-control" placeholder="مثال: قميص كتان صيفي فاخر أو طقم سكاكين مطبخ ياباني" oninput="updateStudioLivePreview()" required>
             </div>
 
-            <!-- 3. التصنيف والأسعار -->
-            <div class="form-row-3" style="margin-bottom:14px;">
+            <!-- 3. التصنيف والأسعار والكمية -->
+            <div class="form-row-3" style="margin-bottom:12px;">
               <div class="form-group">
                 <label style="font-size:13px; font-weight:700;">التصنيف الفرعي:</label>
                 <select id="studioCategory" class="form-control" onchange="onStudioCategoryChange()">
@@ -1052,6 +1072,11 @@
                 <label style="font-size:13px; font-weight:700;">السعر قبل الخصم (اختياري):</label>
                 <input type="number" id="studioRegularPrice" class="form-control" placeholder="مثال: 450" oninput="autoCalculateStudioDiscount()">
               </div>
+            </div>
+
+            <div class="form-group" style="max-width:260px;">
+              <label style="font-size:13px; font-weight:700;">الكمية المتوفرة بالمخزن (إشعار تلقائي عند النفاد):</label>
+              <input type="number" id="studioStock" class="form-control" value="10" min="0" placeholder="مثال: 10">
             </div>
 
             <input type="hidden" id="studioDiscountBadge" value="">
@@ -1492,9 +1517,13 @@
           <input type="number" id="prodRegularPrice" class="form-control" oninput="autoCalculateModalDiscount()">
         </div>
         <div class="form-group">
-          <label>شارة الخصم:</label>
-          <input type="text" id="prodDiscountBadge" class="form-control">
+          <label>الكمية بالمخزن:</label>
+          <input type="number" id="prodStock" class="form-control" min="0" placeholder="10">
         </div>
+      </div>
+      <div class="form-group">
+        <label>شارة الخصم (اختياري):</label>
+        <input type="text" id="prodDiscountBadge" class="form-control">
       </div>
 
       <div class="form-group">
@@ -1833,6 +1862,8 @@
       }
     }
 
+    let stockToastShown = false;
+
     function updateStats() {
       const elTotal = document.getElementById('statTotal');
       if (elTotal) elTotal.innerText = productsList.length;
@@ -1846,6 +1877,55 @@
       if (elHome) elHome.innerText = productsList.filter(p => p.mall === 'home').length;
       const elShoes = document.getElementById('statShoes');
       if (elShoes) elShoes.innerText = productsList.filter(p => p.mall === 'shoes').length;
+
+      // Stock Alerts Scanner
+      const getStk = (p) => (p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock))) ? Math.max(0, Number(p.stock)) : 10;
+      const outProds = productsList.filter(p => getStk(p) <= 0);
+      const lowProds = productsList.filter(p => { const s = getStk(p); return s > 0 && s <= 3; });
+      const banner = document.getElementById('stockAlertBanner');
+      if (banner) {
+        if (outProds.length > 0 || lowProds.length > 0) {
+          banner.style.display = 'flex';
+          const parts = [];
+          if (outProds.length > 0) parts.push('نفدت كمية ' + outProds.length + ' منتج (0 بالمخزن)');
+          if (lowProds.length > 0) parts.push(lowProds.length + ' منتج أوشك على النفاد (≤ 3 قطع)');
+          document.getElementById('stockAlertTitle').innerText = '🚨 إشعار المخزون: ' + parts.join(' • ');
+          const sampleNames = [...outProds, ...lowProds].slice(0, 3).map(p => p.title.substring(0, 28) + ' (' + getStk(p) + ')').join('، ');
+          document.getElementById('stockAlertDesc').innerText = 'منتجات تحتاج مراجعة أو تعبئة كمية: ' + sampleNames;
+          if (!stockToastShown && outProds.length > 0) {
+            stockToastShown = true;
+            showToast('🚨 تنبيه: يوجد ' + outProds.length + ' منتج نفدت كميته بالمخزن!');
+          }
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+    }
+
+    function filterLowStockOnly() {
+      const fsEl = document.getElementById('filterStatus');
+      if (fsEl) fsEl.value = 'low_stock';
+      selectMallFilterPill('all', document.querySelector('#deptFilterPillsBar .dept-pill-btn[data-mall="all"]'));
+    }
+
+    async function adjustProductStock(id, delta) {
+      const p = productsList.find(x => x.id === id);
+      if (!p) return;
+      const cur = (p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock))) ? Math.max(0, Number(p.stock)) : 10;
+      const next = Math.max(0, cur + delta);
+      p.stock = next;
+      const res = await fetch('/api/products/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p)
+      });
+      if (res.ok) {
+        if (next === 0) showToast('🚨 تنبيه: نفدت كمية "' + p.title.substring(0, 20) + '" (0 بالمخزن)');
+        else if (next <= 3) showToast('⚠️ كمية محدودة: متبقي ' + next + ' فقط');
+        else showToast('✅ تم تحديث الكمية إلى ' + next + ' قطعة');
+        updateStats();
+        filterProductsTable();
+      }
     }
 
     function selectMallFilterPill(mall, btnEl) {
@@ -1892,6 +1972,11 @@
           ? `<div style="font-size:11.5px; color:#999; text-decoration:line-through;">${Number(p.regularPrice).toLocaleString('en-US')} ج.م</div>`
           : '';
 
+        const stockNum = (p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock))) ? Math.max(0, Number(p.stock)) : 10;
+        let stockPill = `<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800;">📦 ${stockNum}</span>`;
+        if (stockNum === 0) stockPill = `<span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800;">🚨 نفدت (0)</span>`;
+        else if (stockNum <= 3) stockPill = `<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800;">⚠️ متبقي ${stockNum}</span>`;
+
         return `
           <tr>
             <td><img src="${p.image || ''}" class="table-thumb" alt=""></td>
@@ -1911,6 +1996,11 @@
                   ${regPriceHtml}
                 </div>
                 ${p.discountBadge ? `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:800; white-space:nowrap;">${p.discountBadge}</span>` : ''}
+              </div>
+              <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                ${stockPill}
+                <button type="button" onclick="adjustProductStock(${p.id}, -1)" style="width:22px; height:22px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; font-size:13px; line-height:1;" title="إنقاص 1">-</button>
+                <button type="button" onclick="adjustProductStock(${p.id}, 1)" style="width:22px; height:22px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; font-size:13px; line-height:1;" title="زيادة 1">+</button>
               </div>
             </td>
             <td>${statusBtn}</td>
@@ -1936,6 +2026,10 @@
         let matchStatus = true;
         if (status === 'published') matchStatus = (p.published !== false);
         if (status === 'hidden') matchStatus = (p.published === false);
+        if (status === 'low_stock') {
+          const stk = (p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock))) ? Math.max(0, Number(p.stock)) : 10;
+          matchStatus = stk <= 3;
+        }
 
         return matchQ && matchMall && matchStatus;
       });
@@ -2286,6 +2380,8 @@
       document.getElementById('studioChip').value = '';
       document.getElementById('studioPrice').value = '';
       document.getElementById('studioRegularPrice').value = '';
+      const stEl = document.getElementById('studioStock');
+      if (stEl) stEl.value = '10';
       document.getElementById('studioDiscountBadge').value = '';
       document.getElementById('studioSizesInput').value = '';
       document.getElementById('studioColorsInput').value = '';
@@ -2322,6 +2418,8 @@
       }
 
       const reg = parseFloat(document.getElementById('studioRegularPrice').value) || null;
+      const stockRaw = parseInt((document.getElementById('studioStock') || {}).value, 10);
+      const stock = isNaN(stockRaw) ? 10 : Math.max(0, stockRaw);
       const category = document.getElementById('studioCategory').value;
       const chip = document.getElementById('studioChip').value.trim() || document.getElementById('studioCategory').selectedOptions[0].text;
       const brand = document.getElementById('studioBrand').value.trim();
@@ -2345,6 +2443,7 @@
         title,
         price,
         regularPrice: reg,
+        stock,
         discountBadge,
         image,
         gallery: studioExtraGalleryUrls.slice(0, 4),
@@ -2397,6 +2496,7 @@
       document.getElementById('prodCategory').value = p.category || '';
       document.getElementById('prodPrice').value = p.price || '';
       document.getElementById('prodRegularPrice').value = p.regularPrice || '';
+      document.getElementById('prodStock').value = (p.stock !== undefined && p.stock !== null) ? p.stock : 10;
       document.getElementById('prodDiscountBadge').value = p.discountBadge || '';
       document.getElementById('prodSizesInput').value = (p.sizes || []).join(', ');
       document.getElementById('prodColorsInput').value = (p.colors || []).join(', ');
@@ -2441,6 +2541,8 @@
       p.category = document.getElementById('prodCategory').value;
       p.price = parseFloat(document.getElementById('prodPrice').value);
       p.regularPrice = parseFloat(document.getElementById('prodRegularPrice').value) || null;
+      const modStock = parseInt(document.getElementById('prodStock').value, 10);
+      p.stock = isNaN(modStock) ? 10 : Math.max(0, modStock);
       p.discountBadge = document.getElementById('prodDiscountBadge').value.trim();
       p.sizes = document.getElementById('prodSizesInput').value.split(',').map(s => s.trim()).filter(Boolean);
       p.colors = document.getElementById('prodColorsInput').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -2614,6 +2716,7 @@
         const colImg = findCol(['image', 'img', 'photo', 'صورة', 'رابط'], 5);
         const colSizes = findCol(['size', 'مقاس'], 6);
         const colColors = findCol(['color', 'لون', 'ألوان', 'الوان'], 7);
+        const colStock = findCol(['stock', 'qty', 'كمية', 'المخزن'], 8);
 
         let imported = 0;
         for (let i = 1; i < rows.length; i++) {
@@ -2630,10 +2733,12 @@
           const image = String(r[colImg] || '').trim() || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800';
           const sizes = String(r[colSizes] || '').split(/[;،,]/).map(s => s.trim()).filter(Boolean);
           const colors = String(r[colColors] || '').split(/[;،,]/).map(c => c.trim()).filter(Boolean);
+          const stkRaw = parseInt(String(r[colStock] !== undefined ? r[colStock] : ''), 10);
+          const stock = isNaN(stkRaw) ? 10 : Math.max(0, stkRaw);
 
           const payload = {
             title, mall, category, price, regularPrice, discountBadge,
-            image, sizes, colors,
+            image, sizes, colors, stock,
             sale: Boolean(regularPrice && regularPrice > price),
             published: true
           };
@@ -2661,10 +2766,10 @@
     function downloadExcelTemplate() {
       if (typeof XLSX === 'undefined') { showToast('مكتبة الإكسيل غير محملة'); return; }
       const sampleRows = [
-        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان'],
-        ['جاكيت كاجوال إيطالي فاخر', 'clothes', 'ملابس رجالي', 1850, 2300, 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800', 'M; L; XL; 2XL', 'أسود; كحلي'],
-        ['طقم تقديم ضيافة جرانيت', 'home', 'أدوات المطبخ', 2400, 2900, 'https://images.unsplash.com/photo-1593618998160-e34014e67546?w=800', '', 'رمادي; بيج'],
-        ['سنيكرز رياضي مريح طبي', 'shoes', 'أحذية رياضية', 1250, 1500, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800', '41; 42; 43; 44', 'أسود; أبيض']
+        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان', 'الكمية'],
+        ['جاكيت كاجوال إيطالي فاخر', 'clothes', 'ملابس رجالي', 1850, 2300, 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800', 'M; L; XL; 2XL', 'أسود; كحلي', 10],
+        ['طقم تقديم ضيافة جرانيت', 'home', 'أدوات المطبخ', 2400, 2900, 'https://images.unsplash.com/photo-1593618998160-e34014e67546?w=800', '', 'رمادي; بيج', 5],
+        ['سنيكرز رياضي مريح طبي', 'shoes', 'أحذية رياضية', 1250, 1500, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800', '41; 42; 43; 44', 'أسود; أبيض', 8]
       ];
       const ws = XLSX.utils.aoa_to_sheet(sampleRows);
       const wb = XLSX.utils.book_new();
@@ -2676,7 +2781,7 @@
     function exportExcel() {
       if (typeof XLSX === 'undefined') { exportCSV(); return; }
       const rows = [
-        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان']
+        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان', 'الكمية']
       ];
       productsList.forEach(p => {
         rows.push([
@@ -2687,7 +2792,8 @@
           p.regularPrice || '',
           p.image || '',
           (p.sizes || []).join('; '),
-          (p.colors || []).join('; ')
+          (p.colors || []).join('; '),
+          (p.stock !== undefined && p.stock !== null) ? p.stock : 10
         ]);
       });
       const ws = XLSX.utils.aoa_to_sheet(rows);

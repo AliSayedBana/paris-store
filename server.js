@@ -598,6 +598,9 @@ async function handleRequest(req, res) {
     }
 
     if (newProd.published === undefined) newProd.published = true;
+    newProd.stock = (newProd.stock !== undefined && newProd.stock !== null && !isNaN(parseInt(newProd.stock, 10)))
+      ? Math.max(0, parseInt(newProd.stock, 10))
+      : 10;
 
     // Product variations cleanup
     if (Array.isArray(newProd.sizes)) {
@@ -655,6 +658,10 @@ async function handleRequest(req, res) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: false, message: 'غير مصرح: لا يمكنك تعديل منتجات قسم آخر.' }));
         return;
+      }
+
+      if (updateData.stock !== undefined && updateData.stock !== null && !isNaN(parseInt(updateData.stock, 10))) {
+        updateData.stock = Math.max(0, parseInt(updateData.stock, 10));
       }
 
       products[idx] = { ...products[idx], ...updateData, id };
@@ -719,6 +726,41 @@ async function handleRequest(req, res) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: false, message: 'المنتج غير موجود' }));
     }
+    return;
+  }
+
+  // POST /api/orders/checkout (Decrement product stock when customer places an order)
+  if (reqPath === '/api/orders/checkout' && method === 'POST') {
+    const data = await parseBody(req);
+    const items = Array.isArray(data && data.items) ? data.items : [];
+    const products = readJSON(PRODUCTS_FILE, []);
+    const alerts = [];
+    let changed = false;
+
+    items.forEach(item => {
+      const qty = Math.max(1, parseInt(item.qty, 10) || 1);
+      const prod = products.find(p => (item.id && p.id === Number(item.id)) || (item.title && p.title === item.title));
+      if (prod) {
+        const curStock = (prod.stock !== undefined && prod.stock !== null && !isNaN(parseInt(prod.stock, 10)))
+          ? Math.max(0, parseInt(prod.stock, 10))
+          : 10;
+        prod.stock = Math.max(0, curStock - qty);
+        changed = true;
+        if (prod.stock === 0) {
+          alerts.push({ id: prod.id, title: prod.title, stock: 0, type: 'out_of_stock' });
+        } else if (prod.stock <= 3) {
+          alerts.push({ id: prod.id, title: prod.title, stock: prod.stock, type: 'low_stock' });
+        }
+      }
+    });
+
+    if (changed) {
+      writeJSON(PRODUCTS_FILE, products);
+      buildStore();
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, alerts }));
     return;
   }
 

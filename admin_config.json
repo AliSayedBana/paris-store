@@ -223,9 +223,19 @@
       "departmentName": "الإدارة العامة (جميع الأقسام)",
       "createdAt": "2026-11-25T12:41:49.517Z",
       "expiresAt": "2026-12-09T12:41:49.517Z"
+    },
+    "422087ef90954d766452cbc6f4394016151f1f9b526b0982670c3be37b5ed094": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-25T13:33:57.763Z",
+      "expiresAt": "2026-12-09T13:33:57.763Z"
     }
   },
-  "lastUpdated": "2026-11-25T12:43:59.486Z",
+  "lastUpdated": "2026-11-25T13:36:19.944Z",
   "admins": {
     "super": {
       "id": "super",
@@ -236,7 +246,7 @@
       "departmentName": "الإدارة العامة (جميع الأقسام)",
       "salt": "b4a67673ad1dac2f515002750bd4c05f",
       "passwordHash": "d17f5da3f3cc37f1993a97fc078db2d1f4afd078b289984df22739194400de1ef332b09a2e82282827ce5a43ca08fa97bc3acf37684877766e6b0b4335917b09",
-      "lastLogin": "2026-11-25T12:41:49.517Z"
+      "lastLogin": "2026-11-25T13:33:57.763Z"
     },
     "clothes": {
       "id": "clothes",

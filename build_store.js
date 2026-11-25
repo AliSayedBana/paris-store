@@ -112,6 +112,13 @@ function buildStore() {
 
     const safeTitle = p.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const safeImg = p.image || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800';
+    const stockVal = (p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock))) ? Math.max(0, Number(p.stock)) : 10;
+    const isOutOfStock = stockVal <= 0;
+    const stockPillHtml = isOutOfStock
+      ? `<div style="font-size:11px; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; padding:2px 8px; border-radius:6px; font-weight:800; width:fit-content; margin-bottom:6px;">🚫 نفدت الكمية</div>`
+      : (stockVal <= 3
+          ? `<div style="font-size:11px; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; padding:2px 8px; border-radius:6px; font-weight:800; width:fit-content; margin-bottom:6px;">🔥 متبقي ${stockVal} قطع فقط!</div>`
+          : `<div style="font-size:10.5px; color:#15803d; font-weight:700; margin-bottom:6px;">✓ متوفر بالمخزن (${stockVal})</div>`);
 
     cardsHtml += `
       <!-- Product Card #${p.id} -->
@@ -121,6 +128,7 @@ function buildStore() {
           data-sale="${saleStr}" 
           data-id="${p.id}" 
           data-price="${p.price}" 
+          data-stock="${stockVal}"
           data-rating="4.9">
         <div class="paris-card-inner">
           
@@ -177,17 +185,18 @@ function buildStore() {
 
             <!-- Price & Savings -->
             ${priceDisplay}
+            ${stockPillHtml}
 
             <!-- Dual Action Buttons -->
             <div class="card-action-buttons-group">
-              <button type="button" class="btn-card-add-cart" onclick="addToCart('${safeTitle}', ${p.price}, '${safeImg}', '${(p.sizes && p.sizes[0]) || ''}')">
+              <button type="button" class="btn-card-add-cart" ${isOutOfStock ? 'style="background:#9ca3af; cursor:not-allowed;"' : ''} onclick="addToCart('${safeTitle}', ${p.price}, '${safeImg}', '${(p.sizes && p.sizes[0]) || ''}', ${p.id})">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                <span>أضف للسلة</span>
+                <span>${isOutOfStock ? 'نفدت الكمية 🚫' : 'أضف للسلة'}</span>
               </button>
 
-              <button type="button" class="btn-card-whatsapp-quick" onclick="quickOrderWhatsApp('${safeTitle}', ${p.price})" title="طلب سريع عبر واتساب">
+              <button type="button" class="btn-card-whatsapp-quick" onclick="${isOutOfStock ? `notifyRestockWhatsApp('${safeTitle}')` : `quickOrderWhatsApp('${safeTitle}', ${p.price})`}" title="${isOutOfStock ? 'أخبرني عند توفر المنتج' : 'طلب سريع عبر واتساب'}">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.311.045-.698.077-1.118-.056-.277-.088-.636-.217-1.096-.416-1.936-.838-3.195-2.798-3.292-2.927-.098-.129-.785-1.045-.785-1.993 0-.948.497-1.414.674-1.606.177-.193.385-.241.513-.241.129 0 .257.002.369.006.118.005.276-.045.432.329.16.386.546 1.332.594 1.43.048.097.08.21.016.339-.064.13-.097.21-.193.322-.096.113-.203.252-.29.339-.096.096-.197.2-.085.392.112.193.498.822 1.069 1.33.736.655 1.357.858 1.55.954.193.096.305.08.418-.049.112-.128.481-.561.61-.754.128-.193.257-.161.433-.096.177.064 1.123.53 1.316.626.193.097.321.145.369.226.048.08.048.466-.096.871z"/></svg>
-                <span>طلب واتساب</span>
+                <span>${isOutOfStock ? 'أخبرني عند التوفر 🔔' : 'طلب واتساب'}</span>
               </button>
             </div>
 
@@ -1901,6 +1910,7 @@ function buildStore() {
           <span class="qv-price-val" id="qvModalPrice">0 ج.م</span>
           <span class="qv-old-price" id="qvModalOldPrice">0 ج.م</span>
         </div>
+        <div id="qvModalStockBadge" style="font-size:12.5px; font-weight:800; margin-bottom:12px;"></div>
 
         <div id="qvSizesWrap">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -2400,12 +2410,33 @@ function buildStore() {
       document.body.style.overflow = '';
     }
 
-    function addToCart(title, price, img, size) {
+    function getProductStock(id, title) {
+      const prod = productsData.find(p => (id && p.id === id) || (title && p.title === title));
+      if (!prod || prod.stock === undefined || prod.stock === null || isNaN(Number(prod.stock))) return 10;
+      return Math.max(0, Number(prod.stock));
+    }
+
+    function addToCart(title, price, img, size, prodId) {
+      const prod = productsData.find(p => (prodId && p.id === prodId) || p.title === title);
+      const id = prod ? prod.id : prodId;
+      const maxStock = getProductStock(id, title);
+
+      if (maxStock <= 0) {
+        showToast('🚫 عذراً، نفدت كمية هذا المنتج حالياً!');
+        return;
+      }
+
+      const totalForProd = cart.filter(item => (id && item.id === id) || item.title === title).reduce((s, i) => s + i.qty, 0);
+      if (totalForProd + 1 > maxStock) {
+        showToast('⚠️ عذراً، أقصى كمية متوفرة من هذا المنتج هي ' + maxStock + ' قطعة!');
+        return;
+      }
+
       const existing = cart.find(item => item.title === title && item.size === size);
       if (existing) {
         existing.qty += 1;
       } else {
-        cart.push({ title, price, img, size: size || '', qty: 1 });
+        cart.push({ id, title, price, img, size: size || '', qty: 1 });
       }
       persistCartState();
       updateCartBadge();
@@ -2421,6 +2452,15 @@ function buildStore() {
     }
 
     function updateQty(index, delta) {
+      if (delta > 0) {
+        const item = cart[index];
+        const maxStock = getProductStock(item.id, item.title);
+        const totalForProd = cart.filter(x => (item.id && x.id === item.id) || x.title === item.title).reduce((s, i) => s + i.qty, 0);
+        if (totalForProd + delta > maxStock) {
+          showToast('⚠️ أقصى كمية متوفرة بالمخزن هي ' + maxStock + ' قطعة!');
+          return;
+        }
+      }
       cart[index].qty += delta;
       if (cart[index].qty <= 0) cart.splice(index, 1);
       persistCartState();
@@ -2524,6 +2564,11 @@ function buildStore() {
       window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + msg, '_blank');
     }
 
+    function notifyRestockWhatsApp(title) {
+      const msg = 'مرحباً متجر باريس 👋%0Aأرغب في إشعاري فور توفر هذا المنتج من جديد:%0A• *المنتج:* ' + encodeURIComponent(title);
+      window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + msg, '_blank');
+    }
+
     function submitWhatsAppOrder() {
       const name = document.getElementById('custName').value.trim();
       const phone = document.getElementById('custPhone').value.trim();
@@ -2559,6 +2604,13 @@ function buildStore() {
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
       window.trackParisEvent('Purchase', { value: t.total, currency: 'EGP' });
+      // Auto-decrement inventory stock on server if available
+      fetch('/api/orders/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cart.map(i => ({ id: i.id, title: i.title, qty: i.qty })) })
+      }).catch(() => {});
+
       window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + orderMsg, '_blank');
       checkoutModal.style.display = 'none';
       cart = [];
@@ -2603,6 +2655,30 @@ function buildStore() {
       document.getElementById('qvModalPrice').innerText = formatPrice(prod.price) + ' ج.م';
       document.getElementById('qvModalOldPrice').innerText = (prod.regularPrice && prod.regularPrice > prod.price) ? (formatPrice(prod.regularPrice) + ' ج.م') : '';
       
+      const qvStockVal = getProductStock(prod.id, prod.title);
+      const qvStockBadge = document.getElementById('qvModalStockBadge');
+      const qvAddBtn = document.getElementById('qvAddToCartBtn');
+      if (qvStockBadge) {
+        if (qvStockVal <= 0) {
+          qvStockBadge.innerHTML = '<span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:3px 10px; border-radius:6px;">🚫 نفدت الكمية حالياً</span>';
+        } else if (qvStockVal <= 3) {
+          qvStockBadge.innerHTML = '<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:3px 10px; border-radius:6px;">🔥 كمية محدودة جداً — متبقي ' + qvStockVal + ' قطع فقط!</span>';
+        } else {
+          qvStockBadge.innerHTML = '<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; padding:3px 10px; border-radius:6px;">✓ متوفر بالمخزن (' + qvStockVal + ' قطعة)</span>';
+        }
+      }
+      if (qvAddBtn) {
+        if (qvStockVal <= 0) {
+          qvAddBtn.style.background = '#9ca3af';
+          qvAddBtn.style.cursor = 'not-allowed';
+          qvAddBtn.innerHTML = '<span>نفدت الكمية 🚫</span>';
+        } else {
+          qvAddBtn.style.background = '';
+          qvAddBtn.style.cursor = '';
+          qvAddBtn.innerHTML = '<span>أضف إلى السلة 🛒</span>';
+        }
+      }
+
       let deptName = 'قسم الأدوات المنزلية';
       if (prod.mall === 'clothes') deptName = 'قسم الأزياء والملابس';
       if (prod.mall === 'shoes') deptName = 'قسم الأحذية والرياضة';
@@ -2650,8 +2726,9 @@ function buildStore() {
 
       // Add to cart & WhatsApp button handlers
       document.getElementById('qvAddToCartBtn').onclick = () => {
-        addToCart(prod.title, prod.price, prod.image, selectedQvSize);
-        closeQuickView();
+        const beforeLen = cart.length;
+        addToCart(prod.title, prod.price, prod.image, selectedQvSize, prod.id);
+        if (getProductStock(prod.id, prod.title) > 0) closeQuickView();
       };
 
       document.getElementById('qvWhatsAppBtn').onclick = () => {
