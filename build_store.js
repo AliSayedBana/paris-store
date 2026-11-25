@@ -1965,9 +1965,9 @@ function buildStore() {
     </div>
 
     <div class="cart-panel-footer">
-      <!-- Coupon Code Box -->
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <input type="text" id="cartCouponInput" placeholder="أدخل كود الخصم (مثال: PARIS2026)" style="flex:1; padding:8px 12px; border:1.5px solid #ded7c8; border-radius:8px; font-family:inherit; font-size:12.5px; outline:none; text-transform:uppercase;">
+      <!-- Coupon Code Box (Shown only when admin adds active coupons) -->
+      <div id="cartCouponBox" style="display:${Object.keys(activeCouponsMap).length > 0 ? 'flex' : 'none'}; gap:8px; margin-bottom:12px;">
+        <input type="text" id="cartCouponInput" placeholder="أدخل كود الخصم إن وجد" style="flex:1; padding:8px 12px; border:1.5px solid #ded7c8; border-radius:8px; font-family:inherit; font-size:12.5px; outline:none; text-transform:uppercase;">
         <button type="button" onclick="applyCouponCode()" style="background:var(--paris-forest); color:#fff; border:none; padding:8px 14px; border-radius:8px; font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;">تطبيق</button>
       </div>
 
@@ -2100,7 +2100,7 @@ function buildStore() {
           <div style="color:#f5a623; font-size:14px;">★★★★★</div>
         </div>
         <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
-          "طقم الجرانيت الـ 32 قطعة وصلني في ميعاده بكرتونته الأصلية ومعاه شهادة الضمان 5 سنوات، وفحصت كل الحلل مع المندوب. كمان استخدمت كود PARIS2026 ووفر لي مبلغ محترم جداً!"
+          "طقم الجرانيت الـ 32 قطعة وصلني في ميعاده بكرتونته الأصلية ومعاه شهادة الضمان 5 سنوات، وفحصت كل الحلل مع المندوب، والتوصيل كان سريع ومؤمّن بالكامل!"
         </p>
       </div>
 
@@ -2371,7 +2371,7 @@ function buildStore() {
         renderCart();
         showToast('✅ تم تطبيق ' + PARIS_COUPONS[code].label + ' بنجاح!');
       } else {
-        showToast('❌ كود الخصم غير صحيح (جرب PARIS2026)');
+        showToast('❌ كود الخصم غير صحيح أو غير مفعل');
       }
     }
 

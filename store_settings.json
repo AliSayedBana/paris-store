@@ -2,27 +2,8 @@
   "whatsappNumber": "201065968425",
   "whatsappDisplay": "01065968425",
   "announcementText": "",
-  "activeCouponBannerCode": "PARIS2026",
-  "coupons": [
-    {
-      "code": "PARIS2026",
-      "rate": 10,
-      "label": "خصم VIP 10%",
-      "active": true
-    },
-    {
-      "code": "VIP10",
-      "rate": 10,
-      "label": "خصم VIP 10%",
-      "active": true
-    },
-    {
-      "code": "VIP15",
-      "rate": 15,
-      "label": "خصم خاص 15%",
-      "active": true
-    }
-  ],
+  "activeCouponBannerCode": "",
+  "coupons": [],
   "shipping": {
     "freeThreshold": 500,
     "vipThreshold": 5000,
