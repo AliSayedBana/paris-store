@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/assets/js/xlsx.full.min.js"></script>
   <style>
     :root {
       --paris-forest: #133e29;
@@ -935,11 +936,12 @@
           </select>
           <details style="position:relative;">
             <summary style="list-style:none; cursor:pointer; background:#f4f1ea; border:1px solid #e2ddd2; padding:8px 14px; border-radius:50px; font-size:12.5px; font-weight:800; color:var(--paris-forest); white-space:nowrap;">
-              ⚙️ خيارات CSV
+              📊 إكسيل / CSV
             </summary>
-            <div style="position:absolute; left:0; top:42px; background:#fff; border:1.5px solid #e2ddd2; border-radius:12px; padding:8px; box-shadow:0 8px 25px rgba(0,0,0,0.12); z-index:50; min-width:190px; display:flex; flex-direction:column; gap:6px;">
-              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="openImportModal()">📁 استيراد شيت CSV</button>
-              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="exportCSV()">📥 تصدير المنتجات (CSV)</button>
+            <div style="position:absolute; left:0; top:42px; background:#fff; border:1.5px solid #e2ddd2; border-radius:12px; padding:8px; box-shadow:0 8px 25px rgba(0,0,0,0.12); z-index:50; min-width:225px; display:flex; flex-direction:column; gap:6px;">
+              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="openImportModal()">📥 استيراد من إكسيل (.xlsx / .csv)</button>
+              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="downloadExcelTemplate()">📄 تحميل نموذج إكسيل جاهز</button>
+              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="exportExcel()">📤 تصدير المنتجات كملف إكسيل</button>
             </div>
           </details>
         </div>
@@ -1568,20 +1570,28 @@
     </div>
   </div>
 
-  <!-- ===================== MODAL: IMPORT CSV ===================== -->
+  <!-- ===================== MODAL: IMPORT EXCEL / CSV ===================== -->
   <div class="modal-backdrop" id="importModal">
-    <div class="modal-box" style="max-width:520px;">
+    <div class="modal-box" style="max-width:560px;">
       <div class="modal-header">
-        <h3 class="modal-title">📁 استيراد المنتجات من ملف CSV</h3>
+        <h3 class="modal-title">📊 استيراد المنتجات من ملف إكسيل (.xlsx / .csv)</h3>
         <button class="modal-close" onclick="closeImportModal()">&times;</button>
       </div>
-      <p style="font-size:13.5px; color:#666; margin-bottom:15px;">اختر ملف CSV يحتوي على بيانات المنتجات لإضافتها دفعة واحدة:</p>
+      <p style="font-size:13.5px; color:#555; margin-bottom:12px; line-height:1.6;">
+        يمكنك رفع ملف <strong>Microsoft Excel (.xlsx / .xls)</strong> أو <strong>CSV</strong> مباشرة، ويدعم الأعمدة بالعربية أو الإنجليزية (اسم المنتج، القسم، التصنيف، السعر، السعر قبل الخصم، رابط الصورة، المقاسات، الألوان).
+      </p>
+
+      <div style="margin-bottom:14px;">
+        <button type="button" class="admin-btn admin-btn-outline" style="font-size:12.5px; width:100%; justify-content:center; border-style:dashed;" onclick="downloadExcelTemplate()">
+          📄 تحميل ملف إكسيل نموذجي جاهز للتعبئة (.xlsx)
+        </button>
+      </div>
       
-      <input type="file" id="csvFileInput" accept=".csv" class="form-control" style="margin-bottom:15px;">
+      <input type="file" id="csvFileInput" accept=".xlsx,.xls,.csv" class="form-control" style="margin-bottom:16px;">
       
       <div style="display:flex; justify-content:flex-end; gap:10px;">
         <button type="button" class="admin-btn admin-btn-outline" onclick="closeImportModal()">إلغاء</button>
-        <button type="button" class="admin-btn admin-btn-gold" onclick="handleCSVUpload()">بدء الاستيراد</button>
+        <button type="button" class="admin-btn admin-btn-gold" id="btnStartExcelImport" onclick="handleExcelOrCSVUpload()">🚀 بدء استيراد الملف</button>
       </div>
     </div>
   </div>
@@ -2536,52 +2546,163 @@
       }
     }
 
-    // CSV Import / Export
+    // Excel (.xlsx/.xls) & CSV Import / Export
     function openImportModal() { document.getElementById('importModal').style.display = 'flex'; }
     function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
-    async function handleCSVUpload() {
-      const fileInput = document.getElementById('csvFileInput');
-      if (!fileInput.files.length) { showToast('يرجى اختيار ملف CSV أولاً'); return; }
-      
-      const file = fileInput.files[0];
-      const text = await file.text();
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length < 2) { showToast('ملف CSV فارغ أو غير صالح'); return; }
 
-      let imported = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        if (cols.length >= 3) {
+    function normalizeExcelMall(rawMall) {
+      const m = String(rawMall || '').trim().toLowerCase();
+      if (m.includes('home') || m.includes('منزل') || m.includes('مطبخ') || m.includes('ديكور')) return 'home';
+      if (m.includes('shoe') || m.includes('حذاء') || m.includes('أحذي') || m.includes('احذي')) return 'shoes';
+      return 'clothes';
+    }
+
+    function normalizeExcelCategory(mall, rawCat) {
+      const c = String(rawCat || '').trim().toLowerCase();
+      if (!c) return mall === 'home' ? 'home kitchen' : (mall === 'shoes' ? 'shoes men' : 'clothes men');
+      if (mall === 'clothes') {
+        if (c.includes('women') || c.includes('نسائ') || c.includes('حريم')) return 'clothes women';
+        if (c.includes('kid') || c.includes('أطفال') || c.includes('اطفال')) return 'clothes kids';
+        return 'clothes men';
+      }
+      if (mall === 'home') {
+        if (c.includes('decor') || c.includes('ديكور')) return 'home decor';
+        if (c.includes('textile') || c.includes('مفروش')) return 'home textiles';
+        if (c.includes('org') || c.includes('تنظيم') || c.includes('منظم')) return 'home org';
+        return 'home kitchen';
+      }
+      if (mall === 'shoes') {
+        if (c.includes('women') || c.includes('نسائ') || c.includes('حريم')) return 'shoes women';
+        if (c.includes('sport') || c.includes('رياض') || c.includes('سنيكر')) return 'shoes sports';
+        if (c.includes('kid') || c.includes('أطفال') || c.includes('اطفال')) return 'shoes kids';
+        return 'shoes men';
+      }
+      return c;
+    }
+
+    async function handleExcelOrCSVUpload() {
+      const fileInput = document.getElementById('csvFileInput');
+      if (!fileInput.files.length) { showToast('يرجى اختيار ملف إكسيل (.xlsx) أو CSV أولاً'); return; }
+      if (typeof XLSX === 'undefined') { showToast('مكتبة الإكسيل غير محملة'); return; }
+
+      const btn = document.getElementById('btnStartExcelImport');
+      if (btn) { btn.disabled = true; btn.innerText = '⏳ جاري الاستيراد...'; }
+
+      try {
+        const file = fileInput.files[0];
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+
+        if (!rows || rows.length < 2) {
+          showToast('ملف الإكسيل فارغ أو لا يحتوي على منتجات');
+          return;
+        }
+
+        const headers = rows[0].map(h => String(h || '').trim().toLowerCase());
+        const findCol = (keys, fallbackIdx) => {
+          const idx = headers.findIndex(h => keys.some(k => h.includes(k)));
+          return idx !== -1 ? idx : fallbackIdx;
+        };
+
+        const colTitle = findCol(['title', 'name', 'اسم', 'المنتج'], 0);
+        const colMall = findCol(['mall', 'قسم', 'المول'], 1);
+        const colCat = findCol(['category', 'cat', 'تصنيف'], 2);
+        const colPrice = findCol(['price', 'سعر البيع', 'السعر'], 3);
+        const colReg = findCol(['regular', 'old', 'قبل الخصم', 'الأصلي', 'الاصلي'], 4);
+        const colImg = findCol(['image', 'img', 'photo', 'صورة', 'رابط'], 5);
+        const colSizes = findCol(['size', 'مقاس'], 6);
+        const colColors = findCol(['color', 'لون', 'ألوان', 'الوان'], 7);
+
+        let imported = 0;
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const title = String(r[colTitle] || '').trim();
+          if (!title) continue;
+
+          const mall = normalizeExcelMall(r[colMall]);
+          const category = normalizeExcelCategory(mall, r[colCat]);
+          const price = parseFloat(String(r[colPrice] || '').replace(/,/g, '')) || 150;
+          const regRaw = parseFloat(String(r[colReg] || '').replace(/,/g, ''));
+          const regularPrice = (!isNaN(regRaw) && regRaw > price) ? regRaw : null;
+          const discountBadge = regularPrice ? ('خصم ' + Math.round(((regularPrice - price) / regularPrice) * 100) + '%') : '';
+          const image = String(r[colImg] || '').trim() || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800';
+          const sizes = String(r[colSizes] || '').split(/[;،,]/).map(s => s.trim()).filter(Boolean);
+          const colors = String(r[colColors] || '').split(/[;،,]/).map(c => c.trim()).filter(Boolean);
+
           const payload = {
-            title: cols[0],
-            mall: cols[1] || 'clothes',
-            category: cols[2] || 'clothes',
-            price: parseFloat(cols[3]) || 150,
-            regularPrice: parseFloat(cols[4]) || null,
-            image: cols[5] || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800',
-            sizes: cols[6] ? cols[6].split(';').map(s=>s.trim()) : [],
-            colors: cols[7] ? cols[7].split(';').map(c=>c.trim()) : [],
+            title, mall, category, price, regularPrice, discountBadge,
+            image, sizes, colors,
+            sale: Boolean(regularPrice && regularPrice > price),
             published: true
           };
-          await fetch('/api/products', {
+
+          const res = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          imported++;
+          if (res.ok) imported++;
         }
+
+        showToast('🎉 تم استيراد ' + imported + ' منتج من الإكسيل بنجاح!');
+        fileInput.value = '';
+        closeImportModal();
+        loadProducts();
+      } catch (e) {
+        console.error(e);
+        showToast('تعذر قراءة ملف الإكسيل، تأكد من صيغة الملف (.xlsx / .csv)');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = '🚀 بدء استيراد الملف'; }
       }
-      showToast('تم استيراد ' + imported + ' منتج بنجاح!');
-      closeImportModal();
-      loadProducts();
+    }
+
+    function downloadExcelTemplate() {
+      if (typeof XLSX === 'undefined') { showToast('مكتبة الإكسيل غير محملة'); return; }
+      const sampleRows = [
+        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان'],
+        ['جاكيت كاجوال إيطالي فاخر', 'clothes', 'ملابس رجالي', 1850, 2300, 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800', 'M; L; XL; 2XL', 'أسود; كحلي'],
+        ['طقم تقديم ضيافة جرانيت', 'home', 'أدوات المطبخ', 2400, 2900, 'https://images.unsplash.com/photo-1593618998160-e34014e67546?w=800', '', 'رمادي; بيج'],
+        ['سنيكرز رياضي مريح طبي', 'shoes', 'أحذية رياضية', 1250, 1500, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800', '41; 42; 43; 44', 'أسود; أبيض']
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(sampleRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'المنتجات');
+      XLSX.writeFile(wb, 'نموذج_رفع_منتجات_متجر_باريس.xlsx');
+      showToast('تم تحميل نموذج الإكسيل الجاهز بنجاح!');
+    }
+
+    function exportExcel() {
+      if (typeof XLSX === 'undefined') { exportCSV(); return; }
+      const rows = [
+        ['اسم المنتج', 'القسم', 'التصنيف', 'السعر', 'السعر قبل الخصم', 'رابط الصورة', 'المقاسات', 'الألوان']
+      ];
+      productsList.forEach(p => {
+        rows.push([
+          p.title || '',
+          p.mall || 'clothes',
+          p.category || '',
+          p.price || 0,
+          p.regularPrice || '',
+          p.image || '',
+          (p.sizes || []).join('; '),
+          (p.colors || []).join('; ')
+        ]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'منتجات_متجر_باريس');
+      XLSX.writeFile(wb, 'paris_store_products_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+      showToast('تم تصدير جميع المنتجات إلى ملف إكسيل (.xlsx)');
     }
 
     function exportCSV() {
-      let csv = 'Title,Mall,Category,Price,RegularPrice,Image,Sizes,Colors\n';
+      let csv = '\uFEFFTitle,Mall,Category,Price,RegularPrice,Image,Sizes,Colors\n';
       productsList.forEach(p => {
         const sizes = (p.sizes || []).join(';');
         const colors = (p.colors || []).join(';');
-        csv += `"${p.title.replace(/"/g, '""')}",${p.mall},${p.category},${p.price},${p.regularPrice || ''},"${p.image || ''}","${sizes}","${colors}"\n`;
+        csv += `"${(p.title || '').replace(/"/g, '""')}",${p.mall},${p.category},${p.price},${p.regularPrice || ''},"${p.image || ''}","${sizes}","${colors}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
