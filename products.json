@@ -29,7 +29,7 @@
     "id": 1,
     "mall": "clothes",
     "category": "clothes men",
-    "chip": "ملابس رجالي",
+    "chip": "ملابس رجالية",
     "title": "تيشيرت قطن مصري كلاسيك 100% مريح وعملي",
     "price": 185,
     "regularPrice": 220,
@@ -37,7 +37,11 @@
     "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80",
     "sale": true,
     "published": true,
-    "stock": 10
+    "stock": 10,
+    "brand": "",
+    "badge": "",
+    "sizes": [],
+    "colors": []
   },
   {
     "id": 2,
@@ -518,7 +522,7 @@
     "mall": "home",
     "category": "home kitchen",
     "chip": "أطقم طهي ملكية",
-    "title": "طقم جرانيت وأواني طهي تركي ملكي متكامل 32 قطعة مع ضمان 5 سنوات",
+    "title": "طقم جرانيت وأواني طهي تركي ملكي متكامل 32 قطعة",
     "price": 10500,
     "regularPrice": 13500,
     "discountBadge": "خصم 22%",
@@ -536,7 +540,7 @@
     "highlights": [
       "جرانيت أصلي تركي غير لاصق خالي تماماً من المواد الضارة",
       "طقم كامل 32 قطعة يغطي كل احتياجات المطبخ العصري",
-      "شهادة ضمان رسمية معتمدة 5 سنوات + حق الفحص قبل الدفع"
+      "حق الفحص والمعاينة الكاملة لكل قطعة قبل الدفع للمندوب"
     ],
     "gallery": [
       "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=800&auto=format&fit=crop&q=80",

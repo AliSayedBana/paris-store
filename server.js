@@ -6,8 +6,10 @@ const auth = require('./auth_utils');
 const storeSettings = require('./settings_utils');
 
 const PORT = parseInt(process.env.PORT, 10) || 4000;
+const HOST = process.env.HOST || '0.0.0.0';
 const BASE_DIR = path.resolve(__dirname);
 const PRODUCTS_FILE = path.join(BASE_DIR, 'products.json');
+const ORDERS_FILE = path.join(BASE_DIR, 'orders.json');
 const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB max request body (safe for high-res phone camera uploads)
 
 // Login Brute-Force Rate Limiter (10 failed attempts per 15 min window)
@@ -192,9 +194,17 @@ async function handleRequest(req, res) {
   res.setHeader('Expires', '0');
 
   // Health Check endpoint for hosting / reverse proxy monitors
-  if (reqPath === '/health' && method === 'GET') {
+  if ((reqPath === '/health' || reqPath === '/api/health') && method === 'GET') {
+    const prods = readJSON(PRODUCTS_FILE, []);
+    const ords = readJSON(ORDERS_FILE, []);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, status: 'healthy', uptime: Math.floor(process.uptime()) }));
+    res.end(JSON.stringify({
+      ok: true,
+      status: 'healthy',
+      uptime: Math.floor(process.uptime()),
+      productsCount: Array.isArray(prods) ? prods.length : 0,
+      ordersCount: Array.isArray(ords) ? ords.length : 0
+    }));
     return;
   }
 
@@ -290,6 +300,9 @@ async function handleRequest(req, res) {
   if (reqPath === '/api/admin/check-auth' && method === 'GET') {
     const session = auth.verifySession(req);
     if (session) {
+      const adminObj = auth.findAdminByEmail(session.email);
+      const defaultPwds = ['paris2026', 'clothes2026', 'home2026', 'shoes2026'];
+      const isDefaultPassword = defaultPwds.some(pw => Boolean(auth.verifyAdminPassword(adminObj, pw)));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         authenticated: true,
@@ -298,7 +311,8 @@ async function handleRequest(req, res) {
         name: session.name,
         role: session.role,
         mall: session.mall,
-        departmentName: session.departmentName
+        departmentName: session.departmentName,
+        isDefaultPassword
       }));
     } else {
       res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -729,12 +743,140 @@ async function handleRequest(req, res) {
     return;
   }
 
-  // POST /api/orders/checkout (Decrement product stock when customer places an order)
+  // POST /api/admin/products/bulk-delete (Bulk Delete Products - Protected)
+  if (reqPath === '/api/admin/products/bulk-delete' && method === 'POST') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح: يجب تسجيل الدخول أولاً' }));
+      return;
+    }
+    const body = await parseBody(req);
+    const idSet = new Set(Array.isArray(body && body.ids) ? body.ids.map(n => Number(n)) : []);
+    let products = readJSON(PRODUCTS_FILE, []);
+    let deletedCount = 0;
+
+    products = products.filter(p => {
+      const target = idSet.has(Number(p.id)) || idSet.has(Number(p.wp_id));
+      if (!target) return true;
+      if (session.mall && session.mall !== 'all' && p.mall !== session.mall) return true;
+      deletedCount++;
+      return false;
+    });
+
+    if (deletedCount > 0) {
+      writeJSON(PRODUCTS_FILE, products);
+      buildStore();
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, deletedCount }));
+    return;
+  }
+
+  // GET /api/admin/orders (Protected)
+  if (reqPath === '/api/admin/orders' && method === 'GET') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح بالوصول للطلبات' }));
+      return;
+    }
+    let orders = readJSON(ORDERS_FILE, []);
+    if (!Array.isArray(orders)) orders = [];
+    if (session.mall && session.mall !== 'all') {
+      orders = orders.filter(o => Array.isArray(o.items) && o.items.some(i => i.mall === session.mall));
+    }
+    orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, orders }));
+    return;
+  }
+
+  // PUT /api/admin/orders/:id (Update order status/notes - Protected)
+  if (reqPath.startsWith('/api/admin/orders/') && method === 'PUT') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح' }));
+      return;
+    }
+    const orderId = reqPath.replace('/api/admin/orders/', '').trim();
+    const updateData = await parseBody(req);
+    const orders = readJSON(ORDERS_FILE, []);
+    const idx = Array.isArray(orders) ? orders.findIndex(o => String(o.id) === orderId) : -1;
+    if (idx === -1) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'الطلب غير موجود' }));
+      return;
+    }
+    const allowedStatuses = ['جديد', 'قيد التأكيد', 'تم الشحن', 'تم التسليم', 'ملغي'];
+    if (updateData && allowedStatuses.includes(updateData.status)) {
+      orders[idx].status = updateData.status;
+    }
+    if (updateData && typeof updateData.adminNotes === 'string') {
+      orders[idx].adminNotes = updateData.adminNotes.trim();
+    }
+    orders[idx].updatedAt = new Date().toISOString();
+    writeJSON(ORDERS_FILE, orders);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, order: orders[idx] }));
+    return;
+  }
+
+  // DELETE /api/admin/orders/:id (Protected)
+  if (reqPath.startsWith('/api/admin/orders/') && method === 'DELETE') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح' }));
+      return;
+    }
+    const orderId = reqPath.replace('/api/admin/orders/', '').trim();
+    let orders = readJSON(ORDERS_FILE, []);
+    const before = Array.isArray(orders) ? orders.length : 0;
+    orders = (Array.isArray(orders) ? orders : []).filter(o => String(o.id) !== orderId);
+    if (orders.length === before) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'الطلب غير موجود' }));
+      return;
+    }
+    writeJSON(ORDERS_FILE, orders);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // GET /api/admin/backup (Export full JSON backup for production safety)
+  if (reqPath === '/api/admin/backup' && method === 'GET') {
+    const session = auth.verifySession(req);
+    if (!session || session.role !== 'super_admin') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'تصدير النسخة الاحتياطية للمدير العام فقط' }));
+      return;
+    }
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      storeName: 'Paris Store',
+      products: readJSON(PRODUCTS_FILE, []),
+      settings: storeSettings.getStoreSettings(),
+      orders: readJSON(ORDERS_FILE, [])
+    };
+    const dateTag = new Date().toISOString().slice(0, 10);
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="paris-store-backup-${dateTag}.json"`
+    });
+    res.end(JSON.stringify(backup, null, 2));
+    return;
+  }
+
+  // POST /api/orders/checkout (Save customer order log & decrement product stock)
   if (reqPath === '/api/orders/checkout' && method === 'POST') {
     const data = await parseBody(req);
     const items = Array.isArray(data && data.items) ? data.items : [];
     const products = readJSON(PRODUCTS_FILE, []);
     const alerts = [];
+    const enrichedItems = [];
     let changed = false;
 
     items.forEach(item => {
@@ -751,6 +893,23 @@ async function handleRequest(req, res) {
         } else if (prod.stock <= 3) {
           alerts.push({ id: prod.id, title: prod.title, stock: prod.stock, type: 'low_stock' });
         }
+        enrichedItems.push({
+          id: prod.id,
+          title: prod.title,
+          mall: prod.mall || 'clothes',
+          price: Number(prod.price) || Number(item.price) || 0,
+          size: item.size || '',
+          qty
+        });
+      } else if (item.title) {
+        enrichedItems.push({
+          id: item.id || null,
+          title: String(item.title),
+          mall: 'clothes',
+          price: Number(item.price) || 0,
+          size: item.size || '',
+          qty
+        });
       }
     });
 
@@ -759,8 +918,40 @@ async function handleRequest(req, res) {
       buildStore();
     }
 
+    let orderId = null;
+    if (enrichedItems.length > 0) {
+      let orders = readJSON(ORDERS_FILE, []);
+      if (!Array.isArray(orders)) orders = [];
+      const nextNum = 1001 + orders.length;
+      orderId = 'ORD-' + nextNum;
+      const calcSubtotal = enrichedItems.reduce((s, i) => s + (i.price * i.qty), 0);
+      const discount = Math.max(0, Number(data && data.discount) || 0);
+      const shipping = Math.max(0, Number(data && data.shipping) || 0);
+      const total = Number(data && data.total) || Math.max(0, calcSubtotal - discount + shipping);
+
+      const newOrder = {
+        id: orderId,
+        customerName: String((data && data.customerName) || 'عميل طلب سريع').trim(),
+        customerPhone: String((data && data.customerPhone) || '').trim(),
+        gov: String((data && data.gov) || '').trim(),
+        address: String((data && data.address) || '').trim(),
+        couponCode: (data && data.couponCode) ? String(data.couponCode) : null,
+        items: enrichedItems,
+        subtotal: calcSubtotal,
+        discount,
+        shipping,
+        total,
+        status: 'جديد',
+        adminNotes: '',
+        source: (data && data.source) || 'checkout',
+        createdAt: new Date().toISOString()
+      };
+      orders.push(newOrder);
+      writeJSON(ORDERS_FILE, orders);
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, alerts }));
+    res.end(JSON.stringify({ ok: true, orderId, alerts }));
     return;
   }
 
@@ -916,8 +1107,8 @@ async function handleRequest(req, res) {
   });
 }
 
-server.listen(PORT, () => {
-  console.log(`Paris Store server running on http://localhost:${PORT}/ and http://127.0.0.1:${PORT}/`);
+server.listen(PORT, HOST, () => {
+  console.log(`Paris Store server running on http://localhost:${PORT}/ and http://${HOST}:${PORT}/`);
   console.log(`Admin Login running on http://localhost:${PORT}/login`);
   console.log(`Admin Dashboard running on http://localhost:${PORT}/admin`);
 });

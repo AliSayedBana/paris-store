@@ -837,7 +837,21 @@
       </div>
     </div>
 
-    <!-- Master View Switcher (List vs Studio vs Settings) -->
+    <!-- Default Password Production Security Warning Banner -->
+    <div id="defaultPasswordWarning" style="display:none; background:#fffbeb; border:1.5px solid #fcd34d; border-radius:14px; padding:14px 20px; margin-bottom:18px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">🛡️</span>
+        <div>
+          <div style="font-weight:900; color:#92400e; font-size:14px;">تنبيه أمان ما قبل النشر: كلمة المرور الحالية هي الافتراضية!</div>
+          <div style="font-size:12.5px; color:#78350f; margin-top:2px;">قبل نشر المتجر أونلاين، يُنصح بتغيير كلمة المرور لحماية لوحة التحكم ومنتجاتك.</div>
+        </div>
+      </div>
+      <button type="button" class="admin-btn admin-btn-primary" style="background:#b45309; padding:8px 16px; font-size:12.5px;" onclick="openSettingsModal()">
+        🔐 تغيير كلمة المرور الآن
+      </button>
+    </div>
+
+    <!-- Master View Switcher (List vs Studio vs Orders vs Settings) -->
     <div class="admin-view-switcher">
       <button type="button" class="view-switch-btn active" id="btnViewList" onclick="switchAdminView('list')">
         <span>📦</span>
@@ -849,6 +863,12 @@
         <span>➕</span>
         <span>إضافة منتج جديد</span>
         <span class="view-tab-badge" style="background:#25d366; color:#fff;">سريع ⚡</span>
+      </button>
+
+      <button type="button" class="view-switch-btn" id="btnViewOrders" onclick="switchAdminView('orders')">
+        <span>🧾</span>
+        <span>الطلبات الواردة</span>
+        <span class="view-tab-badge" id="ordersBadgeCount" style="background:#eb6b47; color:#fff;">0</span>
       </button>
 
       <button type="button" class="view-switch-btn" id="btnViewSettings" onclick="switchAdminView('settings')">
@@ -931,6 +951,9 @@
           <button type="button" class="admin-btn admin-btn-primary" style="background:#0d5c3a; padding:11px 22px; font-size:14px;" onclick="switchAdminView('studio')">
             ➕ أضف منتجاً جديداً
           </button>
+          <button type="button" id="bulkDeleteBtn" class="admin-btn admin-btn-danger" style="display:none; padding:10px 16px; font-size:13px;" onclick="bulkDeleteSelectedProducts()">
+            🗑️ حذف المحدد (<span id="selectedProdsCount">0</span>)
+          </button>
 
           <div class="dept-filter-pills" id="deptFilterPillsBar">
             <button type="button" class="dept-pill-btn active" data-mall="all" onclick="selectMallFilterPill('all', this)">الكل</button>
@@ -972,12 +995,13 @@
         <table class="products-table">
           <thead>
             <tr>
+              <th style="width:36px; text-align:center;"><input type="checkbox" id="selectAllProds" onchange="toggleSelectAllProds(this.checked)" title="تحديد الكل" style="width:16px; height:16px; cursor:pointer;"></th>
               <th style="width:68px;">الصورة</th>
               <th>المنتج والتصنيف</th>
               <th>القسم</th>
-              <th>السعر والخصم</th>
+              <th>السعر والكمية</th>
               <th>الحالة</th>
-              <th style="text-align:left;">إجراءات سريعة</th>
+              <th style="text-align:left;">تعديل وحذف</th>
             </tr>
           </thead>
           <tbody id="productsTableBody">
@@ -1430,6 +1454,95 @@
           <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:15px; font-size:15.5px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
             💾 حفظ جميع التعديلات وتحديث المتجر فوراً
           </button>
+
+          <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:16px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <div style="font-weight:900; color:var(--paris-forest); font-size:14px;">📦 النسخ الاحتياطي قبل النشر (Production Backup)</div>
+              <div style="font-size:12px; color:#64748b; margin-top:2px;">حمّل نسخة كاملة من المنتجات والطلبات والإعدادات كملف JSON آمن على جهازك.</div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-outline" style="background:#fff; border-color:var(--paris-forest); color:var(--paris-forest);" onclick="window.location.href='/api/admin/backup'">
+              ⬇️ تحميل نسخة احتياطية (.json)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VIEW 4: ORDERS LOG ===================== -->
+    <div id="ordersView" style="display:none;">
+      <div class="upload-studio-card">
+        <div class="studio-header">
+          <div>
+            <h3 class="studio-title">
+              <span>🧾</span>
+              <span>سجل الطلبات الواردة من العملاء</span>
+            </h3>
+            <p class="studio-subhead">يتم تسجيل كل طلب هنا تلقائياً عند تأكيد العميل مع خصم الكمية من المخزون، لمتابعة الشحن والتواصل.</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="admin-btn admin-btn-outline" onclick="loadOrders()">🔄 تحديث الطلبات</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:18px;">
+          <div class="stat-card">
+            <div class="stat-icon">🧾</div>
+            <div>
+              <div class="stat-number" id="ordStatTotal">0</div>
+              <div class="stat-label">إجمالي الطلبات</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#fff7ed;">🆕</div>
+            <div>
+              <div class="stat-number" id="ordStatNew" style="color:#c2410c;">0</div>
+              <div class="stat-label">طلبات جديدة</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#e8f5e9;">🚚</div>
+            <div>
+              <div class="stat-number" id="ordStatDelivered" style="color:#15803d;">0</div>
+              <div class="stat-label">تم الشحن / التسليم</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#fef7e0;">💰</div>
+            <div>
+              <div class="stat-number" id="ordStatRevenue" style="color:#92400e;">0</div>
+              <div class="stat-label">إجمالي المبيعات (ج.م)</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+          <input type="text" id="orderSearchInput" class="search-input" placeholder="🔍 ابحث برقم الطلب أو اسم العميل أو الموبايل..." oninput="renderOrdersTable()" style="flex:1; min-width:220px;">
+          <select id="orderStatusFilter" class="filter-select" onchange="renderOrdersTable()">
+            <option value="all">كل الحالات</option>
+            <option value="جديد">جديد 🆕</option>
+            <option value="قيد التأكيد">قيد التأكيد 📞</option>
+            <option value="تم الشحن">تم الشحن 🚚</option>
+            <option value="تم التسليم">تم التسليم ✅</option>
+            <option value="ملغي">ملغي ❌</option>
+          </select>
+        </div>
+
+        <div class="table-container">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>رقم الطلب والتاريخ</th>
+                <th>بيانات العميل والعنوان</th>
+                <th>المنتجات المطلوبة</th>
+                <th>الإجمالي</th>
+                <th>الحالة</th>
+                <th style="text-align:left;">إجراء</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:30px; color:#888;">جاري تحميل الطلبات...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1536,9 +1649,12 @@
         </label>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top:1px solid #f0ede6; padding-top:15px;">
-        <button type="button" class="admin-btn admin-btn-outline" onclick="closeProductModal()">إلغاء</button>
-        <button type="button" class="admin-btn admin-btn-primary" onclick="saveModalProduct()">حفظ التعديلات</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:20px; border-top:1px solid #f0ede6; padding-top:15px;">
+        <button type="button" class="admin-btn admin-btn-danger" onclick="deleteFromEditModal()">🗑️ حذف هذا المنتج</button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="admin-btn admin-btn-outline" onclick="closeProductModal()">إلغاء</button>
+          <button type="button" class="admin-btn admin-btn-primary" onclick="saveModalProduct()">حفظ التعديلات</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1681,8 +1797,12 @@
         document.getElementById('settingsAdminEmail').value = data.email;
         document.getElementById('settingsAdminName').value = data.name;
 
+        const pwdWarn = document.getElementById('defaultPasswordWarning');
+        if (pwdWarn) pwdWarn.style.display = data.isDefaultPassword ? 'flex' : 'none';
+
         applyRoleUI();
         loadProducts();
+        loadOrders();
       } catch (err) {
         window.location.href = '/login';
       }
@@ -1809,23 +1929,29 @@
       window.location.href = '/login';
     }
 
-    // View Switching (List vs Studio vs Settings)
+    // View Switching (List vs Studio vs Orders vs Settings)
     function switchAdminView(view, targetMall) {
       const btnList = document.getElementById('btnViewList');
       const btnStudio = document.getElementById('btnViewStudio');
+      const btnOrders = document.getElementById('btnViewOrders');
       const btnSettings = document.getElementById('btnViewSettings');
       const viewList = document.getElementById('productsListView');
       const viewStudio = document.getElementById('uploadStudioView');
+      const viewOrders = document.getElementById('ordersView');
       const viewSettings = document.getElementById('storeSettingsView');
 
-      [btnList, btnStudio, btnSettings].forEach(b => b && b.classList.remove('active'));
-      [viewList, viewStudio, viewSettings].forEach(v => { if (v) v.style.display = 'none'; });
+      [btnList, btnStudio, btnOrders, btnSettings].forEach(b => b && b.classList.remove('active'));
+      [viewList, viewStudio, viewOrders, viewSettings].forEach(v => { if (v) v.style.display = 'none'; });
 
       if (view === 'studio') {
         if (btnStudio) btnStudio.classList.add('active');
         if (viewStudio) viewStudio.style.display = 'block';
         if (targetMall) selectStudioMall(targetMall);
         window.scrollTo({ top: 120, behavior: 'smooth' });
+      } else if (view === 'orders') {
+        if (btnOrders) btnOrders.classList.add('active');
+        if (viewOrders) viewOrders.style.display = 'block';
+        loadOrders();
       } else if (view === 'settings') {
         if (btnSettings) btnSettings.classList.add('active');
         if (viewSettings) viewSettings.style.display = 'block';
@@ -1942,8 +2068,11 @@
 
     function renderProductsTable(prods) {
       const tbody = document.getElementById('productsTableBody');
+      const selAll = document.getElementById('selectAllProds');
+      if (selAll) selAll.checked = false;
       if (prods.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#888;">لا توجد منتجات مطابقة للبحث أو القسم.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#888;">لا توجد منتجات مطابقة للبحث أو القسم.</td></tr>';
+        updateBulkSelectionUI();
         return;
       }
 
@@ -1968,6 +2097,7 @@
 
         return `
           <tr>
+            <td style="text-align:center;"><input type="checkbox" class="prod-row-check" value="${p.id}" onchange="updateBulkSelectionUI()" style="width:16px; height:16px; cursor:pointer;"></td>
             <td><img src="${p.image || ''}" class="table-thumb" alt=""></td>
             <td>
               <div style="font-weight:800; color:var(--paris-forest); font-size:14px;">${p.title}</div>
@@ -1995,13 +2125,45 @@
             <td>${statusBtn}</td>
             <td style="text-align:left;">
               <div style="display:flex; gap:6px; justify-content:flex-end;">
-                <button type="button" class="admin-btn admin-btn-outline" style="padding:6px 14px; font-size:12.5px;" onclick="openEditProductModal(${p.id})">✏️ تعديل السعر والبيانات</button>
-                <button type="button" class="admin-btn admin-btn-danger" style="padding:6px 10px; font-size:12px;" onclick="deleteProduct(${p.id})" title="حذف">🗑️</button>
+                <button type="button" class="admin-btn admin-btn-outline" style="padding:6px 12px; font-size:12.5px;" onclick="openEditProductModal(${p.id})">✏️ تعديل</button>
+                <button type="button" class="admin-btn admin-btn-danger" style="padding:6px 11px; font-size:12px;" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
               </div>
             </td>
           </tr>
         `;
       }).join('');
+      updateBulkSelectionUI();
+    }
+
+    function toggleSelectAllProds(checked) {
+      document.querySelectorAll('.prod-row-check').forEach(cb => { cb.checked = checked; });
+      updateBulkSelectionUI();
+    }
+
+    function updateBulkSelectionUI() {
+      const checks = Array.from(document.querySelectorAll('.prod-row-check:checked'));
+      const btn = document.getElementById('bulkDeleteBtn');
+      const cnt = document.getElementById('selectedProdsCount');
+      if (cnt) cnt.innerText = checks.length;
+      if (btn) btn.style.display = checks.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    async function bulkDeleteSelectedProducts() {
+      const ids = Array.from(document.querySelectorAll('.prod-row-check:checked')).map(cb => Number(cb.value));
+      if (ids.length === 0) return;
+      if (!confirm('هل أنت متأكد من حذف ' + ids.length + ' منتج محدد نهائياً من المتجر؟')) return;
+      const res = await fetch('/api/admin/products/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        showToast('🗑️ تم حذف ' + data.deletedCount + ' منتج بنجاح');
+        loadProducts();
+      } else {
+        showToast(data.message || 'تعذر حذف المنتجات المحددة');
+      }
     }
 
     function filterProductsTable() {
@@ -2521,6 +2683,8 @@
       p.badge = document.getElementById('prodBadge').value;
       p.mall = document.getElementById('prodMall').value;
       p.category = document.getElementById('prodCategory').value;
+      const matchedCat = (categoriesOptions[p.mall] || []).find(c => c.slug === p.category);
+      if (matchedCat) p.chip = matchedCat.label;
       p.price = parseFloat(document.getElementById('prodPrice').value);
       p.regularPrice = parseFloat(document.getElementById('prodRegularPrice').value) || null;
       const modStock = parseInt(document.getElementById('prodStock').value, 10);
@@ -2537,23 +2701,171 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(p)
       });
+      const resData = await res.json().catch(() => ({}));
       if (res.ok) {
         showToast('تم حفظ التعديلات بنجاح');
         closeProductModal();
         loadProducts();
       } else {
-        showToast('تعذر حفظ التعديلات');
+        showToast(resData.message || 'تعذر حفظ التعديلات');
       }
     }
 
     async function deleteProduct(id) {
       if (!confirm('هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟')) return;
       const res = await fetch('/api/products/' + id, { method: 'DELETE' });
+      const resData = await res.json().catch(() => ({}));
       if (res.ok) {
         showToast('تم حذف المنتج بنجاح');
         loadProducts();
       } else {
-        showToast('تعذر حذف المنتج');
+        showToast(resData.message || 'تعذر حذف المنتج');
+      }
+    }
+
+    async function deleteFromEditModal() {
+      const id = document.getElementById('editProductId').value;
+      if (!id) return;
+      if (!confirm('هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟')) return;
+      const res = await fetch('/api/products/' + id, { method: 'DELETE' });
+      const resData = await res.json().catch(() => ({}));
+      if (res.ok) {
+        closeProductModal();
+        showToast('تم حذف المنتج بنجاح');
+        loadProducts();
+      } else {
+        showToast(resData.message || 'تعذر حذف المنتج');
+      }
+    }
+
+    // Orders Log Management
+    let ordersList = [];
+
+    async function loadOrders() {
+      try {
+        const res = await fetch('/api/admin/orders');
+        if (!res.ok) return;
+        const data = await res.json();
+        ordersList = Array.isArray(data.orders) ? data.orders : [];
+        updateOrdersStats();
+        renderOrdersTable();
+      } catch (e) {
+        console.error('Error loading orders:', e);
+      }
+    }
+
+    function updateOrdersStats() {
+      const totalEl = document.getElementById('ordStatTotal');
+      const newEl = document.getElementById('ordStatNew');
+      const delivEl = document.getElementById('ordStatDelivered');
+      const revEl = document.getElementById('ordStatRevenue');
+      const badgeEl = document.getElementById('ordersBadgeCount');
+
+      const newCount = ordersList.filter(o => o.status === 'جديد').length;
+      const deliveredCount = ordersList.filter(o => o.status === 'تم الشحن' || o.status === 'تم التسليم').length;
+      const revenue = ordersList.filter(o => o.status !== 'ملغي').reduce((s, o) => s + (Number(o.total) || 0), 0);
+
+      if (totalEl) totalEl.innerText = ordersList.length;
+      if (newEl) newEl.innerText = newCount;
+      if (delivEl) delivEl.innerText = deliveredCount;
+      if (revEl) revEl.innerText = revenue.toLocaleString('en-US');
+      if (badgeEl) badgeEl.innerText = newCount > 0 ? newCount : ordersList.length;
+    }
+
+    function renderOrdersTable() {
+      const tbody = document.getElementById('ordersTableBody');
+      if (!tbody) return;
+      const q = (document.getElementById('orderSearchInput')?.value || '').trim().toLowerCase();
+      const stFilter = document.getElementById('orderStatusFilter')?.value || 'all';
+
+      const filtered = ordersList.filter(o => {
+        const matchSt = (stFilter === 'all') || (o.status === stFilter);
+        const hay = ((o.id || '') + ' ' + (o.customerName || '') + ' ' + (o.customerPhone || '') + ' ' + (o.gov || '')).toLowerCase();
+        const matchQ = !q || hay.includes(q);
+        return matchSt && matchQ;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:35px; color:#888;">لا توجد طلبات مسجلة حالياً. ستظهر الطلبات هنا فور تأكيد العملاء من السلة!</td></tr>';
+        return;
+      }
+
+      const statusColors = {
+        'جديد': '#fff7ed; color:#c2410c; border-color:#fed7aa',
+        'قيد التأكيد': '#eff6ff; color:#1d4ed8; border-color:#bfdbfe',
+        'تم الشحن': '#f5f3ff; color:#6d28d9; border-color:#ddd6fe',
+        'تم التسليم': '#f0fdf4; color:#15803d; border-color:#bbf7d0',
+        'ملغي': '#fef2f2; color:#b91c1c; border-color:#fecaca'
+      };
+
+      tbody.innerHTML = filtered.map(o => {
+        const dt = o.createdAt ? new Date(o.createdAt).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) : '';
+        const itemsHtml = (o.items || []).map(it =>
+          `<div style="font-size:12px; color:#19201d; margin-bottom:3px;">• ${it.title}${it.size ? ' [' + it.size + ']' : ''} <strong>×${it.qty}</strong></div>`
+        ).join('');
+        const waPhone = (o.customerPhone || '').replace(/[^0-9]/g, '');
+        const waHref = waPhone ? ('https://wa.me/' + (waPhone.startsWith('2') ? waPhone : '2' + waPhone)) : '#';
+        const stStyle = statusColors[o.status] || '#f8fafc; color:#334155; border-color:#cbd5e1';
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:900; color:var(--paris-forest); font-size:13.5px;">${o.id}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:3px;">${dt}</div>
+            </td>
+            <td>
+              <div style="font-weight:800; color:#111; font-size:13.5px;">${o.customerName || '-'}</div>
+              <div style="font-size:12px; color:#0f3322; font-weight:700; margin-top:2px;">
+                📞 ${o.customerPhone || '-'}
+                ${waPhone ? `<a href="${waHref}" target="_blank" style="margin-inline-start:6px; background:#25d366; color:#fff; padding:1px 7px; border-radius:50px; font-size:10.5px; text-decoration:none;">واتساب</a>` : ''}
+              </div>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px;">📍 ${o.gov || ''} ${o.address ? '— ' + o.address : ''}</div>
+            </td>
+            <td>${itemsHtml}</td>
+            <td>
+              <strong style="font-size:14.5px; color:var(--paris-forest);">${Number(o.total || 0).toLocaleString('en-US')} ج.م</strong>
+              ${o.shipping > 0 ? `<div style="font-size:10.5px; color:#64748b;">شامل شحن ${o.shipping} ج.م</div>` : '<div style="font-size:10.5px; color:#15803d;">شحن مجاني</div>'}
+            </td>
+            <td>
+              <select onchange="updateOrderStatus('${o.id}', this.value)" style="padding:5px 8px; border-radius:8px; font-family:inherit; font-size:12px; font-weight:800; border:1px solid; background:${stStyle}; cursor:pointer;">
+                ${['جديد', 'قيد التأكيد', 'تم الشحن', 'تم التسليم', 'ملغي'].map(st => `<option value="${st}" ${o.status === st ? 'selected' : ''}>${st}</option>`).join('')}
+              </select>
+            </td>
+            <td style="text-align:left;">
+              <button type="button" class="admin-btn admin-btn-danger" style="padding:5px 10px; font-size:11.5px;" onclick="deleteOrderRecord('${o.id}')">🗑️ حذف</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updateOrderStatus(orderId, status) {
+      const res = await fetch('/api/admin/orders/' + encodeURIComponent(orderId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        const target = ordersList.find(o => o.id === orderId);
+        if (target) target.status = status;
+        updateOrdersStats();
+        renderOrdersTable();
+        showToast('✅ تم تحديث حالة الطلب ' + orderId + ' إلى: ' + status);
+      } else {
+        showToast('تعذر تحديث حالة الطلب');
+      }
+    }
+
+    async function deleteOrderRecord(orderId) {
+      if (!confirm('هل تريد حذف سجل الطلب ' + orderId + '؟')) return;
+      const res = await fetch('/api/admin/orders/' + encodeURIComponent(orderId), { method: 'DELETE' });
+      if (res.ok) {
+        ordersList = ordersList.filter(o => o.id !== orderId);
+        updateOrdersStats();
+        renderOrdersTable();
+        showToast('🗑️ تم حذف الطلب بنجاح');
+      } else {
+        showToast('تعذر حذف الطلب');
       }
     }
 

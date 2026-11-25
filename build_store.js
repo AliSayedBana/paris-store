@@ -122,8 +122,7 @@ function buildStore() {
           data-sale="${saleStr}" 
           data-id="${p.id}" 
           data-price="${p.price}" 
-          data-stock="${stockVal}"
-          data-rating="4.9">
+          data-stock="${stockVal}">
         <div class="paris-card-inner">
           
           <!-- Image Container with Hover Actions -->
@@ -166,13 +165,6 @@ function buildStore() {
             <h3 class="card-product-title">
               <a href="javascript:void(0)" onclick="openQuickView(${p.id})" title="${safeTitle}">${p.title}</a>
             </h3>
-
-            <!-- Rating & Trust -->
-            <div class="card-rating-strip">
-              <div class="stars-gold">★★★★★</div>
-              <span class="rating-num">4.9</span>
-              <span class="rating-count">(140+ تقييم)</span>
-            </div>
 
             <!-- Sizes Bar -->
             ${sizesHtml}
@@ -1968,7 +1960,7 @@ function buildStore() {
           <option value="featured">الأكثر تميزاً وطلباً ⭐</option>
           <option value="price-asc">السعر: من الأقل للأعلى ⬆️</option>
           <option value="price-desc">السعر: من الأعلى للأقل ⬇️</option>
-          <option value="rating">الأعلى تقييماً 🏆</option>
+          <option value="newest">الأحدث إضافةً 🆕</option>
         </select>
       </div>
     </div>
@@ -2001,12 +1993,6 @@ function buildStore() {
       <div class="quickview-details-box">
         <div class="qv-dept-badge" id="qvModalDept">قسم المتجر</div>
         <h3 class="qv-title" id="qvModalTitle">عنوان المنتج</h3>
-        
-        <div class="card-rating-strip" style="margin-bottom:14px;">
-          <div class="stars-gold">★★★★★</div>
-          <span class="rating-num">4.9</span>
-          <span class="rating-count">(تقييمات العملاء الموثقة)</span>
-        </div>
 
         <div class="qv-price-wrap">
           <span class="qv-price-val" id="qvModalPrice">0 ج.م</span>
@@ -2102,6 +2088,9 @@ function buildStore() {
 
       <button type="button" class="btn-card-whatsapp-quick" id="openCheckoutModalBtn" style="width:100%; padding:14px; font-size:16px; border-radius:50px;">
         <span>تأكيد الطلب عبر واتساب الآن &larr;</span>
+      </button>
+      <button type="button" id="clearCartBtn" onclick="clearCartItems()" style="display:none; width:100%; margin-top:8px; padding:9px; font-size:12.5px; font-weight:800; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:50px; cursor:pointer; font-family:inherit;">
+        🗑️ تفريغ السلة بالكامل
       </button>
     </div>
 
@@ -2297,7 +2286,11 @@ function buildStore() {
     let wishlistItems = [];
     let appliedCoupon = null;
     try {
-      cart = JSON.parse(localStorage.getItem('paris_cart_v2') || '[]');
+      localStorage.removeItem('paris_cart_v2');
+      const rawCart = JSON.parse(localStorage.getItem('paris_cart_v3') || '[]');
+      cart = Array.isArray(rawCart)
+        ? rawCart.filter(item => item && item.title && productsData.some(p => (item.id && p.id === item.id) || p.title === item.title))
+        : [];
       wishlistItems = JSON.parse(localStorage.getItem('paris_wishlist_v2') || '[]');
       const savedCode = localStorage.getItem('paris_coupon_v2');
       if (savedCode && PARIS_COUPONS[savedCode]) appliedCoupon = savedCode;
@@ -2320,7 +2313,7 @@ function buildStore() {
 
     function persistCartState() {
       try {
-        localStorage.setItem('paris_cart_v2', JSON.stringify(cart));
+        localStorage.setItem('paris_cart_v3', JSON.stringify(cart));
         if (appliedCoupon) localStorage.setItem('paris_coupon_v2', appliedCoupon);
         else localStorage.removeItem('paris_coupon_v2');
       } catch (e) {}
@@ -2566,11 +2559,21 @@ function buildStore() {
       renderCart();
     }
 
+    function clearCartItems() {
+      cart = [];
+      appliedCoupon = null;
+      persistCartState();
+      updateCartBadge();
+      renderCart();
+      showToast('تم تفريغ السلة بنجاح 🗑️');
+    }
+
     function renderCart() {
       const discRow = document.getElementById('cartDiscountRow');
       const discLabel = document.getElementById('cartDiscountLabel');
       const discVal = document.getElementById('cartDiscountVal');
       const shipVal = document.getElementById('cartShippingVal');
+      const clearBtn = document.getElementById('clearCartBtn');
 
       if (cart.length === 0) {
         cartEmptyState.style.display = 'block';
@@ -2578,11 +2581,14 @@ function buildStore() {
         cartSubtotalVal.innerText = '0 ج.م';
         cartTotalVal.innerText = '0 ج.م';
         if (discRow) discRow.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'none';
         if (shipVal) shipVal.innerText = 'مجاني للطلبات فوق 500 ج.م';
         shippingProgressFill.style.width = '0%';
         freeShippingText.innerText = '🚚 أضف بـ 500 ج.م للحصول على شحن مجاني!';
         return;
       }
+
+      if (clearBtn) clearBtn.style.display = 'block';
 
       cartEmptyState.style.display = 'none';
       cartItemsList.style.display = 'block';
@@ -2693,11 +2699,23 @@ function buildStore() {
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
       window.trackParisEvent('Purchase', { value: t.total, currency: 'EGP' });
-      // Auto-decrement inventory stock on server if available
+      // Save customer order log & auto-decrement inventory stock on server
       fetch('/api/orders/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: cart.map(i => ({ id: i.id, title: i.title, qty: i.qty })) })
+        body: JSON.stringify({
+          customerName: name,
+          customerPhone: phone,
+          gov: gov,
+          address: addr,
+          couponCode: appliedCoupon,
+          subtotal: t.subtotal,
+          discount: t.discount,
+          shipping: t.shipping,
+          total: t.total,
+          source: 'checkout',
+          items: cart.map(i => ({ id: i.id, title: i.title, price: i.price, size: i.size || '', qty: i.qty }))
+        })
       }).catch(() => {});
 
       window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + orderMsg, '_blank');
@@ -3118,7 +3136,7 @@ function buildStore() {
 
         if (sortVal === 'price-asc') return priceA - priceB;
         if (sortVal === 'price-desc') return priceB - priceA;
-        if (sortVal === 'rating') return idB - idA;
+        if (sortVal === 'newest' || sortVal === 'rating') return idB - idA;
         return idA - idB; // featured
       });
 

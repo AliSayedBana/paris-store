@@ -8,6 +8,7 @@ scratch/
 *.tmp
 *.log
 scratch.html
+orders.json
 
 # Local Server & IDE
 .vscode/
