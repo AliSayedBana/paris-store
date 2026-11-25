@@ -3273,16 +3273,22 @@ function buildStore() {
     }
 
     const BOT_STOP_WORDS = new Set([
-      'عندكم', 'عندك', 'عندكوا', 'عاوز', 'عايز', 'عاوزين', 'عايزين', 'محتاج', 'محتاجين',
+      'عندكم', 'عندك', 'عندكوا', 'عاوز', 'عايز', 'عاوزين', 'عايزين', 'عاوزلي', 'عايزلي',
+      'محتاج', 'محتاجين', 'معاي', 'معايا', 'معي', 'بمبلغ', 'بميزانيه', 'يجيبولي', 'يجيبوا',
       'ابحث', 'دور', 'عن', 'في', 'فيه', 'فيها', 'من', 'بكام', 'بكم', 'سعر', 'اسعار',
       'لو', 'سمحت', 'سمحتي', 'ممكن', 'انا', 'احنا', 'منتج', 'منتجات', 'قسم', 'مول',
       'حاجه', 'حاجات', 'شويه', 'اي', 'ايه', 'تحت', 'اقل', 'حتي', 'فوق', 'اعلي', 'اكثر',
-      'بين', 'الي', 'جنيه', 'جم', 'مصري', 'قولي', 'هات', 'وريني', 'اريد', 'نريد',
+      'بين', 'الي', 'جنيه', 'جم', 'مصري', 'قولي', 'هات', 'هاتلي', 'وريني', 'اريد', 'نريد',
       'متوفر', 'متاح', 'موجود', 'كاش', 'ميزانيه', 'ميزانيتي', 'بحدود', 'حدود', 'تقريبا',
-      'يعني', 'بس', 'او', 'علي', 'قد', 'اللي', 'عندنا', 'دي', 'ده', 'دول'
+      'يعني', 'بس', 'او', 'علي', 'قد', 'اللي', 'عندنا', 'دي', 'ده', 'دول', 'اشتري'
     ]);
 
     const BOT_DEPT_WORDS = new Set(['ملابس', 'هدوم', 'ازياء', 'منزل', 'منزليه', 'ادوات', 'مطبخ', 'احذيه', 'شوز', 'شوزات', 'جزم', 'جزمه']);
+
+    const BOT_MODIFIER_KEYS = new Set([
+      'رجالي', 'رجال', 'شبابي', 'حريمي', 'نسائي', 'نسائيه', 'بناتي',
+      'اطفال', 'طفل', 'ولادي', 'كلاسيك', 'رياضي', 'رياضيه', 'كاجوال', 'صيفي', 'شتوي', 'قطن', 'جلد'
+    ]);
 
     const BOT_SYNONYMS = {
       'بنطلون': ['بنطلون', 'جينز'],
@@ -3314,8 +3320,8 @@ function buildStore() {
       'شيرت': ['سويت شيرت', 'تيشيرت'],
       'هودي': ['سويت شيرت'],
       'بلوفر': ['كارديجان', 'سويت شيرت'],
-      'جاكيت': ['كارديجان', 'سويت شيرت'],
-      'جاكيتات': ['كارديجان', 'سويت شيرت'],
+      'جاكيت': ['جاكيت', 'كارديجان', 'سويت شيرت'],
+      'جاكيتات': ['جاكيت', 'كارديجان', 'سويت شيرت'],
       'بلوزه': ['بلوز'],
       'بلوزات': ['بلوز'],
       'بيجاما': ['بيجام', 'نوم'],
@@ -3387,22 +3393,34 @@ function buildStore() {
       'جلد': ['جلد']
     };
 
-    function getBotMatchGroups(normText, excludeDeptWords) {
+    function parseBotTokens(normText, excludeDeptWords) {
       const cleaned = normText.replace(/[^\\u0621-\\u064A0-9 ]/g, ' ');
       const rawTokens = cleaned.split(/ +/).filter(Boolean);
-      const groups = [];
+      const itemGroups = [];
+      const modifierGroups = [];
       for (let i = 0; i < rawTokens.length; i++) {
         let tok = rawTokens[i];
         if (/^[0-9]+$/.test(tok)) continue;
         if (BOT_STOP_WORDS.has(tok)) continue;
+        // Strip leading Arabic conjunction 'و' (and) if token isn't already a known root/stopword
+        if (!BOT_SYNONYMS[tok] && !BOT_DEPT_WORDS.has(tok) && tok.startsWith('و') && tok.length > 3) {
+          const withoutWaw = tok.slice(1);
+          const wawBase = (withoutWaw.length > 3 && withoutWaw.startsWith('ال')) ? withoutWaw.slice(2) : withoutWaw;
+          if (BOT_STOP_WORDS.has(withoutWaw) || BOT_STOP_WORDS.has(wawBase)) continue;
+          tok = withoutWaw;
+        }
         let base = (tok.length > 3 && tok.startsWith('ال')) ? tok.slice(2) : tok;
         if (BOT_STOP_WORDS.has(base)) continue;
         if (excludeDeptWords && (BOT_DEPT_WORDS.has(tok) || BOT_DEPT_WORDS.has(base))) continue;
         if (base.length < 2) continue;
         const syns = BOT_SYNONYMS[tok] || BOT_SYNONYMS[base] || [base];
-        groups.push(syns);
+        if (BOT_MODIFIER_KEYS.has(tok) || BOT_MODIFIER_KEYS.has(base)) {
+          modifierGroups.push(syns);
+        } else {
+          itemGroups.push({ key: base, syns });
+        }
       }
-      return groups;
+      return { itemGroups, modifierGroups };
     }
 
     function filterProductsByBotGroups(pool, groups) {
@@ -3411,6 +3429,39 @@ function buildStore() {
         const hay = normalizeBotArabic((p.title || '') + ' ' + (p.chip || '') + ' ' + (p.category || ''));
         return groups.every(syns => syns.some(term => hay.includes(term)));
       });
+    }
+
+    function buildComboMatches(pool, parsed, maxTotalBudget) {
+      const modSyns = parsed.modifierGroups || [];
+      const perItemBuckets = [];
+      for (const ig of parsed.itemGroups) {
+        let matches = filterProductsByBotGroups(pool, [ig.syns, ...modSyns]);
+        if (matches.length === 0 && modSyns.length > 0) {
+          matches = filterProductsByBotGroups(pool, [ig.syns]);
+        }
+        if (maxTotalBudget) {
+          matches = matches.filter(p => p.price <= maxTotalBudget);
+        }
+        matches.sort((a, b) => a.price - b.price);
+        if (matches.length > 0) perItemBuckets.push({ key: ig.key, items: matches });
+      }
+      if (perItemBuckets.length === 0) return { combined: [], sumMin: 0 };
+      const pickedIds = new Set();
+      const combined = [];
+      let sumMin = 0;
+      for (const bucket of perItemBuckets) {
+        sumMin += bucket.items[0].price;
+        for (const it of bucket.items.slice(0, 3)) {
+          if (!pickedIds.has(it.id)) {
+            pickedIds.add(it.id);
+            combined.push(it);
+          }
+        }
+      }
+      if (maxTotalBudget && sumMin > maxTotalBudget) {
+        return { combined: [], sumMin, overBudget: true };
+      }
+      return { combined, sumMin, bucketCount: perItemBuckets.length };
     }
 
     function sendBotQuery(rawText) {
@@ -3442,9 +3493,10 @@ function buildStore() {
       const asksInstallment = /قسط|تقسيط|فاليو|valu/.test(qRaw);
       const asksReturn = /استرجاع|استبدال|ارجاع|ترجيع/.test(qRaw);
 
-      // Base pool respects department if requested, plus specific keyword groups
+      // Base pool respects department if requested, plus parsed item/modifier groups
       const deptPool = targetMall ? inStock.filter(p => p.mall === targetMall) : inStock;
-      const specificGroups = getBotMatchGroups(qNorm, true);
+      const parsed = parseBotTokens(qNorm, true);
+      const allGroups = [...parsed.itemGroups.map(g => g.syns), ...parsed.modifierGroups];
 
       if ((asksInstallment || asksReturn) && nums.length === 0) {
         const parts = [];
@@ -3454,7 +3506,7 @@ function buildStore() {
       } else if (nums.length >= 2 && (/من|بين|الي|-/.test(qNorm))) {
         const minB = Math.min(nums[0], nums[1]);
         const maxB = Math.max(nums[0], nums[1]);
-        let pool = specificGroups.length > 0 ? filterProductsByBotGroups(deptPool, specificGroups) : deptPool;
+        let pool = allGroups.length > 0 ? filterProductsByBotGroups(deptPool, allGroups) : deptPool;
         let matches = pool.filter(p => p.price >= minB && p.price <= maxB).sort((a, b) => b.price - a.price);
         if (matches.length > 0) {
           replyHtml = 'متاح لدينا <strong>' + matches.length + '</strong> منتج بين <strong>' + formatPrice(minB) + '</strong> و<strong>' + formatPrice(maxB) + ' ج.م</strong>:' +
@@ -3465,12 +3517,23 @@ function buildStore() {
       } else if (nums.length >= 1) {
         const budget = nums[0];
         const isAbove = /فوق|اعلي|اكثر/.test(qNorm);
-        let pool = specificGroups.length > 0 ? filterProductsByBotGroups(deptPool, specificGroups) : deptPool;
+        let pool = allGroups.length > 0 ? filterProductsByBotGroups(deptPool, allGroups) : deptPool;
         let matches = isAbove
           ? pool.filter(p => p.price >= budget).sort((a, b) => a.price - b.price)
           : pool.filter(p => p.price <= budget).sort((a, b) => b.price - a.price);
 
-        if (matches.length > 0) {
+        // If user asked for 2+ distinct items with a budget (e.g., "معاي 4000 عاوز جاكيت وبنطلون")
+        if (matches.length === 0 && parsed.itemGroups.length >= 2 && !isAbove) {
+          const combo = buildComboMatches(deptPool, parsed, budget);
+          if (combo.combined.length > 0) {
+            replyHtml = 'في حدود ميزانيتك <strong>' + formatPrice(budget) + ' ج.م</strong>، هذه الخيارات المتاحة لطلبك (أقل تجميعة متوفرة بحوالي <strong>' + formatPrice(combo.sumMin) + ' ج.م</strong>):' +
+              combo.combined.slice(0, 6).map(renderBotProductCard).join('');
+          } else if (combo.overBudget) {
+            replyHtml = 'أقل إجمالي متاح لطلبك يبدأ من <strong>' + formatPrice(combo.sumMin) + ' ج.م</strong> (أعلى من ' + formatPrice(budget) + ' ج.م).';
+          } else {
+            replyHtml = 'عذراً، لا تتوفر حالياً منتجات مطابقة لطلبك ضمن ميزانية <strong>' + formatPrice(budget) + ' ج.م</strong>.';
+          }
+        } else if (matches.length > 0) {
           const intro = isAbove
             ? 'المتاح بسعر أعلى من <strong>' + formatPrice(budget) + ' ج.م</strong> (' + matches.length + ' منتج):'
             : 'على قد ميزانيتك حتى <strong>' + formatPrice(budget) + ' ج.م</strong>، متاح لدينا <strong>' + matches.length + ' منتج</strong> (أفضل الاختيارات):';
@@ -3486,8 +3549,12 @@ function buildStore() {
       } else {
         // Pure product / department search
         let matches = [];
-        if (specificGroups.length > 0) {
-          matches = filterProductsByBotGroups(deptPool, specificGroups);
+        if (allGroups.length > 0) {
+          matches = filterProductsByBotGroups(deptPool, allGroups);
+          if (matches.length === 0 && parsed.itemGroups.length >= 2) {
+            const combo = buildComboMatches(deptPool, parsed, null);
+            matches = combo.combined;
+          }
         } else if (targetMall) {
           matches = deptPool;
         }
@@ -3495,7 +3562,7 @@ function buildStore() {
         if (matches.length > 0) {
           replyHtml = 'وجدت لك <strong>' + matches.length + ' منتج متوفر</strong> مطابق لبحثك:' +
             matches.slice(0, 8).map(renderBotProductCard).join('');
-        } else if (specificGroups.length > 0) {
+        } else if (allGroups.length > 0) {
           replyHtml = 'عذراً، غير متوفر حالياً «<strong>' + escapeBotHtml(rawText) + '</strong>» في المخزون.<br>المتاح لدينا حالياً: ملابس (بناطيل، قمصان، تيشيرتات، فساتين، بدل)، أحذية، وأدوات منزلية. اكتب اسم الصنف أو ميزانيتك!';
         } else {
           replyHtml = 'أنا مساعد المنتجات والميزانية فقط 😊<br>اكتب <strong>رقم ميزانيتك</strong> (مثلاً: <code>500</code> أو <code>2000</code> أو <code>10000</code>) أو اسم المنتج (مثل: <code>بناطيل</code>، <code>بدلة</code>، <code>أحذية</code>) وسأعرض لك المتاح فوراً.';
