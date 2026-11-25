@@ -160,6 +160,72 @@
       color: var(--paris-forest);
     }
 
+    /* Simple Settings Sub-Tabs & Pill Filters */
+    .settings-subtabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+      border-bottom: 2px solid #f0ede6;
+      padding-bottom: 14px;
+    }
+    .settings-subtab-btn {
+      background: #f4f6f4;
+      border: 1.5px solid #e2ddd2;
+      color: var(--paris-muted);
+      padding: 10px 18px;
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .settings-subtab-btn:hover { color: var(--paris-forest); border-color: var(--paris-forest); }
+    .settings-subtab-btn.active {
+      background: var(--paris-forest);
+      color: #fff;
+      border-color: var(--paris-forest);
+    }
+    .dept-filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .dept-pill-btn {
+      background: #f4f1ea;
+      border: 1.5px solid #e2ddd2;
+      color: var(--paris-forest);
+      padding: 7px 14px;
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .dept-pill-btn:hover { background: #fff; border-color: var(--paris-forest); }
+    .dept-pill-btn.active { background: var(--paris-forest); color: #fff; border-color: var(--paris-forest); }
+    .quick-pct-btn {
+      background: #fff;
+      border: 1.5px solid #cce3d8;
+      color: var(--paris-forest);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .quick-pct-btn:hover { background: var(--paris-forest); color: #fff; border-color: var(--paris-forest); }
+    @media (max-width: 820px) {
+      .settings-two-col { grid-template-columns: 1fr !important; }
+      .admin-view-switcher { border-radius: 16px; flex-direction: column; }
+    }
+
     /* Stats Grid */
     .stats-grid {
       display: grid;
@@ -839,57 +905,57 @@
         </div>
       </div>
 
-      <!-- Action Toolbar -->
+      <!-- Simple Action Toolbar -->
       <div class="toolbar-card">
         <div class="toolbar-left" id="toolbarActionButtons">
-          <button type="button" class="admin-btn admin-btn-gold" id="btnUploadClothes" onclick="switchAdminView('studio', 'clothes')">
-            👗 إضافة منتج ملابس جديد
+          <button type="button" class="admin-btn admin-btn-primary" style="background:#0d5c3a; padding:11px 22px; font-size:14px;" onclick="switchAdminView('studio')">
+            ➕ أضف منتجاً جديداً
           </button>
-          <button type="button" class="admin-btn admin-btn-gold" id="btnUploadHome" style="background:#2e7d32; color:#fff;" onclick="switchAdminView('studio', 'home')">
-            🍳 إضافة منتج أدوات منزلية جديد
-          </button>
-          <button type="button" class="admin-btn admin-btn-gold" id="btnUploadShoes" style="background:#1565c0; color:#fff;" onclick="switchAdminView('studio', 'shoes')">
-            👟 إضافة منتج أحذية جديد
-          </button>
-          <button type="button" class="admin-btn admin-btn-outline" style="background:#f2f5f2; color:#133e29; border:1px solid #c5d1cb;" onclick="openImportModal()">
-            📁 استيراد شيت CSV
-          </button>
-          <button type="button" class="admin-btn admin-btn-outline" style="background:#f2f5f2; color:#133e29; border:1px solid #c5d1cb;" onclick="exportCSV()">
-            📥 تصدير المنتجات (CSV)
-          </button>
-        </div>
 
-        <div class="toolbar-right">
-          <input type="text" id="filterSearch" class="search-input" placeholder="ابحث باسم المنتج..." oninput="filterProductsTable()">
-          <select id="filterMall" class="filter-select" onchange="filterProductsTable()">
+          <div class="dept-filter-pills" id="deptFilterPillsBar">
+            <button type="button" class="dept-pill-btn active" data-mall="all" onclick="selectMallFilterPill('all', this)">الكل</button>
+            <button type="button" class="dept-pill-btn" data-mall="clothes" onclick="selectMallFilterPill('clothes', this)">👗 الملابس</button>
+            <button type="button" class="dept-pill-btn" data-mall="home" onclick="selectMallFilterPill('home', this)">🏠 المنزل</button>
+            <button type="button" class="dept-pill-btn" data-mall="shoes" onclick="selectMallFilterPill('shoes', this)">👟 الأحذية</button>
+          </div>
+          <select id="filterMall" style="display:none;" onchange="filterProductsTable()">
             <option value="all">كل الأقسام</option>
             <option value="clothes">مول الملابس</option>
             <option value="home">مول الأدوات المنزلية</option>
             <option value="shoes">مول الأحذية</option>
           </select>
+        </div>
+
+        <div class="toolbar-right">
+          <input type="text" id="filterSearch" class="search-input" placeholder="🔍 ابحث باسم المنتج..." oninput="filterProductsTable()">
           <select id="filterStatus" class="filter-select" onchange="filterProductsTable()">
             <option value="all">كل الحالات</option>
-            <option value="published">المعروض فقط (مفعل)</option>
-            <option value="hidden">المخفي فقط</option>
+            <option value="published">المعروض فقط ✅</option>
+            <option value="hidden">المخفي فقط 🚫</option>
           </select>
+          <details style="position:relative;">
+            <summary style="list-style:none; cursor:pointer; background:#f4f1ea; border:1px solid #e2ddd2; padding:8px 14px; border-radius:50px; font-size:12.5px; font-weight:800; color:var(--paris-forest); white-space:nowrap;">
+              ⚙️ خيارات CSV
+            </summary>
+            <div style="position:absolute; left:0; top:42px; background:#fff; border:1.5px solid #e2ddd2; border-radius:12px; padding:8px; box-shadow:0 8px 25px rgba(0,0,0,0.12); z-index:50; min-width:190px; display:flex; flex-direction:column; gap:6px;">
+              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="openImportModal()">📁 استيراد شيت CSV</button>
+              <button type="button" class="admin-btn admin-btn-outline" style="width:100%; justify-content:flex-start; font-size:12.5px;" onclick="exportCSV()">📥 تصدير المنتجات (CSV)</button>
+            </div>
+          </details>
         </div>
       </div>
 
-      <!-- Products Table -->
+      <!-- Simplified Products Table -->
       <div class="table-container">
         <table class="products-table">
           <thead>
             <tr>
-              <th style="width:60px;">#</th>
-              <th style="width:70px;">الصورة</th>
-              <th>اسم وموديل المنتج</th>
-              <th>القسم (المول)</th>
-              <th>التصنيف والوسم</th>
-              <th>المقاسات</th>
-              <th>السعر</th>
-              <th>الخصم</th>
+              <th style="width:68px;">الصورة</th>
+              <th>المنتج والتصنيف</th>
+              <th>القسم</th>
+              <th>السعر والخصم</th>
               <th>الحالة</th>
-              <th style="text-align:left;">إجراءات</th>
+              <th style="text-align:left;">إجراءات سريعة</th>
             </tr>
           </thead>
           <tbody id="productsTableBody">
@@ -1169,78 +1235,102 @@
 
     </div>
 
-    <!-- ===================== VIEW 3: STORE SETTINGS & DISCOUNTS CONTROL CENTER ===================== -->
+    <!-- ===================== VIEW 3: SIMPLE STORE SETTINGS & DISCOUNTS ===================== -->
     <div id="storeSettingsView" style="display:none;">
       <div class="upload-studio-card">
         <div class="studio-header">
           <div>
             <h3 class="studio-title">
               <span>🎛️</span>
-              <span>مركز التحكم الكامل في الخصومات وإعدادات المتجر</span>
+              <span>الخصومات وإعدادات المتجر</span>
             </h3>
-            <p class="studio-subhead">حدد من هنا أكواد الخصم، العروض الموسمية على الأقسام، الشحن، رقم الواتساب، التقسيط، وبكسلات الإعلانات — وسيتم تحديث المتجر فوراً.</p>
+            <p class="studio-subhead">واجهة مبسطة ومنظمة: اختر ما تريد تعديله من التبويبات أدناه ثم اضغط حفظ.</p>
           </div>
           <div>
             <button type="button" class="admin-btn admin-btn-primary" style="padding:12px 26px; font-size:14.5px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
-              <span>💾 حفظ وتطبيق على المتجر فوراً</span>
+              <span>💾 حفظ وتطبيق على المتجر</span>
             </button>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="settings-two-col">
+        <!-- Clean Sub-Tabs inside Settings -->
+        <div class="settings-subtabs">
+          <button type="button" class="settings-subtab-btn active" id="subtabBtn_discounts" onclick="switchSettingsSubtab('discounts')">🏷️ الخصومات والأكواد</button>
+          <button type="button" class="settings-subtab-btn" id="subtabBtn_contact" onclick="switchSettingsSubtab('contact')">📱 واتساب والإعلان العلوي</button>
+          <button type="button" class="settings-subtab-btn" id="subtabBtn_shipping" onclick="switchSettingsSubtab('shipping')">🚚 الشحن والتقسيط</button>
+          <button type="button" class="settings-subtab-btn" id="subtabBtn_pixels" onclick="switchSettingsSubtab('pixels')">📊 إعلانات السوشيال ميديا</button>
+        </div>
 
-          <!-- 1. Coupons Management -->
-          <div style="background:#fbf9f4; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
-            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">🎟️ أكواد الخصم الترويجية (Coupons)</h4>
-            <div style="display:grid; grid-template-columns:1.2fr 0.7fr 1.2fr auto; gap:8px; margin-bottom:14px;">
-              <input type="text" id="newCouponCode" class="form-control" placeholder="الكود (مثال: EID20)" style="text-transform:uppercase; padding:8px 10px;">
-              <input type="number" id="newCouponRate" class="form-control" placeholder="النسبة %" min="1" max="90" value="10" style="padding:8px 10px;">
-              <input type="text" id="newCouponLabel" class="form-control" placeholder="الوصف (خصم العيد)" style="padding:8px 10px;">
-              <button type="button" class="admin-btn admin-btn-gold" onclick="addNewCoupon()" style="padding:8px 14px;">+ إضافة</button>
-            </div>
-            <div id="couponsManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
-          </div>
+        <!-- SUBTAB 1: DISCOUNTS & COUPONS -->
+        <div id="subtabPanel_discounts">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="settings-two-col">
 
-          <!-- 2. Bulk Seasonal Discount on Products -->
-          <div style="background:#f4fbf6; border:1.5px solid #cce3d8; border-radius:16px; padding:20px;">
-            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:8px;">🏷️ تطبيق خصم مباشر على منتجات قسم كامل</h4>
-            <p style="font-size:12.5px; color:#4f6459; margin-bottom:14px; line-height:1.6;">
-              اختر القسم والنسبة (أو اكتب <strong>0</strong> لإلغاء الخصومات واسترجاع الأسعار الأصلية لجميع منتجات القسم دفعة واحدة):
-            </p>
-            <div class="form-row" style="margin-bottom:14px;">
-              <div class="form-group" style="margin-bottom:0;">
-                <label>القسم المستهدف:</label>
+            <!-- Quick Preset Bulk Discount -->
+            <div style="background:#f4fbf6; border:1.5px solid #cce3d8; border-radius:16px; padding:22px;">
+              <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:8px;">🏷️ خصم سريع بضغطة زر على المنتجات</h4>
+              <p style="font-size:13px; color:#4f6459; margin-bottom:14px;">اختر القسم ثم اضغط النسبة المطلوبة لتغيير الأسعار فوراً:</p>
+
+              <div class="form-group">
+                <label>القسم:</label>
                 <select id="bulkDiscountMall" class="form-control">
-                  <option value="all">جميع أقسام المتجر (الكل)</option>
-                  <option value="clothes">مول الملابس والأزياء</option>
-                  <option value="home">مول الأدوات المنزلية</option>
-                  <option value="shoes">مول الأحذية والرياضة</option>
+                  <option value="all">جميع منتجات المتجر (الكل)</option>
+                  <option value="clothes">👗 قسم الملابس فقط</option>
+                  <option value="home">🏠 قسم الأدوات المنزلية فقط</option>
+                  <option value="shoes">👟 قسم الأحذية فقط</option>
                 </select>
               </div>
-              <div class="form-group" style="margin-bottom:0;">
-                <label>نسبة الخصم (%):</label>
-                <input type="number" id="bulkDiscountPercent" class="form-control" min="0" max="80" value="15" placeholder="مثال: 15 أو 0 للإلغاء">
+
+              <div style="margin-bottom:14px;">
+                <label style="display:block; font-size:13px; font-weight:800; color:var(--paris-forest); margin-bottom:8px;">اختر نسبة جاهزة:</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="quick-pct-btn" onclick="setBulkPctAndApply(10)">خصم 10%</button>
+                  <button type="button" class="quick-pct-btn" onclick="setBulkPctAndApply(15)">خصم 15%</button>
+                  <button type="button" class="quick-pct-btn" onclick="setBulkPctAndApply(20)">خصم 20%</button>
+                  <button type="button" class="quick-pct-btn" onclick="setBulkPctAndApply(30)">خصم 30%</button>
+                  <button type="button" class="quick-pct-btn" style="border-color:#fecaca; color:#b91c1c;" onclick="setBulkPctAndApply(0)">إلغاء الخصومات ↺</button>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; align-items:flex-end;">
+                <div style="flex:1;">
+                  <label style="display:block; font-size:12.5px; font-weight:700; margin-bottom:4px;">أو اكتب نسبة مخصصة (%):</label>
+                  <input type="number" id="bulkDiscountPercent" class="form-control" min="0" max="80" value="15">
+                </div>
+                <button type="button" class="admin-btn admin-btn-primary" style="padding:11px 20px;" onclick="applyBulkDiscount()">تطبيق الآن</button>
               </div>
             </div>
-            <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="applyBulkDiscount()">
-              🚀 تطبيق الخصم / تحديث أسعار المنتجات الآن
-            </button>
-          </div>
 
-          <!-- 3. Announcement Banner & WhatsApp -->
-          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
-            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">📢 الشريط الإعلاني وواتساب الطلبات</h4>
+            <!-- Coupons Management -->
+            <div style="background:#fbf9f4; border:1.5px solid var(--paris-border); border-radius:16px; padding:22px;">
+              <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:10px;">🎟️ أكواد الخصم (عند الدفع في السلة)</h4>
+              <p style="font-size:12.5px; color:var(--paris-muted); margin-bottom:12px;">أضف كوداً جديداً أو عطّل أي كود بنقرة واحدة:</p>
+              <div style="display:grid; grid-template-columns:1.2fr 0.7fr 1.1fr auto; gap:8px; margin-bottom:14px;">
+                <input type="text" id="newCouponCode" class="form-control" placeholder="الكود (EID20)" style="text-transform:uppercase; padding:8px 10px;">
+                <input type="number" id="newCouponRate" class="form-control" placeholder="%" min="1" max="90" value="10" style="padding:8px 10px;">
+                <input type="text" id="newCouponLabel" class="form-control" placeholder="الوصف" style="padding:8px 10px;">
+                <button type="button" class="admin-btn admin-btn-gold" onclick="addNewCoupon()" style="padding:8px 14px;">+ إضافة</button>
+              </div>
+              <div id="couponsManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SUBTAB 2: CONTACT & BANNER -->
+        <div id="subtabPanel_contact" style="display:none;">
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:24px; max-width:820px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:14px;">📢 الشريط الإعلاني ورقم الواتساب</h4>
             <div class="form-group">
-              <label>نص الشريط العلوي للمتجر:</label>
+              <label>رسالة العروض في أعلى المتجر:</label>
               <input type="text" id="cfgAnnouncementText" class="form-control" placeholder="موسم باريس 2026: عروض وخصومات...">
             </div>
             <div class="form-row-3">
               <div class="form-group">
-                <label>الكود البارز بالشريط:</label>
+                <label>الكود المعروض في الشريط:</label>
                 <input type="text" id="cfgActiveBannerCode" class="form-control" placeholder="PARIS2026" style="text-transform:uppercase;">
               </div>
               <div class="form-group">
-                <label>واتساب الدولي (للإرسال):</label>
+                <label>رقم الواتساب (بالكود الدولي):</label>
                 <input type="text" id="cfgWhatsappNumber" class="form-control" placeholder="201065968425">
               </div>
               <div class="form-group">
@@ -1249,42 +1339,44 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 4. Shipping & Installments -->
-          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
-            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">🚚 قواعد الشحن والتقسيط</h4>
-            <div class="form-row" style="margin-bottom:12px;">
+        <!-- SUBTAB 3: SHIPPING & INSTALLMENTS -->
+        <div id="subtabPanel_shipping" style="display:none;">
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:24px; max-width:820px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:14px;">🚚 أسعار الشحن وقواعد التقسيط</h4>
+            <div class="form-row" style="margin-bottom:14px;">
               <div class="form-group" style="margin-bottom:0;">
-                <label>الشحن المجاني فوق (ج.م):</label>
+                <label>الشحن المجاني يبدأ من (ج.م):</label>
                 <input type="number" id="cfgFreeThreshold" class="form-control" min="0">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label>شحن VIP مجاني مؤمّن فوق (ج.م):</label>
+                <label>شحن VIP المؤمّن يبدأ من (ج.م):</label>
                 <input type="number" id="cfgVipThreshold" class="form-control" min="0">
               </div>
             </div>
-            <div class="form-row-3" style="margin-bottom:14px;">
+            <div class="form-row-3" style="margin-bottom:16px;">
               <div class="form-group" style="margin-bottom:0;">
-                <label>القاهرة/الجيزة (ج.م):</label>
+                <label>القاهرة والجيزة (ج.م):</label>
                 <input type="number" id="cfgCairoFee" class="form-control" min="0">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label>الدلتا/الإسكندرية:</label>
+                <label>الدلتا والإسكندرية (ج.م):</label>
                 <input type="number" id="cfgDeltaFee" class="form-control" min="0">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label>الصعيد/أخرى:</label>
+                <label>الصعيد والمحافظات الأخرى:</label>
                 <input type="number" id="cfgOtherFee" class="form-control" min="0">
               </div>
             </div>
-            <div style="border-top:1px dashed #e2ddd2; padding-top:12px;">
-              <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px;">
+            <div style="border-top:1px dashed #e2ddd2; padding-top:14px;">
+              <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:12px;">
                 <input type="checkbox" id="cfgInstallmentsEnabled" checked style="width:17px; height:17px;">
-                <span style="font-weight:800; color:var(--paris-forest); font-size:13px;">تفعيل عرض حاسبة التقسيط على البطاقات</span>
+                <span style="font-weight:800; color:var(--paris-forest); font-size:13.5px;">إظهار عبارة التقسيط الشهري على المنتجات المرتفعة السعر</span>
               </label>
               <div class="form-row">
                 <div class="form-group" style="margin-bottom:0;">
-                  <label>أقل سعر يظهر عليه التقسيط (ج.م):</label>
+                  <label>يبدأ من سعر (ج.م):</label>
                   <input type="number" id="cfgInstallmentMinPrice" class="form-control" min="100">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
@@ -1294,31 +1386,33 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 5. Marketing Pixels -->
-          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px; grid-column:1 / -1;">
-            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:10px;">📊 ربط بكسلات الإعلانات الممولة (اختياري)</h4>
+        <!-- SUBTAB 4: MARKETING PIXELS -->
+        <div id="subtabPanel_pixels" style="display:none;">
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:24px; max-width:820px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:8px;">📊 بكسلات الإعلانات الممولة (اختياري)</h4>
+            <p style="font-size:12.5px; color:var(--paris-muted); margin-bottom:14px;">اتركها فارغة إذا لم تبدأ حملات إعلانية بعد، أو الصق المعرّف وسيعمل التتبع تلقائياً:</p>
             <div class="form-row-3">
               <div class="form-group" style="margin-bottom:0;">
-                <label>Meta (Facebook) Pixel ID:</label>
+                <label>Meta (Facebook) Pixel:</label>
                 <input type="text" id="cfgMetaPixel" class="form-control" placeholder="مثال: 123456789012345">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label>TikTok Pixel ID:</label>
+                <label>TikTok Pixel:</label>
                 <input type="text" id="cfgTikTokPixel" class="form-control" placeholder="مثال: CXXXXXXXXXXXXX">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label>Google Analytics (G-XXXX):</label>
+                <label>Google Analytics:</label>
                 <input type="text" id="cfgGaId" class="form-control" placeholder="مثال: G-XXXXXXXXXX">
               </div>
             </div>
           </div>
-
         </div>
 
-        <div style="margin-top:24px;">
-          <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:16px; font-size:16px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
-            💾 حفظ جميع الخصومات والإعدادات وتحديث المتجر فوراً
+        <div style="margin-top:22px;">
+          <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:15px; font-size:15.5px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
+            💾 حفظ جميع التعديلات وتحديث المتجر فوراً
           </button>
         </div>
       </div>
@@ -1579,9 +1673,11 @@
       const filterMall = document.getElementById('filterMall');
 
       const btnViewSettings = document.getElementById('btnViewSettings');
+      const deptFilterPillsBar = document.getElementById('deptFilterPillsBar');
 
       if (role === 'clothes_admin') {
         if (btnViewSettings) btnViewSettings.style.display = 'none';
+        if (deptFilterPillsBar) deptFilterPillsBar.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الملابس والأزياء 👗';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة وتحديث تشكيلات الملابس الرجالية والنسائية وملابس الأطفال.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الملابس';
@@ -1607,6 +1703,7 @@
         selectStudioMall('clothes', true);
       } else if (role === 'home_admin') {
         if (btnViewSettings) btnViewSettings.style.display = 'none';
+        if (deptFilterPillsBar) deptFilterPillsBar.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأدوات المنزلية والديكور 🍳';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة مستلزمات المطبخ، الديكورات، المفروشات، المنظمات وأدوات التنظيف.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأدوات المنزلية';
@@ -1632,6 +1729,7 @@
         selectStudioMall('home', true);
       } else if (role === 'shoes_admin') {
         if (btnViewSettings) btnViewSettings.style.display = 'none';
+        if (deptFilterPillsBar) deptFilterPillsBar.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأحذية والأحذية الرياضية 👟';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة الأحذية الرجالية، النسائية، الرياضية، وأحذية الأطفال بمقاساتها الكاملة.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأحذية';
@@ -1658,24 +1756,21 @@
       } else {
         // Super Admin
         if (btnViewSettings) btnViewSettings.style.display = 'inline-flex';
+        if (deptFilterPillsBar) deptFilterPillsBar.style.display = 'flex';
         document.getElementById('departmentHeaderTitle').innerText = 'الإدارة العامة لمتجر باريس 🛍️';
-        document.getElementById('departmentHeaderDesc').innerText = 'لوحة تحكم كاملة للإدارة العامة للمتجر: الملابس، الأدوات المنزلية، والأحذية.';
-        document.getElementById('departmentBadgeText').innerText = 'المدير العام (Super Admin)';
+        document.getElementById('departmentHeaderDesc').innerText = 'لوحة بسيطة وسريعة للتحكم في المنتجات، الأسعار، الخصومات، وإعدادات المتجر.';
+        document.getElementById('departmentBadgeText').innerText = 'المدير العام — صلاحية كاملة';
         document.getElementById('adminMallSubtext').innerText = 'الإدارة العامة لمتجر باريس';
 
         document.getElementById('cardClothesStat').style.display = 'flex';
         document.getElementById('cardHomeStat').style.display = 'flex';
         document.getElementById('cardShoesStat').style.display = 'flex';
 
-        if (btnUploadClothes) btnUploadClothes.style.display = 'inline-flex';
-        if (btnUploadHome) btnUploadHome.style.display = 'inline-flex';
-        if (btnUploadShoes) btnUploadShoes.style.display = 'inline-flex';
-
         if (mallCardClothes) mallCardClothes.style.display = 'flex';
         if (mallCardHome) mallCardHome.style.display = 'flex';
         if (mallCardShoes) mallCardShoes.style.display = 'flex';
 
-        if (filterMall) filterMall.style.display = 'inline-block';
+        if (filterMall) filterMall.style.display = 'none';
 
         selectStudioMall('clothes', false);
       }
@@ -1743,46 +1838,76 @@
       if (elShoes) elShoes.innerText = productsList.filter(p => p.mall === 'shoes').length;
     }
 
+    function selectMallFilterPill(mall, btnEl) {
+      const fm = document.getElementById('filterMall');
+      if (fm) fm.value = mall;
+      document.querySelectorAll('#deptFilterPillsBar .dept-pill-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      filterProductsTable();
+    }
+
+    function switchSettingsSubtab(tab) {
+      ['discounts', 'contact', 'shipping', 'pixels'].forEach(t => {
+        const btn = document.getElementById('subtabBtn_' + t);
+        const panel = document.getElementById('subtabPanel_' + t);
+        if (btn) btn.classList.toggle('active', t === tab);
+        if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+      });
+    }
+
+    function setBulkPctAndApply(pct) {
+      const inp = document.getElementById('bulkDiscountPercent');
+      if (inp) inp.value = pct;
+      applyBulkDiscount();
+    }
+
     function renderProductsTable(prods) {
       const tbody = document.getElementById('productsTableBody');
       if (prods.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">لا توجد منتجات مطابقة للبحث أو القسم.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#888;">لا توجد منتجات مطابقة للبحث أو القسم.</td></tr>';
         return;
       }
 
       tbody.innerHTML = prods.map(p => {
-        let mallBadge = '<span style="background:#e8f5e9; color:#1b5e20; padding:3px 10px; border-radius:50px; font-size:12px; font-weight:700;">ملابس</span>';
-        if (p.mall === 'home') mallBadge = '<span style="background:#fff3e0; color:#e65100; padding:3px 10px; border-radius:50px; font-size:12px; font-weight:700;">أدوات منزلية</span>';
-        if (p.mall === 'shoes') mallBadge = '<span style="background:#e3f2fd; color:#0d47a1; padding:3px 10px; border-radius:50px; font-size:12px; font-weight:700;">أحذية</span>';
+        let mallBadge = '<span style="background:#e8f5e9; color:#1b5e20; padding:4px 10px; border-radius:50px; font-size:12px; font-weight:700; white-space:nowrap;">👗 ملابس</span>';
+        if (p.mall === 'home') mallBadge = '<span style="background:#fff3e0; color:#e65100; padding:4px 10px; border-radius:50px; font-size:12px; font-weight:700; white-space:nowrap;">🏠 منزل</span>';
+        if (p.mall === 'shoes') mallBadge = '<span style="background:#e3f2fd; color:#0d47a1; padding:4px 10px; border-radius:50px; font-size:12px; font-weight:700; white-space:nowrap;">👟 أحذية</span>';
 
         const isPub = (p.published !== false);
         const statusBtn = isPub
-          ? '<button type="button" class="admin-btn admin-btn-outline" style="background:#e8f5e9; color:#2e7d32; border:none; padding:4px 10px; font-size:11.5px;" onclick="togglePublish(' + p.id + ', false)">معروض ✅</button>'
-          : '<button type="button" class="admin-btn admin-btn-outline" style="background:#ffebee; color:#c62828; border:none; padding:4px 10px; font-size:11.5px;" onclick="togglePublish(' + p.id + ', true)">مخفي 🚫</button>';
+          ? '<button type="button" class="admin-btn admin-btn-outline" style="background:#e8f5e9; color:#2e7d32; border:none; padding:5px 12px; font-size:12px;" onclick="togglePublish(' + p.id + ', false)">معروض ✅</button>'
+          : '<button type="button" class="admin-btn admin-btn-outline" style="background:#ffebee; color:#c62828; border:none; padding:5px 12px; font-size:12px;" onclick="togglePublish(' + p.id + ', true)">مخفي 🚫</button>';
 
-        const sizesStr = (p.sizes && p.sizes.length) ? p.sizes.slice(0, 4).join(', ') : '-';
+        const regPriceHtml = (p.regularPrice && p.regularPrice > p.price)
+          ? `<div style="font-size:11.5px; color:#999; text-decoration:line-through;">${Number(p.regularPrice).toLocaleString('en-US')} ج.م</div>`
+          : '';
 
         return `
           <tr>
-            <td><strong>#${p.id}</strong></td>
             <td><img src="${p.image || ''}" class="table-thumb" alt=""></td>
             <td>
-              <div style="font-weight:800; color:var(--paris-forest);">${p.title}</div>
-              ${p.brand ? `<span style="font-size:11px; color:#888;">الماركة: ${p.brand}</span>` : ''}
-              ${p.badge ? `<span style="background:#232f3e; color:#ff9900; font-size:10.5px; padding:1px 6px; border-radius:4px; font-weight:800; margin-inline-start:6px;">${p.badge}</span>` : ''}
+              <div style="font-weight:800; color:var(--paris-forest); font-size:14px;">${p.title}</div>
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+                <span style="background:#f4f1ea; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;">${p.chip || p.category}</span>
+                ${p.brand ? `<span style="font-size:11px; color:#888;">• ${p.brand}</span>` : ''}
+                ${p.badge ? `<span style="background:#fef3c7; color:#92400e; font-size:10.5px; padding:1px 6px; border-radius:4px; font-weight:800;">${p.badge}</span>` : ''}
+              </div>
             </td>
             <td>${mallBadge}</td>
             <td>
-              <span style="background:#f4f1ea; padding:2px 8px; border-radius:4px; font-size:11.5px; font-weight:700;">${p.chip || p.category}</span>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div>
+                  <strong style="font-size:15.5px; color:var(--paris-forest);">${Number(p.price).toLocaleString('en-US')} ج.م</strong>
+                  ${regPriceHtml}
+                </div>
+                ${p.discountBadge ? `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:800; white-space:nowrap;">${p.discountBadge}</span>` : ''}
+              </div>
             </td>
-            <td><span style="font-size:12px; color:#555;">${sizesStr}</span></td>
-            <td><strong style="font-size:15px; color:var(--paris-forest);">${Number(p.price).toLocaleString('en-US')} ج.م</strong></td>
-            <td>${p.discountBadge ? `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:800; white-space:nowrap;">${p.discountBadge}</span>` : '-'}</td>
             <td>${statusBtn}</td>
             <td style="text-align:left;">
               <div style="display:flex; gap:6px; justify-content:flex-end;">
-                <button type="button" class="admin-btn admin-btn-outline" style="padding:5px 12px; font-size:12px;" onclick="openEditProductModal(${p.id})">✏️ تعديل</button>
-                <button type="button" class="admin-btn admin-btn-danger" style="padding:5px 12px; font-size:12px;" onclick="deleteProduct(${p.id})">🗑️</button>
+                <button type="button" class="admin-btn admin-btn-outline" style="padding:6px 14px; font-size:12.5px;" onclick="openEditProductModal(${p.id})">✏️ تعديل السعر والبيانات</button>
+                <button type="button" class="admin-btn admin-btn-danger" style="padding:6px 10px; font-size:12px;" onclick="deleteProduct(${p.id})" title="حذف">🗑️</button>
               </div>
             </td>
           </tr>
