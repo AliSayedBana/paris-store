@@ -147,17 +147,16 @@ function findAdminByEmail(emailInput) {
 }
 
 function verifyAdminPassword(admin, password) {
-  if (!admin || !password) return false;
+  if (!admin || !password || !admin.salt || !admin.passwordHash) return false;
   const hash = hashPassword(password, admin.salt);
-  if (hash === admin.passwordHash) return true;
-
-  // Fallback defaults if hash changed
-  if (admin.id === 'super' && password === 'paris2026') return true;
-  if (admin.id === 'clothes' && password === 'clothes2026') return true;
-  if (admin.id === 'home' && password === 'home2026') return true;
-  if (admin.id === 'shoes' && password === 'shoes2026') return true;
-
-  return false;
+  try {
+    const a = Buffer.from(hash, 'hex');
+    const b = Buffer.from(admin.passwordHash, 'hex');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch (e) {
+    return hash === admin.passwordHash;
+  }
 }
 
 function parseCookies(req) {
@@ -228,6 +227,15 @@ function createSession(adminOrId, rememberMe = true) {
   }
 
   admin.lastLogin = now.toISOString();
+
+  // Prune expired sessions on login to keep admin_config.json clean
+  if (config.sessions) {
+    for (const k of Object.keys(config.sessions)) {
+      if (!config.sessions[k] || new Date(config.sessions[k].expiresAt) < now) {
+        delete config.sessions[k];
+      }
+    }
+  }
 
   config.sessions[token] = {
     adminId: admin.id,

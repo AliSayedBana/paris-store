@@ -4,9 +4,51 @@ const path = require('path');
 const { buildStore } = require('./build_store');
 const auth = require('./auth_utils');
 
-const PORT = 4000;
-const BASE_DIR = __dirname;
+const PORT = parseInt(process.env.PORT, 10) || 4000;
+const BASE_DIR = path.resolve(__dirname);
 const PRODUCTS_FILE = path.join(BASE_DIR, 'products.json');
+const MAX_BODY_BYTES = 15 * 1024 * 1024; // 15 MB max request body (safe for base64 image uploads)
+
+// Login Brute-Force Rate Limiter (10 failed attempts per 15 min window)
+const loginAttempts = new Map();
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+const MAX_LOGIN_ATTEMPTS = 10;
+
+function getClientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  if (fwd) return fwd.split(',')[0].trim();
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+function isLoginRateLimited(ip) {
+  const entry = loginAttempts.get(ip);
+  if (!entry) return false;
+  if (Date.now() - entry.firstAt > RATE_WINDOW_MS) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+  return entry.count >= MAX_LOGIN_ATTEMPTS;
+}
+
+function recordFailedLogin(ip) {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || now - entry.firstAt > RATE_WINDOW_MS) {
+    loginAttempts.set(ip, { count: 1, firstAt: now });
+  } else {
+    entry.count += 1;
+  }
+}
+
+function clearFailedLogins(ip) {
+  loginAttempts.delete(ip);
+}
+
+function buildAuthCookie(req, token, maxAgeSeconds) {
+  const isHttps = req.headers['x-forwarded-proto'] === 'https' || Boolean(req.socket && req.socket.encrypted);
+  const secureFlag = isHttps ? '; Secure' : '';
+  return `paris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secureFlag}`;
+}
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -40,28 +82,48 @@ function writeJSON(file, data) {
 }
 
 function parseBody(req) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => { body += chunk; });
+    let size = 0;
+    let aborted = false;
+    req.on('data', chunk => {
+      if (aborted) return;
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        aborted = true;
+        reject(Object.assign(new Error('Payload too large'), { statusCode: 413 }));
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
     req.on('end', () => {
+      if (aborted) return;
       try {
         resolve(JSON.parse(body));
       } catch (e) {
         resolve(body);
       }
     });
+    req.on('error', err => {
+      if (!aborted) resolve({});
+    });
   });
 }
 
-// Helper to communicate with local WordPress WooCommerce REST API
+// Helper to communicate with local WordPress WooCommerce REST API (only active if ENABLE_WP_BRIDGE=true)
 function wpRequest(endpoint, method = 'GET', data = null) {
+  if (process.env.ENABLE_WP_BRIDGE !== 'true') {
+    return Promise.resolve({ status: 503, error: 'WP bridge disabled' });
+  }
   return new Promise((resolve) => {
     const postData = data ? JSON.stringify(data) : null;
     const options = {
-      hostname: 'paris-store.local',
-      port: 80,
+      hostname: process.env.WP_HOST || 'paris-store.local',
+      port: parseInt(process.env.WP_PORT, 10) || 80,
       path: endpoint,
       method: method,
+      timeout: 800,
       headers: {
         'Accept': 'application/json',
       }
@@ -83,6 +145,11 @@ function wpRequest(endpoint, method = 'GET', data = null) {
       });
     });
 
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ status: 504, error: 'WP bridge timeout' });
+    });
+
     req.on('error', (err) => {
       console.warn('[WP Bridge Warning]', err.message);
       resolve({ status: 500, error: err.message });
@@ -93,19 +160,80 @@ function wpRequest(endpoint, method = 'GET', data = null) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
-  let reqPath = decodeURI(req.url.split('?')[0]);
-  const method = req.method.toUpperCase();
+const server = http.createServer((req, res) => {
+  handleRequest(req, res).catch(err => {
+    console.error('[Server Error]', err);
+    if (!res.headersSent) {
+      const code = err.statusCode || 500;
+      res.writeHead(code, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: code === 413 ? 'حجم الطلب كبير جداً' : 'حدث خطأ داخلي في الخادم' }));
+    }
+  });
+});
 
-  // No-cache headers
+async function handleRequest(req, res) {
+  let reqPath = '/';
+  try {
+    reqPath = decodeURIComponent((req.url || '/').split('?')[0]);
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Bad Request');
+    return;
+  }
+  const method = (req.method || 'GET').toUpperCase();
+
+  // Global Security & Cache Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+
+  // Health Check endpoint for hosting / reverse proxy monitors
+  if (reqPath === '/health' && method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, status: 'healthy', uptime: Math.floor(process.uptime()) }));
+    return;
+  }
+
+  // robots.txt for Search Engines
+  if (reqPath === '/robots.txt' && method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /login\nDisallow: /api/\n');
+    return;
+  }
+
+  // sitemap.xml for SEO
+  if (reqPath === '/sitemap.xml' && method === 'GET') {
+    const host = req.headers.host || `localhost:${PORT}`;
+    const proto = (req.headers['x-forwarded-proto'] === 'https' || (req.socket && req.socket.encrypted)) ? 'https' : 'http';
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+    res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${proto}://${host}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>`);
+    return;
+  }
+
+  // Avoid noisy 404 on browser favicon requests
+  if (reqPath === '/favicon.ico' && method === 'GET') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
   // ===================== AUTH & SESSION API ROUTES =====================
 
   // POST /api/auth/login or /api/admin/login
   if ((reqPath === '/api/auth/login' || reqPath === '/api/admin/login') && method === 'POST') {
+    const clientIp = getClientIp(req);
+    if (isLoginRateLimited(clientIp)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: false,
+        message: 'تم تجاوز الحد المسموح لمحاولات الدخول. يرجى الانتظار 15 دقيقة والمحاولة مجدداً.'
+      }));
+      return;
+    }
+
     const data = await parseBody(req);
     const emailInput = (data.email || '').trim();
     const passwordInput = data.password || '';
@@ -114,11 +242,12 @@ const server = http.createServer(async (req, res) => {
     const admin = auth.findAdminByEmail(emailInput);
 
     if (admin && auth.verifyAdminPassword(admin, passwordInput)) {
+      clearFailedLogins(clientIp);
       const session = auth.createSession(admin, rememberMe);
       const maxAge = rememberMe ? 14 * 24 * 3600 : 24 * 3600;
       res.writeHead(200, {
         'Content-Type': 'application/json',
-        'Set-Cookie': `paris_auth_token=${session.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`
+        'Set-Cookie': buildAuthCookie(req, session.token, maxAge)
       });
       res.end(JSON.stringify({
         ok: true,
@@ -131,6 +260,7 @@ const server = http.createServer(async (req, res) => {
         departmentName: admin.departmentName
       }));
     } else {
+      recordFailedLogin(clientIp);
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         ok: false,
@@ -179,21 +309,32 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/admin/config
+  // GET /api/admin/config (Protected)
   if (reqPath === '/api/admin/config' && method === 'GET') {
     const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح لك بالوصول' }));
+      return;
+    }
     const config = auth.getAdminConfig();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
-      adminEmail: (session && session.email) || config.adminEmail,
-      adminName: (session && session.name) || config.adminName,
-      admins: auth.getAdminsPublicList()
+      adminEmail: session.email || config.adminEmail,
+      adminName: session.name || config.adminName,
+      admins: session.role === 'super_admin' ? auth.getAdminsPublicList() : undefined
     }));
     return;
   }
 
-  // GET /api/admin/studio-images
+  // GET /api/admin/studio-images (Protected)
   if (reqPath === '/api/admin/studio-images' && method === 'GET') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح لك بالوصول' }));
+      return;
+    }
     const uploadDir = path.join(BASE_DIR, 'uploads', 'paris-custom');
     let images = [];
     if (fs.existsSync(uploadDir)) {
@@ -296,13 +437,19 @@ const server = http.createServer(async (req, res) => {
     const newPassword = data.adminPassword || data.newPassword || data.password;
     const newName = data.adminName || data.name;
 
+    if (newPassword && String(newPassword).trim().length < 6) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام.' }));
+      return;
+    }
+
     const updatedAdmin = auth.updateAdminCredentials(targetAdminId, newEmail, newPassword, newName);
     const newSession = auth.createSession(updatedAdmin, true);
     buildStore();
 
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Set-Cookie': `paris_auth_token=${newSession.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${14 * 24 * 3600}`
+      'Set-Cookie': buildAuthCookie(req, newSession.token, 14 * 24 * 3600)
     });
     res.end(JSON.stringify({
       ok: true,
@@ -338,8 +485,10 @@ const server = http.createServer(async (req, res) => {
       products = readJSON(PRODUCTS_FILE, []);
     }
     
-    // If admin has restricted mall scope
-    if (session && session.mall && session.mall !== 'all') {
+    // Only show hidden/unpublished products to authenticated admins
+    if (!session) {
+      products = products.filter(p => p.published !== false);
+    } else if (session.mall && session.mall !== 'all') {
       products = products.filter(p => p.mall === session.mall);
     }
     
@@ -607,28 +756,38 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Static files
-  const filePath = path.join(BASE_DIR, reqPath);
-  if (!filePath.startsWith(BASE_DIR)) {
-    res.writeHead(403);
-    res.end('Access denied');
+  // Static files (Strictly allow-listed public asset directories only — never expose config, code, DB, or .git)
+  const PUBLIC_STATIC_PREFIXES = [
+    '/uploads/',
+    '/themes/storefront-paris-child/assets/',
+    '/assets/'
+  ];
+  const isAllowedStatic = PUBLIC_STATIC_PREFIXES.some(prefix => reqPath.startsWith(prefix));
+  const resolvedFile = path.resolve(BASE_DIR, '.' + reqPath);
+
+  if (!isAllowedStatic || !resolvedFile.startsWith(BASE_DIR + path.sep) || /\/\./.test(reqPath)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Not Found');
     return;
   }
 
-  fs.stat(filePath, (err, stats) => {
+  fs.stat(resolvedFile, (err, stats) => {
     if (err || !stats.isFile()) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('404 Not Found');
       return;
     }
 
-    const ext = path.extname(filePath).toLowerCase();
+    const ext = path.extname(resolvedFile).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-    res.writeHead(200, { 'Content-Type': contentType });
-    fs.createReadStream(filePath).pipe(res);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400'
+    });
+    fs.createReadStream(resolvedFile).pipe(res);
   });
-});
+}
 
 server.listen(PORT, () => {
   console.log(`Paris Store server running on http://localhost:${PORT}/ and http://127.0.0.1:${PORT}/`);

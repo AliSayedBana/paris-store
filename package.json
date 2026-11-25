@@ -1,0 +1,14 @@
+{
+  "name": "paris-store",
+  "version": "2.0.0",
+  "description": "Paris Mall Luxury E-Commerce Store & Multi-Department Admin Studio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build_store.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}
