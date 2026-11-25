@@ -1026,6 +1026,18 @@
 
                 <!-- Hidden Input holding Final Image URL -->
                 <input type="hidden" id="studioFinalImage" value="">
+
+                <!-- Optional Multi-Angle Gallery Upload (Up to 4 extra photos) -->
+                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #ded7c8;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <span style="font-size:12.5px; font-weight:700; color:var(--paris-forest);">📸 صور إضافية لزوايا وتفاصيل المنتج (اختياري):</span>
+                    <button type="button" class="admin-btn admin-btn-outline" style="padding:5px 12px; font-size:12px;" onclick="document.getElementById('studioExtraImagesInput').click()">
+                      + إضافة صور زوايا متعددة
+                    </button>
+                    <input type="file" id="studioExtraImagesInput" accept="image/*" multiple style="display:none;" onchange="onStudioExtraImagesSelected(this)">
+                  </div>
+                  <div id="studioExtraGalleryPreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+                </div>
               </div>
             </div>
 
@@ -1771,6 +1783,55 @@
     }
 
     let isUploadingImage = false;
+    let studioExtraGalleryUrls = [];
+
+    function renderStudioExtraGallery() {
+      const box = document.getElementById('studioExtraGalleryPreview');
+      if (!box) return;
+      box.innerHTML = studioExtraGalleryUrls.map((u, idx) => `
+        <div style="position:relative; width:56px; height:56px; border-radius:8px; border:1.5px solid #c59b27; overflow:hidden; background:#fff;">
+          <img src="${u}" style="width:100%; height:100%; object-fit:cover;">
+          <button type="button" onclick="removeExtraGalleryImg(${idx})" style="position:absolute; top:2px; left:2px; background:rgba(0,0,0,0.65); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function removeExtraGalleryImg(idx) {
+      studioExtraGalleryUrls.splice(idx, 1);
+      renderStudioExtraGallery();
+    }
+
+    async function onStudioExtraImagesSelected(input) {
+      const files = Array.from(input.files || []).slice(0, 4 - studioExtraGalleryUrls.length);
+      if (!files.length) return;
+      isUploadingImage = true;
+      showToast('⏳ جاري رفع الصور الإضافية...');
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const base64Data = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = () => resolve(null);
+          r.readAsDataURL(file);
+        });
+        if (!base64Data) continue;
+        try {
+          const res = await fetch('/api/admin/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: file.name, data: base64Data })
+          });
+          const data = await res.json();
+          if (res.ok && data.ok && data.imageUrl) {
+            studioExtraGalleryUrls.push(data.imageUrl);
+          }
+        } catch (e) {}
+      }
+      isUploadingImage = false;
+      renderStudioExtraGallery();
+      input.value = '';
+      showToast('✅ تم تجهيز الصور الإضافية بنجاح!');
+    }
 
     // Core Device Upload function
     async function uploadFileFromDevice(file, target) {
@@ -1929,6 +1990,8 @@
       document.getElementById('studioHighlight3').value = '';
       document.getElementById('studioFinalImage').value = '';
       document.getElementById('studioImageUrlInput').value = '';
+      studioExtraGalleryUrls = [];
+      renderStudioExtraGallery();
       document.getElementById('studioUploadStatus').style.display = 'none';
       document.querySelectorAll('#studioQuickSizesPills .size-btn-pill').forEach(b => b.classList.remove('selected'));
       document.querySelectorAll('#studioQuickColorsPills .color-btn-pill').forEach(b => b.classList.remove('selected'));
@@ -1980,6 +2043,7 @@
         regularPrice: reg,
         discountBadge,
         image,
+        gallery: studioExtraGalleryUrls.slice(0, 4),
         brand,
         badge,
         sizes,

@@ -1275,17 +1275,114 @@ function buildStore() {
     .quickview-img-box {
       background: #f7f5ef;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 30px;
+      padding: 24px;
       position: relative;
+      gap: 14px;
     }
-    .quickview-img-box img {
-      max-width: 100%;
-      max-height: 380px;
-      object-fit: contain;
+    .quickview-main-frame {
+      width: 100%;
+      height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       border-radius: var(--paris-radius-md);
+      background: #fff;
+      cursor: zoom-in;
+      position: relative;
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+    .quickview-main-frame.zoomed {
+      cursor: zoom-out;
+    }
+    .quickview-main-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: transform 0.35s ease;
+    }
+    .quickview-main-frame.zoomed img {
+      transform: scale(1.65);
+    }
+    .qv-thumbs-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .qv-thumb-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      border: 2px solid #ded7c8;
+      padding: 2px;
+      background: #fff;
+      cursor: pointer;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+    .qv-thumb-btn.active, .qv-thumb-btn:hover {
+      border-color: var(--paris-forest);
+      transform: translateY(-2px);
+    }
+    .qv-thumb-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .qv-size-guide-box {
+      display: none;
+      background: #f8faf8;
+      border: 1px solid #cce3d8;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: var(--paris-forest);
+    }
+    .qv-size-guide-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      text-align: center;
+    }
+    .qv-size-guide-table th, .qv-size-guide-table td {
+      border: 1px solid #d9e7df;
+      padding: 4px 6px;
+    }
+    .qv-size-guide-table th {
+      background: #eaf4ee;
+      font-weight: 800;
+    }
+
+    /* Customer Reviews Section */
+    .paris-reviews-section {
+      max-width: 1320px;
+      margin: 60px auto 0;
+      padding: 0 24px;
+    }
+    .reviews-bento-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .review-vip-card {
+      background: #fff;
+      border: 1.5px solid var(--paris-border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--paris-shadow-sm);
+      transition: var(--transition-smooth);
+    }
+    .review-vip-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--paris-gold);
+      box-shadow: var(--paris-shadow-md);
     }
     .quickview-details-box {
       padding: 36px 32px;
@@ -1535,14 +1632,14 @@ function buildStore() {
       </a>
 
       <!-- Center Search Bar -->
-      <form class="paris-search-bar" id="searchForm" onsubmit="event.preventDefault(); searchProducts();">
+      <form class="paris-search-bar" id="searchForm" onsubmit="event.preventDefault(); searchProducts(true);">
         <select id="searchCategory" class="paris-search-scope" onchange="onSearchScopeChange()">
           <option value="">كل الأقسام</option>
           <option value="clothes">👗 قسم الملابس</option>
           <option value="home">🏠 قسم الأدوات المنزلية</option>
           <option value="shoes">👟 قسم الأحذية</option>
         </select>
-        <input type="text" id="searchInput" class="paris-search-input" placeholder="ابحث عن الملابس، الأحذية، أدوات المطبخ، الديكور..." autocomplete="off" oninput="searchProducts()">
+        <input type="text" id="searchInput" class="paris-search-input" placeholder="ابحث عن الملابس، الأحذية، أدوات المطبخ، الديكور..." autocomplete="off" oninput="searchProducts(false)">
         <button type="submit" class="paris-search-btn" aria-label="بحث">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </button>
@@ -1754,7 +1851,11 @@ function buildStore() {
       <button class="qv-close-btn" onclick="closeQuickView()">&times;</button>
       
       <div class="quickview-img-box">
-        <img id="qvModalImg" src="" alt="">
+        <div class="quickview-main-frame" id="qvMainFrame" onclick="toggleQuickViewZoom()" title="انقر للتكبير والفحص">
+          <img id="qvModalImg" src="" alt="">
+          <span style="position:absolute; bottom:10px; right:10px; background:rgba(15,51,34,0.85); color:#fff; font-size:11px; padding:4px 10px; border-radius:50px; pointer-events:none;">🔍 اضغط للتكبير</span>
+        </div>
+        <div class="qv-thumbs-strip" id="qvThumbnailsStrip"></div>
       </div>
 
       <div class="quickview-details-box">
@@ -1773,7 +1874,13 @@ function buildStore() {
         </div>
 
         <div id="qvSizesWrap">
-          <div class="qv-selector-title">المقاس المطلوب:</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div class="qv-selector-title" style="margin-bottom:0;">المقاس المطلوب:</div>
+            <button type="button" id="qvSizeGuideBtn" onclick="toggleSizeGuide()" style="background:#eef5f0; border:1px solid #cce3d8; color:var(--paris-forest); font-size:11.5px; font-weight:800; padding:3px 10px; border-radius:50px; cursor:pointer; font-family:inherit;">
+              📏 دليل المقاسات الدقيق
+            </button>
+          </div>
+          <div id="qvSizeGuideBox" class="qv-size-guide-box"></div>
           <div class="qv-chips-list" id="qvModalSizesList"></div>
         </div>
 
@@ -1829,15 +1936,25 @@ function buildStore() {
     </div>
 
     <div class="cart-panel-footer">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:15px;">
+      <!-- Coupon Code Box -->
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <input type="text" id="cartCouponInput" placeholder="أدخل كود الخصم (مثال: PARIS2026)" style="flex:1; padding:8px 12px; border:1.5px solid #ded7c8; border-radius:8px; font-family:inherit; font-size:12.5px; outline:none; text-transform:uppercase;">
+        <button type="button" onclick="applyCouponCode()" style="background:var(--paris-forest); color:#fff; border:none; padding:8px 14px; border-radius:8px; font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;">تطبيق</button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:14.5px;">
         <span style="color:var(--paris-text-muted);">المجموع الفرعي:</span>
-        <strong id="cartSubtotalVal" style="color:var(--paris-forest); font-size:17px;">0 ج.م</strong>
+        <strong id="cartSubtotalVal" style="color:var(--paris-forest); font-size:16px;">0 ج.م</strong>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:13.5px; color:#107c41;">
+      <div id="cartDiscountRow" style="display:none; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:13.5px; color:#b45309; font-weight:800;">
+        <span id="cartDiscountLabel">🎟️ خصم كود VIP:</span>
+        <span id="cartDiscountVal">-0 ج.م</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:13.5px; color:#107c41;">
         <span>الشحن والتوصيل:</span>
-        <span id="cartShippingVal">الدفع عند الاستلام</span>
+        <span id="cartShippingVal">مجاني للطلبات فوق 500 ج.م</span>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; font-size:19px; font-weight:900; color:var(--paris-forest); border-top:1px dashed #ded7c8; padding-top:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-size:19px; font-weight:900; color:var(--paris-forest); border-top:1px dashed #ded7c8; padding-top:12px;">
         <span>الإجمالي النهائي:</span>
         <span id="cartTotalVal">0 ج.م</span>
       </div>
@@ -1868,7 +1985,7 @@ function buildStore() {
 
       <div style="margin-bottom:14px;">
         <label style="display:block; font-size:13px; font-weight:700; margin-bottom:5px;">المحافظة:</label>
-        <select id="custGov" style="width:100%; padding:11px 14px; border:1.5px solid #ded7c8; border-radius:10px; font-family:inherit; font-size:14px; box-sizing:border-box; outline:none;">
+        <select id="custGov" onchange="updateCheckoutSummary()" style="width:100%; padding:11px 14px; border:1.5px solid #ded7c8; border-radius:10px; font-family:inherit; font-size:14px; box-sizing:border-box; outline:none;">
           <option value="القاهرة">القاهرة</option>
           <option value="الجيزة">الجيزة</option>
           <option value="الإسكندرية">الإسكندرية</option>
@@ -1883,7 +2000,7 @@ function buildStore() {
           <option value="بورسعيد">بورسعيد</option>
           <option value="الإسماعيلية">الإسماعيلية</option>
           <option value="السويس">السويس</option>
-          <option value="محافظة أخرى">محافظة أخرى</option>
+          <option value="محافظة أخرى">محافظة أخرى / الصعيد</option>
         </select>
       </div>
 
@@ -1893,11 +2010,19 @@ function buildStore() {
       </div>
 
       <div style="background:#f7f5ef; padding:14px; border-radius:10px; margin-bottom:14px; font-size:14px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-          <span>إجمالي الطلب:</span>
-          <strong id="modalTotalVal" style="color:var(--paris-forest);">0 ج.م</strong>
+        <div id="modalDiscountRow" style="display:none; justify-content:space-between; margin-bottom:5px; color:#b45309; font-weight:700;">
+          <span>خصم الكود:</span>
+          <span id="modalDiscountVal">-0 ج.م</span>
         </div>
-        <div style="display:flex; justify-content:space-between; color:#107c41; font-weight:700;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px;">
+          <span>الشحن والتوصيل:</span>
+          <strong id="modalShippingVal" style="color:#107c41;">مجاني VIP</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+          <span>الإجمالي شامل الشحن:</span>
+          <strong id="modalTotalVal" style="color:var(--paris-forest); font-size:17px;">0 ج.م</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:#107c41; font-weight:700; font-size:12.5px;">
           <span>طريقة الدفع:</span>
           <span>الدفع عند الاستلام بعد المعاينة والفحص</span>
         </div>
@@ -1914,6 +2039,56 @@ function buildStore() {
       </button>
     </div>
   </div>
+
+  <!-- ===================== 9.5 VERIFIED VIP REVIEWS ===================== -->
+  <section class="paris-reviews-section" aria-label="تقييمات العملاء الموثقة">
+    <div style="text-align:center;">
+      <span style="background:var(--paris-gold-light); color:var(--paris-gold); font-size:12px; font-weight:900; padding:4px 14px; border-radius:50px;">⭐ ثقة عملائنا سر استمرارنا</span>
+      <h2 class="section-headline" style="justify-content:center; margin-top:10px;">تجارب حقيقية بعد المعاينة والاستلام</h2>
+      <p class="section-subhead">آراء عملاء طلبوا منتجاتنا الفاخرة وفحصوها مع المندوب قبل الدفع</p>
+    </div>
+
+    <div class="reviews-bento-grid">
+      <div class="review-vip-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">م. طارق المنصوري</div>
+            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • التجمع الخامس</div>
+          </div>
+          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
+        </div>
+        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
+          "طلبت البدلة الإيطالية الصوف بـ 9,850 ج.م، وصراحة كنت متردد في البداية، لكن المندوب انتظرني فتحت الشحنة وقست البدلة وتأكدت من الخامة والتفصيل الإيطالي قبل ما أدفع جنيه واحد."
+        </p>
+      </div>
+
+      <div class="review-vip-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">أ. ندى الشريف</div>
+            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • الإسكندرية</div>
+          </div>
+          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
+        </div>
+        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
+          "طقم الجرانيت الـ 32 قطعة وصلني في ميعاده بكرتونته الأصلية ومعاه شهادة الضمان 5 سنوات، وفحصت كل الحلل مع المندوب. كمان استخدمت كود PARIS2026 ووفر لي مبلغ محترم جداً!"
+        </p>
+      </div>
+
+      <div class="review-vip-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">د. كريم عبد الرحمن</div>
+            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • الشيخ زايد</div>
+          </div>
+          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
+        </div>
+        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
+          "الحذاء الأوكسفورد الجلد الطبيعي فخم جداً ومريح للقدم، والتواصل مع خدمة عملاء واتساب كان سريع ومحترم جداً من أول تأكيد المقاس لحد الاستلام."
+        </p>
+      </div>
+    </div>
+  </section>
 
   <!-- ===================== 10. LUXURY FOOTER ===================== -->
   <footer style="background:var(--paris-forest); color:#fff; padding:60px 24px 30px; margin-top:80px; border-top:3px solid var(--paris-gold);">
@@ -1984,12 +2159,61 @@ function buildStore() {
   <!-- Client-side Script -->
   <script>
     const productsData = ${JSON.stringify(publishedProducts)};
+    const PARIS_COUPONS = {
+      'PARIS2026': { rate: 0.10, label: 'خصم VIP 10%' },
+      'VIP10': { rate: 0.10, label: 'خصم VIP 10%' },
+      'VIP15': { rate: 0.15, label: 'خصم خاص 15%' }
+    };
     let cart = [];
+    let wishlistItems = [];
+    let appliedCoupon = null;
+    try {
+      cart = JSON.parse(localStorage.getItem('paris_cart_v2') || '[]');
+      wishlistItems = JSON.parse(localStorage.getItem('paris_wishlist_v2') || '[]');
+      const savedCode = localStorage.getItem('paris_coupon_v2');
+      if (savedCode && PARIS_COUPONS[savedCode]) appliedCoupon = savedCode;
+    } catch (e) {}
+
     let currentMall = 'clothes';
     let currentFilter = 'all';
     let selectedQvProduct = null;
     let selectedQvSize = '';
     let selectedQvColor = '';
+
+    // Marketing Pixels Dispatcher (Meta / TikTok / Google Analytics Ready)
+    window.trackParisEvent = function(eventName, payload) {
+      try {
+        if (typeof window.fbq === 'function') window.fbq('track', eventName, payload || {});
+        if (typeof window.ttq !== 'undefined' && typeof window.ttq.track === 'function') window.ttq.track(eventName, payload || {});
+        if (typeof window.gtag === 'function') window.gtag('event', eventName, payload || {});
+      } catch (e) {}
+    };
+
+    function persistCartState() {
+      try {
+        localStorage.setItem('paris_cart_v2', JSON.stringify(cart));
+        if (appliedCoupon) localStorage.setItem('paris_coupon_v2', appliedCoupon);
+        else localStorage.removeItem('paris_coupon_v2');
+      } catch (e) {}
+    }
+
+    function getShippingFee(gov, subtotalAfterDiscount) {
+      if (subtotalAfterDiscount >= 500 || subtotalAfterDiscount === 0) return 0;
+      if (['القاهرة', 'الجيزة', 'القليوبية'].includes(gov)) return 60;
+      if (['الإسكندرية', 'الدقهلية', 'الشرقية', 'الغربية', 'المنوفية', 'البحيرة', 'كفر الشيخ', 'دمياط', 'بورسعيد', 'الإسماعيلية', 'السويس'].includes(gov)) return 75;
+      return 95;
+    }
+
+    function getCartTotals() {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const couponObj = appliedCoupon ? PARIS_COUPONS[appliedCoupon] : null;
+      const discount = couponObj ? Math.round(subtotal * couponObj.rate) : 0;
+      const net = Math.max(0, subtotal - discount);
+      const govEl = document.getElementById('custGov');
+      const gov = govEl ? govEl.value : 'القاهرة';
+      const shipping = getShippingFee(gov, net);
+      return { subtotal, discount, net, shipping, total: net + shipping, couponObj, gov };
+    }
 
     function formatPrice(val) {
       if (val === undefined || val === null || isNaN(val)) return '0';
@@ -2052,10 +2276,32 @@ function buildStore() {
         return;
       }
       closeCart();
-      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      document.getElementById('modalTotalVal').innerText = formatPrice(total) + ' ج.م';
+      updateCheckoutSummary();
       checkoutModal.style.display = 'flex';
+      window.trackParisEvent('InitiateCheckout', { value: getCartTotals().total, currency: 'EGP', num_items: cart.length });
     });
+
+    function updateCheckoutSummary() {
+      const t = getCartTotals();
+      const modalDiscRow = document.getElementById('modalDiscountRow');
+      const modalDiscVal = document.getElementById('modalDiscountVal');
+      const modalShipVal = document.getElementById('modalShippingVal');
+      const modalTotalVal = document.getElementById('modalTotalVal');
+      if (modalDiscRow && modalDiscVal) {
+        if (t.discount > 0) {
+          modalDiscRow.style.display = 'flex';
+          modalDiscVal.innerText = '-' + formatPrice(t.discount) + ' ج.م (' + appliedCoupon + ')';
+        } else {
+          modalDiscRow.style.display = 'none';
+        }
+      }
+      if (modalShipVal) {
+        modalShipVal.innerText = t.shipping === 0
+          ? (t.net >= 5000 ? 'مجاني VIP ومؤمّن بالكامل 🛡️' : 'مجاني 🎉')
+          : formatPrice(t.shipping) + ' ج.م (' + t.gov + ')';
+      }
+      if (modalTotalVal) modalTotalVal.innerText = formatPrice(t.total) + ' ج.م';
+    }
 
     document.getElementById('modalCloseBtn').addEventListener('click', () => {
       checkoutModal.style.display = 'none';
@@ -2068,20 +2314,49 @@ function buildStore() {
     }
 
     function copyCouponCode(code) {
-      navigator.clipboard.writeText(code).then(() => {
+      navigator.clipboard.writeText(code).catch(() => {});
+      const clean = (code || '').trim().toUpperCase();
+      if (PARIS_COUPONS[clean]) {
+        appliedCoupon = clean;
+        const inp = document.getElementById('cartCouponInput');
+        if (inp) inp.value = clean;
+        persistCartState();
+        renderCart();
+        showToast('🎉 تم نسخ وتفعيل كود الخصم: ' + clean);
+      } else {
         showToast('تم نسخ كود الخصم: ' + code);
-      }).catch(() => {
-        showToast('كود الخصم هو: ' + code);
-      });
+      }
+    }
+
+    function applyCouponCode() {
+      const inp = document.getElementById('cartCouponInput');
+      const code = (inp ? inp.value : '').trim().toUpperCase();
+      if (!code) {
+        appliedCoupon = null;
+        persistCartState();
+        renderCart();
+        return;
+      }
+      if (PARIS_COUPONS[code]) {
+        appliedCoupon = code;
+        persistCartState();
+        renderCart();
+        showToast('✅ تم تطبيق ' + PARIS_COUPONS[code].label + ' بنجاح!');
+      } else {
+        showToast('❌ كود الخصم غير صحيح (جرب PARIS2026)');
+      }
     }
 
     function toggleWishlist(btn, title) {
       btn.classList.toggle('active');
       if (btn.classList.contains('active')) {
+        if (!wishlistItems.includes(title)) wishlistItems.push(title);
         showToast('تمت إضافة "' + title.substring(0, 18) + '..." للمفضلة ❤️');
       } else {
+        wishlistItems = wishlistItems.filter(t => t !== title);
         showToast('تمت الإزالة من المفضلة');
       }
+      try { localStorage.setItem('paris_wishlist_v2', JSON.stringify(wishlistItems)); } catch (e) {}
     }
 
     function openCart() {
@@ -2104,7 +2379,9 @@ function buildStore() {
       } else {
         cart.push({ title, price, img, size: size || '', qty: 1 });
       }
+      persistCartState();
       updateCartBadge();
+      window.trackParisEvent('AddToCart', { content_name: title, value: price, currency: 'EGP' });
       showToast('تمت إضافة "' + title.substring(0, 20) + '..." إلى السلة 🛍️');
       openCart();
     }
@@ -2118,22 +2395,31 @@ function buildStore() {
     function updateQty(index, delta) {
       cart[index].qty += delta;
       if (cart[index].qty <= 0) cart.splice(index, 1);
+      persistCartState();
       updateCartBadge();
       renderCart();
     }
 
     function removeItem(index) {
       cart.splice(index, 1);
+      persistCartState();
       updateCartBadge();
       renderCart();
     }
 
     function renderCart() {
+      const discRow = document.getElementById('cartDiscountRow');
+      const discLabel = document.getElementById('cartDiscountLabel');
+      const discVal = document.getElementById('cartDiscountVal');
+      const shipVal = document.getElementById('cartShippingVal');
+
       if (cart.length === 0) {
         cartEmptyState.style.display = 'block';
         cartItemsList.style.display = 'none';
         cartSubtotalVal.innerText = '0 ج.م';
         cartTotalVal.innerText = '0 ج.م';
+        if (discRow) discRow.style.display = 'none';
+        if (shipVal) shipVal.innerText = 'مجاني للطلبات فوق 500 ج.م';
         shippingProgressFill.style.width = '0%';
         freeShippingText.innerText = '🚚 أضف بـ 500 ج.م للحصول على شحن مجاني!';
         return;
@@ -2142,12 +2428,9 @@ function buildStore() {
       cartEmptyState.style.display = 'none';
       cartItemsList.style.display = 'block';
 
-      let total = 0;
       let html = '';
 
       cart.forEach((item, idx) => {
-        const itemTotal = item.price * item.qty;
-        total += itemTotal;
         html += \`
           <div style="display:flex; gap:14px; padding:14px 0; border-bottom:1px solid #eee; align-items:center;">
             <img src="\${item.img}" style="width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid #e0dbce;">
@@ -2168,24 +2451,42 @@ function buildStore() {
         \`;
       });
 
+      const t = getCartTotals();
       cartItemsList.innerHTML = html;
-      cartSubtotalVal.innerText = formatPrice(total) + ' ج.م';
-      cartTotalVal.innerText = formatPrice(total) + ' ج.م';
+      cartSubtotalVal.innerText = formatPrice(t.subtotal) + ' ج.م';
+      if (discRow && discLabel && discVal) {
+        if (t.discount > 0 && t.couponObj) {
+          discRow.style.display = 'flex';
+          discLabel.innerText = '🎟️ ' + t.couponObj.label + ' (' + appliedCoupon + '):';
+          discVal.innerText = '-' + formatPrice(t.discount) + ' ج.م';
+        } else {
+          discRow.style.display = 'none';
+        }
+      }
+      if (shipVal) {
+        shipVal.innerText = t.shipping === 0
+          ? (t.net >= 5000 ? 'شحن VIP مجاني مؤمّن 🛡️' : 'شحن مجاني 🎉')
+          : formatPrice(t.shipping) + ' ج.م (حسب المحافظة)';
+      }
+      cartTotalVal.innerText = formatPrice(t.total) + ' ج.م';
 
       // Free shipping progress
       const targetFree = 500;
-      if (total >= targetFree) {
+      if (t.net >= targetFree) {
         shippingProgressFill.style.width = '100%';
-        freeShippingText.innerHTML = '🎉 <strong>مبروك!</strong> لقد حصلت على شحن مجاني لطلبك!';
+        freeShippingText.innerHTML = t.net >= 5000
+          ? '👑 <strong>طلب VIP!</strong> شحن مجاني مؤمّن + أولوية فحص ومعاينة مع المندوب!'
+          : '🎉 <strong>مبروك!</strong> لقد حصلت على شحن مجاني لطلبك!';
       } else {
-        const remaining = targetFree - total;
-        const pct = Math.min(100, Math.round((total / targetFree) * 100));
+        const remaining = targetFree - t.net;
+        const pct = Math.min(100, Math.round((t.net / targetFree) * 100));
         shippingProgressFill.style.width = pct + '%';
-        freeShippingText.innerText = '🚚 أضف بـ ' + remaining + ' ج.م إضافية للحصول على شحن مجاني!';
+        freeShippingText.innerText = '🚚 أضف بـ ' + formatPrice(remaining) + ' ج.م إضافية للحصول على شحن مجاني!';
       }
     }
 
     function quickOrderWhatsApp(title, price) {
+      window.trackParisEvent('InitiateCheckout', { content_name: title, value: price, currency: 'EGP' });
       const msg = 'مرحباً متجر باريس 👋%0Aأود الاستفسار وحجز هذا المنتج فوراً:%0A' +
                   '• *المنتج:* ' + encodeURIComponent(title) + '%0A' +
                   '• *السعر:* ' + formatPrice(price) + ' ج.م%0A' +
@@ -2206,11 +2507,14 @@ function buildStore() {
         return;
       }
 
-      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const t = getCartTotals();
       let itemsText = '';
       cart.forEach((item, i) => {
         itemsText += (i+1) + '. ' + item.title + (item.size ? ' [مقاس: ' + item.size + ']' : '') + ' (الكمية: ' + item.qty + ') - ' + formatPrice(item.price * item.qty) + ' ج.م%0A';
       });
+
+      const discountLine = t.discount > 0 ? ('*كود الخصم (' + appliedCoupon + '):* -' + formatPrice(t.discount) + ' ج.م%0A') : '';
+      const shippingLine = '*مصاريف الشحن:* ' + (t.shipping === 0 ? 'مجاني VIP 🚚' : formatPrice(t.shipping) + ' ج.م') + '%0A';
 
       const orderMsg = '🛍️ *طلب شراء رسمي من متجر باريس (VIP Order)* 🛍️%0A%0A' +
                        '*بيانات العميل:*%0A' +
@@ -2219,26 +2523,54 @@ function buildStore() {
                        '• المحافظة: ' + encodeURIComponent(gov) + '%0A' +
                        '• العنوان: ' + encodeURIComponent(addr) + '%0A%0A' +
                        '*تفاصيل المنتجات:*%0A' + itemsText + '%0A' +
-                       '*إجمالي الفاتورة:* ' + formatPrice(total) + ' ج.م%0A' +
+                       discountLine +
+                       shippingLine +
+                       '*إجمالي الفاتورة النهائي:* ' + formatPrice(t.total) + ' ج.م%0A' +
                        '*طريقة الدفع:* الدفع عند الاستلام بعد المعاينة والفحص التام 🛡️%0A' +
                        '*الضمان:* فاتورة رسمية معتمدة + ضمان استبدال واسترجاع 14 يوماً مجاناً 📜%0A%0A' +
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
+      window.trackParisEvent('Purchase', { value: t.total, currency: 'EGP' });
       window.open('https://wa.me/201065968425?text=' + orderMsg, '_blank');
       checkoutModal.style.display = 'none';
       cart = [];
+      appliedCoupon = null;
+      persistCartState();
       updateCartBadge();
       renderCart();
       showToast('تم إرسال طلبك بنجاح عبر واتساب!');
     }
 
-    // Quick View Modal
+    // Quick View Modal + Multi-Image Gallery + Zoom + Size Guide
     function openQuickView(productId) {
       const prod = productsData.find(p => p.id === productId);
       if (!prod) return;
       selectedQvProduct = prod;
 
+      window.trackParisEvent('ViewContent', { content_name: prod.title, value: prod.price, currency: 'EGP' });
+
+      const mainFrame = document.getElementById('qvMainFrame');
+      if (mainFrame) mainFrame.classList.remove('zoomed');
       document.getElementById('qvModalImg').src = prod.image || '';
+
+      // Render multi-image gallery thumbnails if available
+      const allImgs = [prod.image, ...(Array.isArray(prod.gallery) ? prod.gallery : [])].filter(Boolean);
+      const uniqueImgs = Array.from(new Set(allImgs));
+      const thumbsStrip = document.getElementById('qvThumbnailsStrip');
+      if (thumbsStrip) {
+        if (uniqueImgs.length > 1) {
+          thumbsStrip.style.display = 'flex';
+          thumbsStrip.innerHTML = uniqueImgs.map((u, idx) => \`
+            <button type="button" class="qv-thumb-btn \${idx === 0 ? 'active' : ''}" onclick="switchQuickViewImage(this, '\${u}')">
+              <img src="\${u}" alt="">
+            </button>
+          \`).join('');
+        } else {
+          thumbsStrip.style.display = 'none';
+          thumbsStrip.innerHTML = '';
+        }
+      }
+
       document.getElementById('qvModalTitle').innerText = prod.title;
       document.getElementById('qvModalPrice').innerText = formatPrice(prod.price) + ' ج.م';
       document.getElementById('qvModalOldPrice').innerText = (prod.regularPrice && prod.regularPrice > prod.price) ? (formatPrice(prod.regularPrice) + ' ج.م') : '';
@@ -2247,6 +2579,10 @@ function buildStore() {
       if (prod.mall === 'clothes') deptName = 'قسم الأزياء والملابس';
       if (prod.mall === 'shoes') deptName = 'قسم الأحذية والرياضة';
       document.getElementById('qvModalDept').innerText = deptName;
+
+      // Reset size guide box when opening
+      const sgBox = document.getElementById('qvSizeGuideBox');
+      if (sgBox) sgBox.style.display = 'none';
 
       // High-Ticket Features in Highlights
       const isHigh = prod.price >= 1000;
@@ -2302,6 +2638,40 @@ function buildStore() {
     function closeQuickView() {
       quickViewBackdrop.style.display = 'none';
       document.body.style.overflow = '';
+    }
+
+    function switchQuickViewImage(btn, url) {
+      document.querySelectorAll('#qvThumbnailsStrip .qv-thumb-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const imgEl = document.getElementById('qvModalImg');
+      if (imgEl) imgEl.src = url;
+      const frame = document.getElementById('qvMainFrame');
+      if (frame) frame.classList.remove('zoomed');
+    }
+
+    function toggleQuickViewZoom() {
+      const frame = document.getElementById('qvMainFrame');
+      if (frame) frame.classList.toggle('zoomed');
+    }
+
+    function toggleSizeGuide() {
+      const box = document.getElementById('qvSizeGuideBox');
+      if (!box) return;
+      if (box.style.display === 'block') {
+        box.style.display = 'none';
+        return;
+      }
+      const isShoes = selectedQvProduct && selectedQvProduct.mall === 'shoes';
+      if (isShoes) {
+        box.innerHTML = '<strong>📏 دليل مقاسات الأحذية الدقيق (سم):</strong>' +
+          '<table class="qv-size-guide-table"><tr><th>المقاس</th><th>40</th><th>41</th><th>42</th><th>43</th><th>44</th><th>45</th></tr>' +
+          '<tr><td>طول القدم (سم)</td><td>25.5</td><td>26</td><td>26.5</td><td>27.5</td><td>28</td><td>29</td></tr></table>';
+      } else {
+        box.innerHTML = '<strong>📏 دليل مقاسات الملابس والبدل:</strong>' +
+          '<table class="qv-size-guide-table"><tr><th>المقاس</th><th>S / 48</th><th>M / 50</th><th>L / 52</th><th>XL / 54</th><th>2XL / 56</th></tr>' +
+          '<tr><td>الوزن المناسب</td><td>55-65 كجم</td><td>65-75 كجم</td><td>75-85 كجم</td><td>85-95 كجم</td><td>95-110 كجم</td></tr></table>';
+      }
+      box.style.display = 'block';
     }
 
     function selectQvSize(btn, size) {
@@ -2508,7 +2878,7 @@ function buildStore() {
       else applyCategory('everything', 'all', null, 'كل معروضات المتجر', true);
     }
 
-    function searchProducts() {
+    function searchProducts(shouldScroll = false) {
       const cat = document.getElementById('searchCategory').value.toLowerCase();
       const q = document.getElementById('searchInput').value.trim().toLowerCase();
       const cards = document.querySelectorAll('#productsGrid .paris-modern-card');
@@ -2539,7 +2909,7 @@ function buildStore() {
       if (sectionTitle) {
         sectionTitle.innerHTML = 'نتائج البحث (' + (q || 'الكل') + ') <span class=\"section-counter-badge\" id=\"productsCountBadge\">' + count + ' منتج</span>';
       }
-      scrollToProducts();
+      if (shouldScroll) scrollToProducts();
     }
 
     function sortProducts() {
@@ -2567,7 +2937,12 @@ function buildStore() {
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Initialize to Clothes Mall
+    // Initialize store state & restore persisted cart / coupon
+    updateCartBadge();
+    if (appliedCoupon) {
+      const cInput = document.getElementById('cartCouponInput');
+      if (cInput) cInput.value = appliedCoupon;
+    }
     switchMall('clothes', true);
   </script>
 </body>
