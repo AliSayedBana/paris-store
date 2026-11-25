@@ -6,7 +6,7 @@ const SETTINGS_FILE = path.join(__dirname, 'store_settings.json');
 const DEFAULT_SETTINGS = {
   whatsappNumber: '201065968425',
   whatsappDisplay: '01065968425',
-  announcementText: 'موسم باريس 2026: عروض وخصومات كبرى تصل إلى 50% لجميع العائلة مع توصيل فوري للمنزل',
+  announcementText: '',
   activeCouponBannerCode: 'PARIS2026',
   coupons: [
     { code: 'PARIS2026', rate: 10, label: 'خصم VIP 10%', active: true },

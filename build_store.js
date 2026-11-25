@@ -1629,7 +1629,7 @@ function buildStore() {
   <div class="paris-top-bar">
     <div class="paris-top-bar-inner">
       <div style="display:flex; align-items:center;">
-        <span>✨ ${settings.announcementText}</span>
+        ${settings.announcementText ? `<span>✨ ${settings.announcementText}</span>` : ''}
         ${settings.activeCouponBannerCode ? `<span class="top-promo-pill" onclick="copyCouponCode('${settings.activeCouponBannerCode}')" title="انقر لنسخ وتفعيل كود الخصم">كود: ${settings.activeCouponBannerCode} 📋</span>` : ''}
       </div>
       <div>
