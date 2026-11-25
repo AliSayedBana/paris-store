@@ -7,7 +7,7 @@ const auth = require('./auth_utils');
 const PORT = parseInt(process.env.PORT, 10) || 4000;
 const BASE_DIR = path.resolve(__dirname);
 const PRODUCTS_FILE = path.join(BASE_DIR, 'products.json');
-const MAX_BODY_BYTES = 15 * 1024 * 1024; // 15 MB max request body (safe for base64 image uploads)
+const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB max request body (safe for high-res phone camera uploads)
 
 // Login Brute-Force Rate Limiter (10 failed attempts per 15 min window)
 const loginAttempts = new Map();
@@ -390,17 +390,19 @@ async function handleRequest(req, res) {
       const destPath = path.join(uploadDir, filename);
       fs.writeFileSync(destPath, buffer);
 
-      // Also copy to LocalWP directories so WordPress can serve it immediately
-      const wpUploadDirs = [
-        'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\wp-content\\uploads\\paris-custom',
-        'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\uploads\\paris-custom'
-      ];
-      for (const d of wpUploadDirs) {
-        try {
-          if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-          fs.writeFileSync(path.join(d, filename), buffer);
-        } catch (e) {
-          console.warn('[Image Sync Warning] Could not copy to', d, e.message);
+      // Also copy to LocalWP directories only when local WP bridge is enabled
+      if (process.env.ENABLE_WP_BRIDGE === 'true') {
+        const wpUploadDirs = [
+          'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\wp-content\\uploads\\paris-custom',
+          'C:\\Users\\asasas\\Local Sites\\paris-store\\app\\public\\uploads\\paris-custom'
+        ];
+        for (const d of wpUploadDirs) {
+          try {
+            if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+            fs.writeFileSync(path.join(d, filename), buffer);
+          } catch (e) {
+            console.warn('[Image Sync Warning] Could not copy to', d, e.message);
+          }
         }
       }
 
