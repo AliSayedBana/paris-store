@@ -173,9 +173,19 @@
       "departmentName": "مول باريس للأدوات المنزلية",
       "createdAt": "2026-11-24T09:26:54.422Z",
       "expiresAt": "2026-12-08T09:26:54.422Z"
+    },
+    "9ba98a3589db6e9173b710a8bfab02495c5d83d2604d62ef76e43c65fe73043c": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-25T10:45:41.238Z",
+      "expiresAt": "2026-12-09T10:45:41.238Z"
     }
   },
-  "lastUpdated": "2026-11-24T09:26:54.974Z",
+  "lastUpdated": "2026-11-25T10:45:42.316Z",
   "admins": {
     "super": {
       "id": "super",
@@ -186,7 +196,7 @@
       "departmentName": "الإدارة العامة (جميع الأقسام)",
       "salt": "b4a67673ad1dac2f515002750bd4c05f",
       "passwordHash": "d17f5da3f3cc37f1993a97fc078db2d1f4afd078b289984df22739194400de1ef332b09a2e82282827ce5a43ca08fa97bc3acf37684877766e6b0b4335917b09",
-      "lastLogin": "2026-11-24T08:55:53.963Z"
+      "lastLogin": "2026-11-25T10:45:41.238Z"
     },
     "clothes": {
       "id": "clothes",
