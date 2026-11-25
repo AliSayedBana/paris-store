@@ -115,21 +115,21 @@
     /* ===================== VIEW SWITCHER (Master Tabs) ===================== */
     .admin-view-switcher {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       background: #e8ece8;
       padding: 6px;
       border-radius: 50px;
-      max-width: 750px;
+      max-width: 960px;
       margin: 0 auto 25px;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
     }
     .view-switch-btn {
       flex: 1;
-      padding: 12px 20px;
+      padding: 12px 18px;
       border: none;
       border-radius: 50px;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       color: var(--paris-muted);
       background: transparent;
@@ -137,8 +137,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       transition: var(--transition);
+      white-space: nowrap;
     }
     .view-switch-btn:hover {
       color: var(--paris-forest);
@@ -835,24 +836,23 @@
       </div>
     </div>
 
-    <!-- Master View Switcher (List vs On-Screen Studio) -->
+    <!-- Master View Switcher (List vs Studio vs Settings) -->
     <div class="admin-view-switcher">
       <button type="button" class="view-switch-btn active" id="btnViewList" onclick="switchAdminView('list')">
         <span>📦</span>
-        <span>جدول ومعروضات المتجر</span>
+        <span>منتجات المتجر</span>
         <span class="view-tab-badge" id="tabBadgeCount">...</span>
       </button>
 
       <button type="button" class="view-switch-btn" id="btnViewStudio" onclick="switchAdminView('studio')">
         <span>➕</span>
-        <span>إضافة ورفع منتج جديد</span>
-        <span class="view-tab-badge" style="background:#25d366; color:#fff;">سريع وسهل ⚡</span>
+        <span>إضافة منتج جديد</span>
+        <span class="view-tab-badge" style="background:#25d366; color:#fff;">سريع ⚡</span>
       </button>
 
       <button type="button" class="view-switch-btn" id="btnViewSettings" onclick="switchAdminView('settings')">
         <span>🎛️</span>
-        <span>الخصومات وإعدادات المتجر</span>
-        <span class="view-tab-badge" style="background:#c59b27; color:#fff;">تحكم كامل</span>
+        <span>الخصومات والإعدادات</span>
       </button>
     </div>
 
