@@ -1,0 +1,44 @@
+{
+  "whatsappNumber": "201065968425",
+  "whatsappDisplay": "01065968425",
+  "announcementText": "موسم باريس 2026: عروض وخصومات كبرى تصل إلى 50% لجميع العائلة مع توصيل فوري للمنزل",
+  "activeCouponBannerCode": "PARIS2026",
+  "coupons": [
+    {
+      "code": "PARIS2026",
+      "rate": 10,
+      "label": "خصم VIP 10%",
+      "active": true
+    },
+    {
+      "code": "VIP10",
+      "rate": 10,
+      "label": "خصم VIP 10%",
+      "active": true
+    },
+    {
+      "code": "VIP15",
+      "rate": 15,
+      "label": "خصم خاص 15%",
+      "active": true
+    }
+  ],
+  "shipping": {
+    "freeThreshold": 500,
+    "vipThreshold": 5000,
+    "cairoFee": 60,
+    "deltaFee": 75,
+    "otherFee": 95
+  },
+  "installments": {
+    "enabled": true,
+    "minPrice": 1000,
+    "months": 12
+  },
+  "pixels": {
+    "metaPixelId": "",
+    "tiktokPixelId": "",
+    "gaMeasurementId": ""
+  },
+  "lastUpdated": "2026-11-25T12:05:15.371Z"
+}

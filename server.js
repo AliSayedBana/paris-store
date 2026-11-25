@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildStore } = require('./build_store');
 const auth = require('./auth_utils');
+const storeSettings = require('./settings_utils');
 
 const PORT = parseInt(process.env.PORT, 10) || 4000;
 const BASE_DIR = path.resolve(__dirname);
@@ -323,6 +324,88 @@ async function handleRequest(req, res) {
       adminEmail: session.email || config.adminEmail,
       adminName: session.name || config.adminName,
       admins: session.role === 'super_admin' ? auth.getAdminsPublicList() : undefined
+    }));
+    return;
+  }
+
+  // GET /api/admin/store-settings (Protected)
+  if (reqPath === '/api/admin/store-settings' && method === 'GET') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح لك بالوصول' }));
+      return;
+    }
+    const settings = storeSettings.getStoreSettings();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, settings }));
+    return;
+  }
+
+  // POST /api/admin/store-settings (Super Admin saves all store rules, coupons, shipping, pixels)
+  if (reqPath === '/api/admin/store-settings' && method === 'POST') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح: يجب تسجيل الدخول أولاً' }));
+      return;
+    }
+    if (session.role !== 'super_admin') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'صلاحية تعديل إعدادات المتجر الكاملة للمدير العام فقط.' }));
+      return;
+    }
+    const data = await parseBody(req);
+    const updated = storeSettings.saveStoreSettings(data || {});
+    buildStore();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, settings: updated, message: 'تم حفظ الإعدادات وتحديث المتجر بنجاح!' }));
+    return;
+  }
+
+  // POST /api/admin/bulk-discount (Apply or clear seasonal % discount across a department or store)
+  if (reqPath === '/api/admin/bulk-discount' && method === 'POST') {
+    const session = auth.verifySession(req);
+    if (!session) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, message: 'غير مصرح: يجب تسجيل الدخول أولاً' }));
+      return;
+    }
+    const data = await parseBody(req);
+    const targetMall = (session.mall && session.mall !== 'all') ? session.mall : (data.mall || 'all');
+    const pct = Math.max(0, Math.min(80, Number(data.percent) || 0));
+
+    const products = readJSON(PRODUCTS_FILE, []);
+    let affected = 0;
+
+    products.forEach(p => {
+      if (targetMall !== 'all' && p.mall !== targetMall) return;
+      const baseReg = (p.regularPrice && p.regularPrice > p.price) ? Number(p.regularPrice) : Number(p.price);
+      if (pct === 0) {
+        // Restore original regular price
+        p.price = baseReg;
+        p.regularPrice = null;
+        p.discountBadge = '';
+        p.sale = false;
+      } else {
+        p.regularPrice = baseReg;
+        p.price = Math.round(baseReg * (1 - pct / 100));
+        p.discountBadge = `خصم ${pct}%`;
+        p.sale = true;
+      }
+      affected++;
+    });
+
+    writeJSON(PRODUCTS_FILE, products);
+    buildStore();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      ok: true,
+      affected,
+      percent: pct,
+      message: pct === 0
+        ? `تم إلغاء الخصومات واسترجاع الأسعار الأصلية لـ ${affected} منتج`
+        : `تم تطبيق خصم ${pct}% بنجاح على ${affected} منتج!`
     }));
     return;
   }

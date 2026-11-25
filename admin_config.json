@@ -183,9 +183,39 @@
       "departmentName": "مول باريس للأحذية",
       "createdAt": "2026-11-25T11:13:29.495Z",
       "expiresAt": "2026-12-09T11:13:29.495Z"
+    },
+    "a0367b5d34a6a9d633860c361464c764ad201e3d7861c2c8bd6fd0cdc77fec71": {
+      "adminId": "clothes",
+      "email": "clothes-admin@paris-store.com",
+      "name": "مشرف قسم الملابس والأزياء",
+      "role": "clothes_admin",
+      "mall": "clothes",
+      "departmentName": "مول باريس للملابس",
+      "createdAt": "2026-11-25T12:05:11.954Z",
+      "expiresAt": "2026-12-09T12:05:11.954Z"
+    },
+    "df4f0e95e43c0ea5c1432d56518719bb5d6d56cc9d23c71fe9a743f6eef06b56": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-25T12:05:13.403Z",
+      "expiresAt": "2026-12-09T12:05:13.403Z"
+    },
+    "553137e4239e441672acdcf2e9cd9235619c65bf381832bccf1d6f45a12a071f": {
+      "adminId": "super",
+      "email": "admin@paris-store.com",
+      "name": "المدير العام لمتجر باريس",
+      "role": "super_admin",
+      "mall": "all",
+      "departmentName": "الإدارة العامة (جميع الأقسام)",
+      "createdAt": "2026-11-25T12:06:20.944Z",
+      "expiresAt": "2026-12-09T12:06:20.944Z"
     }
   },
-  "lastUpdated": "2026-11-25T11:13:31.387Z",
+  "lastUpdated": "2026-11-25T12:06:24.541Z",
   "admins": {
     "super": {
       "id": "super",
@@ -196,7 +226,7 @@
       "departmentName": "الإدارة العامة (جميع الأقسام)",
       "salt": "b4a67673ad1dac2f515002750bd4c05f",
       "passwordHash": "d17f5da3f3cc37f1993a97fc078db2d1f4afd078b289984df22739194400de1ef332b09a2e82282827ce5a43ca08fa97bc3acf37684877766e6b0b4335917b09",
-      "lastLogin": "2026-11-25T11:04:15.129Z"
+      "lastLogin": "2026-11-25T12:06:20.944Z"
     },
     "clothes": {
       "id": "clothes",
@@ -207,7 +237,7 @@
       "departmentName": "مول باريس للملابس",
       "salt": "6137a117c34591b45f956fca07323174",
       "passwordHash": "48bfc2711e895ae0ece7861d4c2e80263d42f8be02c9dc3f4dc3e298090ba2773a847bbc53f01d8ca377e62ee537e4175f051729889666ac9d063ecb7fcfadb7",
-      "lastLogin": "2026-11-24T09:30:57.960Z"
+      "lastLogin": "2026-11-25T12:05:11.954Z"
     },
     "home": {
       "id": "home",

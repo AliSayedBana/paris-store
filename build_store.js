@@ -1,9 +1,35 @@
 const fs = require('fs');
 const path = require('path');
+const { getStoreSettings } = require('./settings_utils');
 
 const basePath = __dirname;
 
 function buildStore() {
+  const settings = getStoreSettings();
+  const activeCouponsMap = {};
+  (settings.coupons || []).forEach(c => {
+    if (c.active && c.code) {
+      activeCouponsMap[c.code.toUpperCase()] = {
+        rate: (Number(c.rate) || 10) / 100,
+        label: c.label || `خصم ${Number(c.rate) || 10}%`
+      };
+    }
+  });
+
+  let pixelsScripts = '';
+  if (settings.pixels && settings.pixels.metaPixelId) {
+    const pid = settings.pixels.metaPixelId;
+    pixelsScripts += `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pid}');fbq('track','PageView');</script>`;
+  }
+  if (settings.pixels && settings.pixels.tiktokPixelId) {
+    const tid = settings.pixels.tiktokPixelId;
+    pixelsScripts += `<script>!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript";o.async=!0;o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load('${tid}');ttq.page()}(window,document,'ttq');</script>`;
+  }
+  if (settings.pixels && settings.pixels.gaMeasurementId) {
+    const gid = settings.pixels.gaMeasurementId;
+    pixelsScripts += `<script async src="https://www.googletagmanager.com/gtag/js?id=${gid}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gid}');</script>`;
+  }
+
   const productsPath = path.join(basePath, 'products.json');
   let products = [];
   if (fs.existsSync(productsPath)) {
@@ -31,12 +57,15 @@ function buildStore() {
     const formattedReg = (p.regularPrice && p.regularPrice > p.price) ? Number(p.regularPrice).toLocaleString('en-US') : '';
     const formattedSave = discountAmount > 0 ? Number(discountAmount).toLocaleString('en-US') : '';
 
-    const isHighTicket = p.price >= 1000;
-    const installmentMonthly = Math.round(p.price / 12).toLocaleString('en-US');
+    const instEnabled = !settings.installments || settings.installments.enabled !== false;
+    const instMinPrice = (settings.installments && settings.installments.minPrice) || 1000;
+    const instMonths = (settings.installments && settings.installments.months) || 12;
+    const isHighTicket = instEnabled && p.price >= instMinPrice;
+    const installmentMonthly = Math.round(p.price / instMonths).toLocaleString('en-US');
     const installmentTag = isHighTicket
       ? `<div class="card-installment-tag">💳 أو قسط يبدأ من <strong>${installmentMonthly} ج.م</strong>/شهر</div>`
       : '';
-    const highTicketTrustTag = isHighTicket
+    const highTicketTrustTag = p.price >= 1000
       ? `<div class="card-vip-trust">🛡️ معاينة كاملة وفحص مع المندوب قبل الدفع</div>`
       : '';
 
@@ -186,7 +215,7 @@ function buildStore() {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/themes/storefront-paris-child/assets/css/paris-store.css">
-  
+  ${pixelsScripts}
   <style>
     /* ============================================================
        MASTER LUXURY PARIS DESIGN SYSTEM v4.0 (World-Class Overhaul)
@@ -1600,13 +1629,13 @@ function buildStore() {
   <div class="paris-top-bar">
     <div class="paris-top-bar-inner">
       <div style="display:flex; align-items:center;">
-        <span>✨ <strong>موسم باريس 2026:</strong> عروض وخصومات كبرى تصل إلى 50% لجميع العائلة مع توصيل فوري للمنزل</span>
-        <span class="top-promo-pill" onclick="copyCouponCode('PARIS2026')" title="انقر لنسخ كود الخصم">كود: PARIS2026 📋</span>
+        <span>✨ ${settings.announcementText}</span>
+        ${settings.activeCouponBannerCode ? `<span class="top-promo-pill" onclick="copyCouponCode('${settings.activeCouponBannerCode}')" title="انقر لنسخ وتفعيل كود الخصم">كود: ${settings.activeCouponBannerCode} 📋</span>` : ''}
       </div>
       <div>
-        <a href="https://wa.me/201065968425" target="_blank" class="top-vip-support">
+        <a href="https://wa.me/${settings.whatsappNumber}" target="_blank" class="top-vip-support">
           <span class="live-dot"></span>
-          <span>خدمة عملاء VIP واتساب: 01065968425</span>
+          <span>خدمة عملاء VIP واتساب: ${settings.whatsappDisplay}</span>
         </a>
       </div>
     </div>
@@ -2133,7 +2162,7 @@ function buildStore() {
       <div>
         <h4 style="color:#ffd875; font-size:1.15rem; margin-bottom:18px; font-weight:800;">طرق الدفع والتواصل</h4>
         <p style="color:#d6e2dc; font-size:14px; line-height:1.7;">نستقبل استفساراتكم وحجوزاتكم طوال أيام الأسبوع 24/7:</p>
-        <a href="https://wa.me/201065968425" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:#25d366; color:#fff; padding:12px 24px; border-radius:50px; text-decoration:none; font-weight:800; font-size:14px; margin-top:8px; box-shadow:0 6px 20px rgba(37,211,102,0.3);">
+        <a href="https://wa.me/${settings.whatsappNumber}" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:#25d366; color:#fff; padding:12px 24px; border-radius:50px; text-decoration:none; font-weight:800; font-size:14px; margin-top:8px; box-shadow:0 6px 20px rgba(37,211,102,0.3);">
           <span>💬 محادثة فورية واتساب</span>
         </a>
       </div>
@@ -2146,7 +2175,7 @@ function buildStore() {
   </footer>
 
   <!-- WhatsApp Float Button -->
-  <a href="https://wa.me/201065968425" target="_blank" class="paris-wa-float" style="position:fixed; bottom:25px; left:25px; width:60px; height:60px; background:#25d366; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(37,211,102,0.45); z-index:9999; color:#fff; text-decoration:none; transition:all 0.3s;" aria-label="تواصل واتساب">
+  <a href="https://wa.me/${settings.whatsappNumber}" target="_blank" class="paris-wa-float" style="position:fixed; bottom:25px; left:25px; width:60px; height:60px; background:#25d366; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(37,211,102,0.45); z-index:9999; color:#fff; text-decoration:none; transition:all 0.3s;" aria-label="تواصل واتساب">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.311.045-.698.077-1.118-.056-.277-.088-.636-.217-1.096-.416-1.936-.838-3.195-2.798-3.292-2.927-.098-.129-.785-1.045-.785-1.993 0-.948.497-1.414.674-1.606.177-.193.385-.241.513-.241.129 0 .257.002.369.006.118.005.276-.045.432.329.16.386.546 1.332.594 1.43.048.097.08.21.016.339-.064.13-.097.21-.193.322-.096.113-.203.252-.29.339-.096.096-.197.2-.085.392.112.193.498.822 1.069 1.33.736.655 1.357.858 1.55.954.193.096.305.08.418-.049.112-.128.481-.561.61-.754.128-.193.257-.161.433-.096.177.064 1.123.53 1.316.626.193.097.321.145.369.226.048.08.048.466-.096.871z"/></svg>
   </a>
 
@@ -2159,11 +2188,10 @@ function buildStore() {
   <!-- Client-side Script -->
   <script>
     const productsData = ${JSON.stringify(publishedProducts)};
-    const PARIS_COUPONS = {
-      'PARIS2026': { rate: 0.10, label: 'خصم VIP 10%' },
-      'VIP10': { rate: 0.10, label: 'خصم VIP 10%' },
-      'VIP15': { rate: 0.15, label: 'خصم خاص 15%' }
-    };
+    const PARIS_COUPONS = ${JSON.stringify(activeCouponsMap)};
+    const PARIS_SHIPPING = ${JSON.stringify(settings.shipping)};
+    const PARIS_INSTALLMENTS = ${JSON.stringify(settings.installments)};
+    const PARIS_WHATSAPP = ${JSON.stringify(settings.whatsappNumber)};
     let cart = [];
     let wishlistItems = [];
     let appliedCoupon = null;
@@ -2198,10 +2226,10 @@ function buildStore() {
     }
 
     function getShippingFee(gov, subtotalAfterDiscount) {
-      if (subtotalAfterDiscount >= 500 || subtotalAfterDiscount === 0) return 0;
-      if (['القاهرة', 'الجيزة', 'القليوبية'].includes(gov)) return 60;
-      if (['الإسكندرية', 'الدقهلية', 'الشرقية', 'الغربية', 'المنوفية', 'البحيرة', 'كفر الشيخ', 'دمياط', 'بورسعيد', 'الإسماعيلية', 'السويس'].includes(gov)) return 75;
-      return 95;
+      if (subtotalAfterDiscount >= PARIS_SHIPPING.freeThreshold || subtotalAfterDiscount === 0) return 0;
+      if (['القاهرة', 'الجيزة', 'القليوبية'].includes(gov)) return PARIS_SHIPPING.cairoFee;
+      if (['الإسكندرية', 'الدقهلية', 'الشرقية', 'الغربية', 'المنوفية', 'البحيرة', 'كفر الشيخ', 'دمياط', 'بورسعيد', 'الإسماعيلية', 'السويس'].includes(gov)) return PARIS_SHIPPING.deltaFee;
+      return PARIS_SHIPPING.otherFee;
     }
 
     function getCartTotals() {
@@ -2297,7 +2325,7 @@ function buildStore() {
       }
       if (modalShipVal) {
         modalShipVal.innerText = t.shipping === 0
-          ? (t.net >= 5000 ? 'مجاني VIP ومؤمّن بالكامل 🛡️' : 'مجاني 🎉')
+          ? (t.net >= PARIS_SHIPPING.vipThreshold ? 'مجاني VIP ومؤمّن بالكامل 🛡️' : 'مجاني 🎉')
           : formatPrice(t.shipping) + ' ج.م (' + t.gov + ')';
       }
       if (modalTotalVal) modalTotalVal.innerText = formatPrice(t.total) + ' ج.م';
@@ -2465,16 +2493,16 @@ function buildStore() {
       }
       if (shipVal) {
         shipVal.innerText = t.shipping === 0
-          ? (t.net >= 5000 ? 'شحن VIP مجاني مؤمّن 🛡️' : 'شحن مجاني 🎉')
+          ? (t.net >= PARIS_SHIPPING.vipThreshold ? 'شحن VIP مجاني مؤمّن 🛡️' : 'شحن مجاني 🎉')
           : formatPrice(t.shipping) + ' ج.م (حسب المحافظة)';
       }
       cartTotalVal.innerText = formatPrice(t.total) + ' ج.م';
 
       // Free shipping progress
-      const targetFree = 500;
+      const targetFree = PARIS_SHIPPING.freeThreshold;
       if (t.net >= targetFree) {
         shippingProgressFill.style.width = '100%';
-        freeShippingText.innerHTML = t.net >= 5000
+        freeShippingText.innerHTML = t.net >= PARIS_SHIPPING.vipThreshold
           ? '👑 <strong>طلب VIP!</strong> شحن مجاني مؤمّن + أولوية فحص ومعاينة مع المندوب!'
           : '🎉 <strong>مبروك!</strong> لقد حصلت على شحن مجاني لطلبك!';
       } else {
@@ -2493,7 +2521,7 @@ function buildStore() {
                   '• *المعاينة:* متاح الفحص والمعاينة قبل الدفع مع المندوب 🛡️%0A' +
                   '• *الضمان:* فاتورة معتمدة وضمان استبدال 14 يوماً 📜%0A%0A' +
                   'يرجى تأكيد التوافر وتفاصيل الشحن.';
-      window.open('https://wa.me/201065968425?text=' + msg, '_blank');
+      window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + msg, '_blank');
     }
 
     function submitWhatsAppOrder() {
@@ -2531,7 +2559,7 @@ function buildStore() {
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
       window.trackParisEvent('Purchase', { value: t.total, currency: 'EGP' });
-      window.open('https://wa.me/201065968425?text=' + orderMsg, '_blank');
+      window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + orderMsg, '_blank');
       checkoutModal.style.display = 'none';
       cart = [];
       appliedCoupon = null;
@@ -2585,10 +2613,10 @@ function buildStore() {
       if (sgBox) sgBox.style.display = 'none';
 
       // High-Ticket Features in Highlights
-      const isHigh = prod.price >= 1000;
-      const monthly = Math.round(prod.price / 12).toLocaleString('en-US');
+      const isHigh = PARIS_INSTALLMENTS.enabled && prod.price >= PARIS_INSTALLMENTS.minPrice;
+      const monthly = Math.round(prod.price / (PARIS_INSTALLMENTS.months || 12)).toLocaleString('en-US');
       const highHighlights = isHigh
-        ? \`<div style="color:#0d5c3a; font-weight:800; margin-bottom:5px;">💳 متاح التقسيط المريح حتى 12 شهر (يبدأ من \${monthly} ج.م/شهرياً عبر ValU أو البنوك)</div>
+        ? \`<div style="color:#0d5c3a; font-weight:800; margin-bottom:5px;">💳 متاح التقسيط المريح حتى \${PARIS_INSTALLMENTS.months || 12} شهر (يبدأ من \${monthly} ج.م/شهرياً عبر ValU أو البنوك)</div>
            <div style="color:#b45309; font-weight:800; margin-bottom:5px;">🛡️ حق المعاينة والفحص والتجربة مع المندوب قبل دفع أي مليم</div>
            <div>📜 فاتورة ضريبية رسمية وضمان استبدال واسترجاع مجاني 14 يوماً</div>\`
         : \`✨ خامات عالية الجودة ومضمونة 100%<br>

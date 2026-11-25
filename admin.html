@@ -782,6 +782,12 @@
         <span>إضافة ورفع منتج جديد</span>
         <span class="view-tab-badge" style="background:#25d366; color:#fff;">سريع وسهل ⚡</span>
       </button>
+
+      <button type="button" class="view-switch-btn" id="btnViewSettings" onclick="switchAdminView('settings')">
+        <span>🎛️</span>
+        <span>الخصومات وإعدادات المتجر</span>
+        <span class="view-tab-badge" style="background:#c59b27; color:#fff;">تحكم كامل</span>
+      </button>
     </div>
 
     <!-- ===================== VIEW 1: PRODUCTS LIST ===================== -->
@@ -1163,6 +1169,161 @@
 
     </div>
 
+    <!-- ===================== VIEW 3: STORE SETTINGS & DISCOUNTS CONTROL CENTER ===================== -->
+    <div id="storeSettingsView" style="display:none;">
+      <div class="upload-studio-card">
+        <div class="studio-header">
+          <div>
+            <h3 class="studio-title">
+              <span>🎛️</span>
+              <span>مركز التحكم الكامل في الخصومات وإعدادات المتجر</span>
+            </h3>
+            <p class="studio-subhead">حدد من هنا أكواد الخصم، العروض الموسمية على الأقسام، الشحن، رقم الواتساب، التقسيط، وبكسلات الإعلانات — وسيتم تحديث المتجر فوراً.</p>
+          </div>
+          <div>
+            <button type="button" class="admin-btn admin-btn-primary" style="padding:12px 26px; font-size:14.5px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
+              <span>💾 حفظ وتطبيق على المتجر فوراً</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="settings-two-col">
+
+          <!-- 1. Coupons Management -->
+          <div style="background:#fbf9f4; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">🎟️ أكواد الخصم الترويجية (Coupons)</h4>
+            <div style="display:grid; grid-template-columns:1.2fr 0.7fr 1.2fr auto; gap:8px; margin-bottom:14px;">
+              <input type="text" id="newCouponCode" class="form-control" placeholder="الكود (مثال: EID20)" style="text-transform:uppercase; padding:8px 10px;">
+              <input type="number" id="newCouponRate" class="form-control" placeholder="النسبة %" min="1" max="90" value="10" style="padding:8px 10px;">
+              <input type="text" id="newCouponLabel" class="form-control" placeholder="الوصف (خصم العيد)" style="padding:8px 10px;">
+              <button type="button" class="admin-btn admin-btn-gold" onclick="addNewCoupon()" style="padding:8px 14px;">+ إضافة</button>
+            </div>
+            <div id="couponsManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+
+          <!-- 2. Bulk Seasonal Discount on Products -->
+          <div style="background:#f4fbf6; border:1.5px solid #cce3d8; border-radius:16px; padding:20px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:8px;">🏷️ تطبيق خصم مباشر على منتجات قسم كامل</h4>
+            <p style="font-size:12.5px; color:#4f6459; margin-bottom:14px; line-height:1.6;">
+              اختر القسم والنسبة (أو اكتب <strong>0</strong> لإلغاء الخصومات واسترجاع الأسعار الأصلية لجميع منتجات القسم دفعة واحدة):
+            </p>
+            <div class="form-row" style="margin-bottom:14px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>القسم المستهدف:</label>
+                <select id="bulkDiscountMall" class="form-control">
+                  <option value="all">جميع أقسام المتجر (الكل)</option>
+                  <option value="clothes">مول الملابس والأزياء</option>
+                  <option value="home">مول الأدوات المنزلية</option>
+                  <option value="shoes">مول الأحذية والرياضة</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>نسبة الخصم (%):</label>
+                <input type="number" id="bulkDiscountPercent" class="form-control" min="0" max="80" value="15" placeholder="مثال: 15 أو 0 للإلغاء">
+              </div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="applyBulkDiscount()">
+              🚀 تطبيق الخصم / تحديث أسعار المنتجات الآن
+            </button>
+          </div>
+
+          <!-- 3. Announcement Banner & WhatsApp -->
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">📢 الشريط الإعلاني وواتساب الطلبات</h4>
+            <div class="form-group">
+              <label>نص الشريط العلوي للمتجر:</label>
+              <input type="text" id="cfgAnnouncementText" class="form-control" placeholder="موسم باريس 2026: عروض وخصومات...">
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>الكود البارز بالشريط:</label>
+                <input type="text" id="cfgActiveBannerCode" class="form-control" placeholder="PARIS2026" style="text-transform:uppercase;">
+              </div>
+              <div class="form-group">
+                <label>واتساب الدولي (للإرسال):</label>
+                <input type="text" id="cfgWhatsappNumber" class="form-control" placeholder="201065968425">
+              </div>
+              <div class="form-group">
+                <label>الرقم الظاهر للعملاء:</label>
+                <input type="text" id="cfgWhatsappDisplay" class="form-control" placeholder="01065968425">
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Shipping & Installments -->
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:12px;">🚚 قواعد الشحن والتقسيط</h4>
+            <div class="form-row" style="margin-bottom:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>الشحن المجاني فوق (ج.م):</label>
+                <input type="number" id="cfgFreeThreshold" class="form-control" min="0">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>شحن VIP مجاني مؤمّن فوق (ج.م):</label>
+                <input type="number" id="cfgVipThreshold" class="form-control" min="0">
+              </div>
+            </div>
+            <div class="form-row-3" style="margin-bottom:14px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>القاهرة/الجيزة (ج.م):</label>
+                <input type="number" id="cfgCairoFee" class="form-control" min="0">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>الدلتا/الإسكندرية:</label>
+                <input type="number" id="cfgDeltaFee" class="form-control" min="0">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>الصعيد/أخرى:</label>
+                <input type="number" id="cfgOtherFee" class="form-control" min="0">
+              </div>
+            </div>
+            <div style="border-top:1px dashed #e2ddd2; padding-top:12px;">
+              <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px;">
+                <input type="checkbox" id="cfgInstallmentsEnabled" checked style="width:17px; height:17px;">
+                <span style="font-weight:800; color:var(--paris-forest); font-size:13px;">تفعيل عرض حاسبة التقسيط على البطاقات</span>
+              </label>
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>أقل سعر يظهر عليه التقسيط (ج.م):</label>
+                  <input type="number" id="cfgInstallmentMinPrice" class="form-control" min="100">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>عدد شهور التقسيط:</label>
+                  <input type="number" id="cfgInstallmentMonths" class="form-control" min="2" max="60">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Marketing Pixels -->
+          <div style="background:#fff; border:1.5px solid var(--paris-border); border-radius:16px; padding:20px; grid-column:1 / -1;">
+            <h4 style="color:var(--paris-forest); font-size:16px; font-weight:900; margin-bottom:10px;">📊 ربط بكسلات الإعلانات الممولة (اختياري)</h4>
+            <div class="form-row-3">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Meta (Facebook) Pixel ID:</label>
+                <input type="text" id="cfgMetaPixel" class="form-control" placeholder="مثال: 123456789012345">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>TikTok Pixel ID:</label>
+                <input type="text" id="cfgTikTokPixel" class="form-control" placeholder="مثال: CXXXXXXXXXXXXX">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Google Analytics (G-XXXX):</label>
+                <input type="text" id="cfgGaId" class="form-control" placeholder="مثال: G-XXXXXXXXXX">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:24px;">
+          <button type="button" class="admin-btn admin-btn-primary" style="width:100%; justify-content:center; padding:16px; font-size:16px; background:#0d5c3a;" onclick="saveAllStoreSettings()">
+            💾 حفظ جميع الخصومات والإعدادات وتحديث المتجر فوراً
+          </button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ===================== MODAL: EDIT PRODUCT ===================== -->
@@ -1417,7 +1578,10 @@
       const mallCardShoes = document.getElementById('mallCard_shoes');
       const filterMall = document.getElementById('filterMall');
 
+      const btnViewSettings = document.getElementById('btnViewSettings');
+
       if (role === 'clothes_admin') {
+        if (btnViewSettings) btnViewSettings.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الملابس والأزياء 👗';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة وتحديث تشكيلات الملابس الرجالية والنسائية وملابس الأطفال.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الملابس';
@@ -1442,6 +1606,7 @@
 
         selectStudioMall('clothes', true);
       } else if (role === 'home_admin') {
+        if (btnViewSettings) btnViewSettings.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأدوات المنزلية والديكور 🍳';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة مستلزمات المطبخ، الديكورات، المفروشات، المنظمات وأدوات التنظيف.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأدوات المنزلية';
@@ -1466,6 +1631,7 @@
 
         selectStudioMall('home', true);
       } else if (role === 'shoes_admin') {
+        if (btnViewSettings) btnViewSettings.style.display = 'none';
         document.getElementById('departmentHeaderTitle').innerText = 'لوحة إدارة قسم الأحذية والأحذية الرياضية 👟';
         document.getElementById('departmentHeaderDesc').innerText = 'إدارة وإضافة الأحذية الرجالية، النسائية، الرياضية، وأحذية الأطفال بمقاساتها الكاملة.';
         document.getElementById('departmentBadgeText').innerText = 'مشرف قسم الأحذية';
@@ -1491,6 +1657,7 @@
         selectStudioMall('shoes', true);
       } else {
         // Super Admin
+        if (btnViewSettings) btnViewSettings.style.display = 'inline-flex';
         document.getElementById('departmentHeaderTitle').innerText = 'الإدارة العامة لمتجر باريس 🛍️';
         document.getElementById('departmentHeaderDesc').innerText = 'لوحة تحكم كاملة للإدارة العامة للمتجر: الملابس، الأدوات المنزلية، والأحذية.';
         document.getElementById('departmentBadgeText').innerText = 'المدير العام (Super Admin)';
@@ -1519,28 +1686,30 @@
       window.location.href = '/login';
     }
 
-    // View Switching (List vs Studio)
+    // View Switching (List vs Studio vs Settings)
     function switchAdminView(view, targetMall) {
       const btnList = document.getElementById('btnViewList');
       const btnStudio = document.getElementById('btnViewStudio');
+      const btnSettings = document.getElementById('btnViewSettings');
       const viewList = document.getElementById('productsListView');
       const viewStudio = document.getElementById('uploadStudioView');
+      const viewSettings = document.getElementById('storeSettingsView');
+
+      [btnList, btnStudio, btnSettings].forEach(b => b && b.classList.remove('active'));
+      [viewList, viewStudio, viewSettings].forEach(v => { if (v) v.style.display = 'none'; });
 
       if (view === 'studio') {
-        btnList.classList.remove('active');
-        btnStudio.classList.add('active');
-        viewList.style.display = 'none';
-        viewStudio.style.display = 'block';
-
-        if (targetMall) {
-          selectStudioMall(targetMall);
-        }
+        if (btnStudio) btnStudio.classList.add('active');
+        if (viewStudio) viewStudio.style.display = 'block';
+        if (targetMall) selectStudioMall(targetMall);
         window.scrollTo({ top: 120, behavior: 'smooth' });
+      } else if (view === 'settings') {
+        if (btnSettings) btnSettings.classList.add('active');
+        if (viewSettings) viewSettings.style.display = 'block';
+        loadStoreSettings();
       } else {
-        btnStudio.classList.remove('active');
-        btnList.classList.add('active');
-        viewStudio.style.display = 'none';
-        viewList.style.display = 'block';
+        if (btnList) btnList.classList.add('active');
+        if (viewList) viewList.style.display = 'block';
       }
     }
 
@@ -2295,6 +2464,169 @@
       a.href = url;
       a.download = 'paris_store_products_' + new Date().toISOString().slice(0, 10) + '.csv';
       a.click();
+    }
+
+    // ===================== STORE SETTINGS & DISCOUNTS CONTROL CENTER =====================
+    let currentStoreSettings = { coupons: [] };
+
+    async function loadStoreSettings() {
+      try {
+        const res = await fetch('/api/admin/store-settings');
+        const data = await res.json();
+        if (res.ok && data.ok && data.settings) {
+          currentStoreSettings = data.settings;
+          const s = data.settings;
+          document.getElementById('cfgAnnouncementText').value = s.announcementText || '';
+          document.getElementById('cfgActiveBannerCode').value = s.activeCouponBannerCode || '';
+          document.getElementById('cfgWhatsappNumber').value = s.whatsappNumber || '';
+          document.getElementById('cfgWhatsappDisplay').value = s.whatsappDisplay || '';
+
+          document.getElementById('cfgFreeThreshold').value = (s.shipping && s.shipping.freeThreshold !== undefined) ? s.shipping.freeThreshold : 500;
+          document.getElementById('cfgVipThreshold').value = (s.shipping && s.shipping.vipThreshold !== undefined) ? s.shipping.vipThreshold : 5000;
+          document.getElementById('cfgCairoFee').value = (s.shipping && s.shipping.cairoFee !== undefined) ? s.shipping.cairoFee : 60;
+          document.getElementById('cfgDeltaFee').value = (s.shipping && s.shipping.deltaFee !== undefined) ? s.shipping.deltaFee : 75;
+          document.getElementById('cfgOtherFee').value = (s.shipping && s.shipping.otherFee !== undefined) ? s.shipping.otherFee : 95;
+
+          document.getElementById('cfgInstallmentsEnabled').checked = !(s.installments && s.installments.enabled === false);
+          document.getElementById('cfgInstallmentMinPrice').value = (s.installments && s.installments.minPrice) || 1000;
+          document.getElementById('cfgInstallmentMonths').value = (s.installments && s.installments.months) || 12;
+
+          document.getElementById('cfgMetaPixel').value = (s.pixels && s.pixels.metaPixelId) || '';
+          document.getElementById('cfgTikTokPixel').value = (s.pixels && s.pixels.tiktokPixelId) || '';
+          document.getElementById('cfgGaId').value = (s.pixels && s.pixels.gaMeasurementId) || '';
+
+          renderCouponsManageList();
+        }
+      } catch (e) {
+        showToast('تعذر تحميل إعدادات المتجر');
+      }
+    }
+
+    function renderCouponsManageList() {
+      const box = document.getElementById('couponsManageList');
+      if (!box) return;
+      const coupons = currentStoreSettings.coupons || [];
+      if (coupons.length === 0) {
+        box.innerHTML = '<div style="color:#888; font-size:13px; padding:10px; text-align:center;">لا توجد أكواد خصم مضافة حالياً.</div>';
+        return;
+      }
+      box.innerHTML = coupons.map((c, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid #e2ddd2; padding:8px 12px; border-radius:10px; gap:8px;">
+          <div>
+            <strong style="color:var(--paris-forest); font-family:monospace; font-size:14px;">${c.code}</strong>
+            <span style="background:#fef3c7; color:#92400e; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:50px; margin-inline-start:6px;">${c.rate}%</span>
+            <span style="font-size:12px; color:#666; margin-inline-start:6px;">${c.label || ''}</span>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" onclick="toggleCouponActive(${idx})" style="border:none; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:800; cursor:pointer; background:${c.active !== false ? '#e8f5e9' : '#ffebee'}; color:${c.active !== false ? '#2e7d32' : '#c62828'};">
+              ${c.active !== false ? 'مفعل ✅' : 'متوقف 🚫'}
+            </button>
+            <button type="button" onclick="deleteCouponItem(${idx})" style="background:#fff; border:1px solid #fecaca; color:#dc2626; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer;" title="حذف">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addNewCoupon() {
+      const codeEl = document.getElementById('newCouponCode');
+      const rateEl = document.getElementById('newCouponRate');
+      const labelEl = document.getElementById('newCouponLabel');
+      const code = (codeEl.value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+      const rate = parseInt(rateEl.value, 10) || 10;
+      const label = (labelEl.value || '').trim() || ('خصم ' + rate + '%');
+
+      if (!code) { showToast('يرجى إدخال كود خصم بالإنجليزية أو الأرقام'); return; }
+      currentStoreSettings.coupons = currentStoreSettings.coupons || [];
+      const existing = currentStoreSettings.coupons.find(c => c.code === code);
+      if (existing) {
+        existing.rate = rate;
+        existing.label = label;
+        existing.active = true;
+      } else {
+        currentStoreSettings.coupons.unshift({ code, rate, label, active: true });
+      }
+      codeEl.value = '';
+      labelEl.value = '';
+      renderCouponsManageList();
+      showToast('تمت إضافة الكود — اضغط "حفظ وتطبيق" لتفعيله بالمتجر');
+    }
+
+    function toggleCouponActive(idx) {
+      const c = currentStoreSettings.coupons[idx];
+      if (!c) return;
+      c.active = (c.active === false);
+      renderCouponsManageList();
+    }
+
+    function deleteCouponItem(idx) {
+      currentStoreSettings.coupons.splice(idx, 1);
+      renderCouponsManageList();
+    }
+
+    async function saveAllStoreSettings() {
+      const payload = {
+        announcementText: document.getElementById('cfgAnnouncementText').value.trim(),
+        activeCouponBannerCode: document.getElementById('cfgActiveBannerCode').value.trim().toUpperCase(),
+        whatsappNumber: document.getElementById('cfgWhatsappNumber').value.trim(),
+        whatsappDisplay: document.getElementById('cfgWhatsappDisplay').value.trim(),
+        coupons: currentStoreSettings.coupons || [],
+        shipping: {
+          freeThreshold: Number(document.getElementById('cfgFreeThreshold').value) || 0,
+          vipThreshold: Number(document.getElementById('cfgVipThreshold').value) || 0,
+          cairoFee: Number(document.getElementById('cfgCairoFee').value) || 0,
+          deltaFee: Number(document.getElementById('cfgDeltaFee').value) || 0,
+          otherFee: Number(document.getElementById('cfgOtherFee').value) || 0
+        },
+        installments: {
+          enabled: document.getElementById('cfgInstallmentsEnabled').checked,
+          minPrice: Number(document.getElementById('cfgInstallmentMinPrice').value) || 1000,
+          months: Number(document.getElementById('cfgInstallmentMonths').value) || 12
+        },
+        pixels: {
+          metaPixelId: document.getElementById('cfgMetaPixel').value.trim(),
+          tiktokPixelId: document.getElementById('cfgTikTokPixel').value.trim(),
+          gaMeasurementId: document.getElementById('cfgGaId').value.trim()
+        }
+      };
+
+      const res = await fetch('/api/admin/store-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        currentStoreSettings = data.settings;
+        showToast('🎉 تم حفظ وتطبيق جميع الخصومات والإعدادات على المتجر!');
+      } else {
+        showToast('خطأ: ' + (data.message || 'تعذر حفظ الإعدادات'));
+      }
+    }
+
+    async function applyBulkDiscount() {
+      const mall = document.getElementById('bulkDiscountMall').value;
+      const percent = parseFloat(document.getElementById('bulkDiscountPercent').value);
+      if (isNaN(percent) || percent < 0 || percent > 80) {
+        showToast('يرجى إدخال نسبة خصم صالحة بين 0 و 80');
+        return;
+      }
+      const msg = percent === 0
+        ? 'هل تريد إلغاء الخصومات واسترجاع الأسعار الأصلية لهذا القسم؟'
+        : 'هل تريد تطبيق خصم ' + percent + '% على جميع منتجات هذا القسم الآن؟';
+      if (!confirm(msg)) return;
+
+      const res = await fetch('/api/admin/bulk-discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mall, percent })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        showToast('✅ ' + data.message);
+        loadProducts();
+      } else {
+        showToast('خطأ: ' + (data.message || 'تعذر تطبيق الخصم'));
+      }
     }
 
     // Start
