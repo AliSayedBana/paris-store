@@ -1,5 +1,30 @@
 [
   {
+    "mall": "clothes",
+    "category": "clothes women",
+    "chip": "ملابس نسائية",
+    "title": "قميص",
+    "price": 360,
+    "regularPrice": null,
+    "discountBadge": "",
+    "image": "/uploads/paris-custom/product-1795610566177-WhatsApp_Image_2026-11-19_at_1.jpeg",
+    "gallery": [],
+    "brand": "",
+    "badge": "",
+    "sizes": [
+      "M",
+      "2XL",
+      "3XL"
+    ],
+    "colors": [
+      "بيج"
+    ],
+    "highlights": [],
+    "sale": false,
+    "published": true,
+    "id": 29
+  },
+  {
     "id": 1,
     "mall": "clothes",
     "category": "clothes men",
