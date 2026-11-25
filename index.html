@@ -1452,10 +1452,10 @@
       position: fixed;
       bottom: 90px;
       right: 25px;
-      width: 380px;
+      width: 390px;
       max-width: calc(100vw - 32px);
-      height: 530px;
-      max-height: 76vh;
+      height: 550px;
+      max-height: 78vh;
       background: #fff;
       border-radius: 20px;
       border: 1.5px solid var(--paris-border);
@@ -1506,25 +1506,25 @@
       align-self: flex-end;
     }
     .bot-quick-row {
-      padding: 8px 12px;
+      padding: 8px 10px;
       background: #fff;
       border-top: 1px solid #eee;
       display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: flex-start;
     }
     .bot-chip {
       background: #f4f1ea;
       border: 1px solid #ded7c8;
       color: var(--paris-forest);
-      padding: 5px 11px;
+      padding: 4px 9px;
       border-radius: 50px;
       font-family: inherit;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 800;
       cursor: pointer;
-      flex-shrink: 0;
+      white-space: nowrap;
     }
     .bot-chip:hover {
       background: var(--paris-forest);
@@ -5888,12 +5888,165 @@
             '<strong style="font-size:12.5px; color:#0d5c3a;">' + formatPrice(p.price) + ' ج.م</strong>' +
             '<span style="font-size:10.5px; color:#15803d;">(متوفر ' + stk + ')</span>' +
           '</div>' +
-          '<div style="display:flex; gap:5px; margin-top:4px;">' +
-            '<button type="button" onclick="openQuickView(' + p.id + ')" style="background:#f4f1ea; border:1px solid #ded7c8; color:var(--paris-forest); padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">معاينة 👁️</button>' +
-            '<button type="button" onclick="botAddToCart(' + p.id + ')" style="background:var(--paris-forest); border:none; color:#fff; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">أضف للسلة 🛒</button>' +
+          '<div style="display:flex; gap:6px; margin-top:5px;">' +
+            '<button type="button" onclick="openQuickView(' + p.id + ')" style="background:#f4f1ea; border:1px solid #d5cebe; color:var(--paris-forest); padding:3px 10px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">عرض التفاصيل</button>' +
+            '<button type="button" onclick="botAddToCart(' + p.id + ')" style="background:var(--paris-forest); border:none; color:#fff; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">+ أضف للسلة</button>' +
           '</div>' +
         '</div>' +
       '</div>';
+    }
+
+    function normalizeBotArabic(str) {
+      return String(str || '')
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ى/g, 'ي')
+        .replace(/ة/g, 'ه')
+        .replace(/ؤ/g, 'و')
+        .replace(/ئ/g, 'ي')
+        .replace(/[\u064B-\u065F\u0670]/g, '')
+        .toLowerCase();
+    }
+
+    const BOT_STOP_WORDS = new Set([
+      'عندكم', 'عندك', 'عندكوا', 'عاوز', 'عايز', 'عاوزين', 'عايزين', 'محتاج', 'محتاجين',
+      'ابحث', 'دور', 'عن', 'في', 'فيه', 'فيها', 'من', 'بكام', 'بكم', 'سعر', 'اسعار',
+      'لو', 'سمحت', 'سمحتي', 'ممكن', 'انا', 'احنا', 'منتج', 'منتجات', 'قسم', 'مول',
+      'حاجه', 'حاجات', 'شويه', 'اي', 'ايه', 'تحت', 'اقل', 'حتي', 'فوق', 'اعلي', 'اكثر',
+      'بين', 'الي', 'جنيه', 'جم', 'مصري', 'قولي', 'هات', 'وريني', 'اريد', 'نريد',
+      'متوفر', 'متاح', 'موجود', 'كاش', 'ميزانيه', 'ميزانيتي', 'بحدود', 'حدود', 'تقريبا',
+      'يعني', 'بس', 'او', 'علي', 'قد', 'اللي', 'عندنا', 'دي', 'ده', 'دول'
+    ]);
+
+    const BOT_DEPT_WORDS = new Set(['ملابس', 'هدوم', 'ازياء', 'منزل', 'منزليه', 'ادوات', 'مطبخ', 'احذيه', 'شوز', 'شوزات', 'جزم', 'جزمه']);
+
+    const BOT_SYNONYMS = {
+      'بنطلون': ['بنطلون', 'جينز'],
+      'بناطيل': ['بنطلون', 'جينز'],
+      'بنطلونات': ['بنطلون', 'جينز'],
+      'بنطال': ['بنطلون', 'جينز'],
+      'جينز': ['جينز', 'بنطلون'],
+      'شروال': ['بنطلون'],
+      'سروال': ['بنطلون'],
+      'بدله': ['بدله'],
+      'بدل': ['بدله', 'بدل'],
+      'بليزر': ['بدله'],
+      'قميص': ['قميص'],
+      'قمصان': ['قميص'],
+      'شميز': ['قميص'],
+      'شيميز': ['قميص'],
+      'تيشيرت': ['تيشيرت'],
+      'تيشيرتات': ['تيشيرت'],
+      'تشيرت': ['تيشيرت'],
+      'تشيرتات': ['تيشيرت'],
+      'تيشرت': ['تيشيرت'],
+      'فستان': ['فستان'],
+      'فساتين': ['فستان'],
+      'دريس': ['فستان'],
+      'دريسات': ['فستان'],
+      'كارديجان': ['كارديجان'],
+      'كرديجان': ['كارديجان'],
+      'سويت': ['سويت شيرت'],
+      'شيرت': ['سويت شيرت', 'تيشيرت'],
+      'هودي': ['سويت شيرت'],
+      'بلوفر': ['كارديجان', 'سويت شيرت'],
+      'جاكيت': ['كارديجان', 'سويت شيرت'],
+      'جاكيتات': ['كارديجان', 'سويت شيرت'],
+      'بلوزه': ['بلوز'],
+      'بلوزات': ['بلوز'],
+      'بيجاما': ['بيجام', 'نوم'],
+      'بيجامه': ['بيجام', 'نوم'],
+      'بيجامات': ['بيجام', 'نوم'],
+      'بجامه': ['بيجام', 'نوم'],
+      'ترينج': ['بيجام', 'نوم'],
+      'سنيكرز': ['سنيكرز'],
+      'كوتشي': ['سنيكرز', 'رياضي'],
+      'كوتشيات': ['سنيكرز', 'رياضي'],
+      'فلات': ['فلات'],
+      'اوكسفورد': ['اوكسفورد'],
+      'كلاسيك': ['كلاسيك'],
+      'رياضي': ['رياضي', 'سنيكرز'],
+      'رياضيه': ['رياضي', 'سنيكرز'],
+      'رجالي': ['رجالي', 'رجاليه'],
+      'رجال': ['رجالي', 'رجاليه'],
+      'شبابي': ['رجالي'],
+      'حريمي': ['حريمي', 'نسائي', 'نسائيه'],
+      'نسائي': ['حريمي', 'نسائي', 'نسائيه'],
+      'نسائيه': ['حريمي', 'نسائي', 'نسائيه'],
+      'بناتي': ['حريمي', 'نسائي', 'اطفال'],
+      'اطفال': ['اطفال'],
+      'طفل': ['اطفال'],
+      'ولادي': ['اطفال', 'رجالي'],
+      'حلل': ['جرانيت', 'طهي'],
+      'حله': ['جرانيت', 'طهي'],
+      'جرانيت': ['جرانيت'],
+      'تيفال': ['تيفال', 'جرانيت'],
+      'طهي': ['طهي', 'جرانيت'],
+      'مقالي': ['مقالي'],
+      'طاسه': ['مقالي'],
+      'طاسات': ['مقالي'],
+      'سكاكين': ['سكاكين'],
+      'سكين': ['سكاكين'],
+      'سكينه': ['سكاكين'],
+      'توابل': ['توابل'],
+      'بهارات': ['توابل'],
+      'برطمان': ['برطمان'],
+      'برطمانات': ['برطمان'],
+      'مفروشات': ['مفروشات'],
+      'ملايه': ['مفروشات', 'سرير'],
+      'ملايات': ['مفروشات', 'سرير'],
+      'سرير': ['سرير', 'مفروشات'],
+      'بطانيه': ['بطاني'],
+      'بطانيات': ['بطاني'],
+      'كوفرته': ['بطاني', 'مفروشات'],
+      'مناشف': ['مناشف'],
+      'منشفه': ['مناشف'],
+      'فوط': ['مناشف'],
+      'فوطه': ['مناشف'],
+      'منظم': ['منظم', 'تنظيم'],
+      'منظمات': ['منظم', 'تنظيم'],
+      'تنظيم': ['تنظيم', 'منظم'],
+      'تخزين': ['تخزين', 'منظم'],
+      'صندوق': ['صندوق'],
+      'صناديق': ['صندوق'],
+      'ادراج': ['ادراج'],
+      'لوحات': ['لوحات', 'اطارات'],
+      'لوحه': ['لوحات', 'اطارات'],
+      'اطارات': ['اطارات', 'لوحات'],
+      'اباجوره': ['اباجور'],
+      'اباجور': ['اباجور'],
+      'اضاءه': ['اباجور', 'اضاءه'],
+      'ديكور': ['ديكور', 'لوحات', 'اباجور'],
+      'طقم': ['طقم'],
+      'اطقم': ['طقم'],
+      'قطن': ['قطن'],
+      'جلد': ['جلد']
+    };
+
+    function getBotMatchGroups(normText, excludeDeptWords) {
+      const cleaned = normText.replace(/[^\u0621-\u064A0-9 ]/g, ' ');
+      const rawTokens = cleaned.split(/ +/).filter(Boolean);
+      const groups = [];
+      for (let i = 0; i < rawTokens.length; i++) {
+        let tok = rawTokens[i];
+        if (/^[0-9]+$/.test(tok)) continue;
+        if (BOT_STOP_WORDS.has(tok)) continue;
+        let base = (tok.length > 3 && tok.startsWith('ال')) ? tok.slice(2) : tok;
+        if (BOT_STOP_WORDS.has(base)) continue;
+        if (excludeDeptWords && (BOT_DEPT_WORDS.has(tok) || BOT_DEPT_WORDS.has(base))) continue;
+        if (base.length < 2) continue;
+        const syns = BOT_SYNONYMS[tok] || BOT_SYNONYMS[base] || [base];
+        groups.push(syns);
+      }
+      return groups;
+    }
+
+    function filterProductsByBotGroups(pool, groups) {
+      if (!groups || groups.length === 0) return pool;
+      return pool.filter(p => {
+        const hay = normalizeBotArabic((p.title || '') + ' ' + (p.chip || '') + ' ' + (p.category || ''));
+        return groups.every(syns => syns.some(term => hay.includes(term)));
+      });
     }
 
     function sendBotQuery(rawText) {
@@ -5905,43 +6058,50 @@
       userDiv.innerText = rawText;
       box.appendChild(userDiv);
 
-      const q = normalizeBotDigits(rawText).toLowerCase().replace(/,/g, '');
+      const qRaw = normalizeBotDigits(rawText).toLowerCase().replace(/,/g, '');
+      const qNorm = normalizeBotArabic(rawText).replace(/,/g, '');
       const inStock = productsData.filter(p => getProductStock(p.id, p.title) > 0);
 
       let replyHtml = '';
 
-      // Detect broad department browse ONLY when generic department term is used (not specific item like بدلة)
+      // Detect department if requested using normalized tokens
+      const normTokens = qNorm.replace(/[^\u0621-\u064A0-9 ]/g, ' ').split(/ +/).filter(Boolean).map(t => (t.length > 3 && t.startsWith('ال')) ? t.slice(2) : t);
       let targetMall = '';
-      if (/ملابس|هدوم|أزياء|ازياء/.test(q)) targetMall = 'clothes';
-      else if (/أدوات منزلية|ادوات منزلية|منزل|مطبخ|ديكور/.test(q)) targetMall = 'home';
-      else if (/أحذية|احذية|شوزات|شوز/.test(q)) targetMall = 'shoes';
+      if (normTokens.some(t => ['ملابس', 'هدوم', 'ازياء'].includes(t))) targetMall = 'clothes';
+      else if (normTokens.some(t => ['منزل', 'منزليه', 'مطبخ', 'ديكور'].includes(t))) targetMall = 'home';
+      else if (normTokens.some(t => ['احذيه', 'شوز', 'شوزات', 'جزم', 'جزمه'].includes(t))) targetMall = 'shoes';
 
       // Extract numeric budget or range
-      const nums = (q.match(/[0-9]+/g) || []).map(n => parseInt(n, 10)).filter(n => n > 0);
+      const nums = (qNorm.match(/[0-9]+/g) || []).map(n => parseInt(n, 10)).filter(n => n > 0);
 
       // Guard if asked explicitly about installments or returns (handles combined questions clearly)
-      const asksInstallment = /قسط|تقسيط|فاليو|valu/.test(q);
-      const asksReturn = /استرجاع|استبدال|ارجاع|ترجيع/.test(q);
+      const asksInstallment = /قسط|تقسيط|فاليو|valu/.test(qRaw);
+      const asksReturn = /استرجاع|استبدال|ارجاع|ترجيع/.test(qRaw);
+
+      // Base pool respects department if requested, plus specific keyword groups
+      const deptPool = targetMall ? inStock.filter(p => p.mall === targetMall) : inStock;
+      const specificGroups = getBotMatchGroups(qNorm, true);
+
       if ((asksInstallment || asksReturn) && nums.length === 0) {
         const parts = [];
         if (asksReturn) parts.push('متاح لك <strong>فتح الشحنة ومعاينتها وفحصها بالكامل مع المندوب قبل الدفع</strong>، ولا يوجد استرجاع أو استبدال بعد الاستلام.');
         if (asksInstallment) parts.push('الدفع لدينا <strong>كاش عند الاستلام فقط</strong> (لا يوجد نظام تقسيط).');
         replyHtml = parts.join('<br>') + '<br>اكتب ميزانيتك الكاش أو اسم المنتج الآن وسأعرض لك المتاح فوراً!';
-      } else if (nums.length >= 2 && (/من|بين|الى|إلى|-/.test(q))) {
+      } else if (nums.length >= 2 && (/من|بين|الي|-/.test(qNorm))) {
         const minB = Math.min(nums[0], nums[1]);
         const maxB = Math.max(nums[0], nums[1]);
-        let matches = inStock.filter(p => p.price >= minB && p.price <= maxB && (!targetMall || p.mall === targetMall));
-        matches.sort((a, b) => b.price - a.price);
+        let pool = specificGroups.length > 0 ? filterProductsByBotGroups(deptPool, specificGroups) : deptPool;
+        let matches = pool.filter(p => p.price >= minB && p.price <= maxB).sort((a, b) => b.price - a.price);
         if (matches.length > 0) {
           replyHtml = 'متاح لدينا <strong>' + matches.length + '</strong> منتج بين <strong>' + formatPrice(minB) + '</strong> و<strong>' + formatPrice(maxB) + ' ج.م</strong>:' +
-            matches.slice(0, 5).map(renderBotProductCard).join('');
+            matches.slice(0, 6).map(renderBotProductCard).join('');
         } else {
           replyHtml = 'لا توجد منتجات متوفرة في النطاق من ' + formatPrice(minB) + ' إلى ' + formatPrice(maxB) + ' ج.م حالياً. جرّب ميزانية أخرى!';
         }
       } else if (nums.length >= 1) {
         const budget = nums[0];
-        const isAbove = /فوق|أعلى|اعلى|اكثر|أكثر/.test(q);
-        let pool = targetMall ? inStock.filter(p => p.mall === targetMall) : inStock;
+        const isAbove = /فوق|اعلي|اكثر/.test(qNorm);
+        let pool = specificGroups.length > 0 ? filterProductsByBotGroups(deptPool, specificGroups) : deptPool;
         let matches = isAbove
           ? pool.filter(p => p.price >= budget).sort((a, b) => a.price - b.price)
           : pool.filter(p => p.price <= budget).sort((a, b) => b.price - a.price);
@@ -5950,28 +6110,31 @@
           const intro = isAbove
             ? 'المتاح بسعر أعلى من <strong>' + formatPrice(budget) + ' ج.م</strong> (' + matches.length + ' منتج):'
             : 'على قد ميزانيتك حتى <strong>' + formatPrice(budget) + ' ج.م</strong>، متاح لدينا <strong>' + matches.length + ' منتج</strong> (أفضل الاختيارات):';
-          replyHtml = intro + matches.slice(0, 5).map(renderBotProductCard).join('');
-        } else {
+          replyHtml = intro + matches.slice(0, 6).map(renderBotProductCard).join('');
+        } else if (pool.length > 0) {
           const cheapest = [...pool].sort((a, b) => a.price - b.price).slice(0, 3);
-          const minAvail = cheapest.length ? formatPrice(cheapest[0].price) : '0';
+          const minAvail = formatPrice(cheapest[0].price);
           replyHtml = 'المتوفر حالياً يبدأ من <strong>' + minAvail + ' ج.م</strong> — هذه أقل المنتجات المتوفرة سعراً:' +
             cheapest.map(renderBotProductCard).join('');
+        } else {
+          replyHtml = 'عذراً، لا تتوفر منتجات مطابقة لبحثك «' + escapeBotHtml(rawText) + '» حالياً.';
         }
       } else {
-        // Keyword / department search across available in-stock products
-        const cleanWords = q.replace(/عندكم|عاوز|ابحث|عن|في|من|بكام|سعر|لو سمحت|منتجات|قسم/g, '').trim().split(/ +/).filter(Boolean);
-        let matches = inStock.filter(p => {
-          const hay = ((p.title || '') + ' ' + (p.chip || '') + ' ' + (p.category || '') + ' ' + (p.brand || '')).toLowerCase();
-          return cleanWords.some(w => hay.includes(w));
-        });
-        if (matches.length === 0 && targetMall) {
-          matches = inStock.filter(p => p.mall === targetMall);
+        // Pure product / department search
+        let matches = [];
+        if (specificGroups.length > 0) {
+          matches = filterProductsByBotGroups(deptPool, specificGroups);
+        } else if (targetMall) {
+          matches = deptPool;
         }
+
         if (matches.length > 0) {
           replyHtml = 'وجدت لك <strong>' + matches.length + ' منتج متوفر</strong> مطابق لبحثك:' +
-            matches.slice(0, 5).map(renderBotProductCard).join('');
+            matches.slice(0, 8).map(renderBotProductCard).join('');
+        } else if (specificGroups.length > 0) {
+          replyHtml = 'عذراً، غير متوفر حالياً «<strong>' + escapeBotHtml(rawText) + '</strong>» في المخزون.<br>المتاح لدينا حالياً: ملابس (بناطيل، قمصان، تيشيرتات، فساتين، بدل)، أحذية، وأدوات منزلية. اكتب اسم الصنف أو ميزانيتك!';
         } else {
-          replyHtml = 'أنا مساعد المنتجات والميزانية فقط 😊<br>اكتب <strong>رقم ميزانيتك</strong> (مثلاً: <code>500</code> أو <code>2000</code> أو <code>10000</code>) أو اسم المنتج اللي تبحث عنه وسأعرض لك المتاح فوراً.';
+          replyHtml = 'أنا مساعد المنتجات والميزانية فقط 😊<br>اكتب <strong>رقم ميزانيتك</strong> (مثلاً: <code>500</code> أو <code>2000</code> أو <code>10000</code>) أو اسم المنتج (مثل: <code>بناطيل</code>، <code>بدلة</code>، <code>أحذية</code>) وسأعرض لك المتاح فوراً.';
         }
       }
 
