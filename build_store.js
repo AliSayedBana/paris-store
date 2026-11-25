@@ -1391,31 +1391,6 @@ function buildStore() {
       font-weight: 800;
     }
 
-    /* Customer Reviews Section */
-    .paris-reviews-section {
-      max-width: 1320px;
-      margin: 60px auto 0;
-      padding: 0 24px;
-    }
-    .reviews-bento-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 20px;
-      margin-top: 24px;
-    }
-    .review-vip-card {
-      background: #fff;
-      border: 1.5px solid var(--paris-border);
-      border-radius: 18px;
-      padding: 22px;
-      box-shadow: var(--paris-shadow-sm);
-      transition: var(--transition-smooth);
-    }
-    .review-vip-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--paris-gold);
-      box-shadow: var(--paris-shadow-md);
-    }
     .quickview-details-box {
       padding: 36px 32px;
       display: flex;
@@ -2205,56 +2180,6 @@ function buildStore() {
       </button>
     </div>
   </div>
-
-  <!-- ===================== 9.5 VERIFIED VIP REVIEWS ===================== -->
-  <section class="paris-reviews-section" aria-label="تقييمات العملاء الموثقة">
-    <div style="text-align:center;">
-      <span style="background:var(--paris-gold-light); color:var(--paris-gold); font-size:12px; font-weight:900; padding:4px 14px; border-radius:50px;">⭐ ثقة عملائنا سر استمرارنا</span>
-      <h2 class="section-headline" style="justify-content:center; margin-top:10px;">تجارب حقيقية بعد المعاينة والاستلام</h2>
-      <p class="section-subhead">آراء عملاء طلبوا منتجاتنا الفاخرة وفحصوها مع المندوب قبل الدفع</p>
-    </div>
-
-    <div class="reviews-bento-grid">
-      <div class="review-vip-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div>
-            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">م. طارق المنصوري</div>
-            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • التجمع الخامس</div>
-          </div>
-          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
-        </div>
-        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
-          "طلبت البدلة الإيطالية الصوف بـ 9,850 ج.م، وصراحة كنت متردد في البداية، لكن المندوب انتظرني فتحت الشحنة وقست البدلة وتأكدت من الخامة والتفصيل الإيطالي قبل ما أدفع جنيه واحد."
-        </p>
-      </div>
-
-      <div class="review-vip-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div>
-            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">أ. ندى الشريف</div>
-            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • الإسكندرية</div>
-          </div>
-          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
-        </div>
-        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
-          "طقم الجرانيت الـ 32 قطعة وصلني في ميعاده بكرتونته الأصلية ومعاه شهادة الضمان 5 سنوات، وفحصت كل الحلل مع المندوب، والتوصيل كان سريع ومؤمّن بالكامل!"
-        </p>
-      </div>
-
-      <div class="review-vip-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div>
-            <div style="font-weight:900; color:var(--paris-forest); font-size:15px;">د. كريم عبد الرحمن</div>
-            <div style="font-size:11.5px; color:#107c41; font-weight:700;">✅ طلب موثّق • الشيخ زايد</div>
-          </div>
-          <div style="color:#f5a623; font-size:14px;">★★★★★</div>
-        </div>
-        <p style="font-size:13.5px; color:var(--paris-text-muted); line-height:1.7; margin:0;">
-          "الحذاء الأوكسفورد الجلد الطبيعي فخم جداً ومريح للقدم، والتواصل مع خدمة عملاء واتساب كان سريع ومحترم جداً من أول تأكيد المقاس لحد الاستلام."
-        </p>
-      </div>
-    </div>
-  </section>
 
   <!-- ===================== 10. LUXURY FOOTER ===================== -->
   <footer style="background:var(--paris-forest); color:#fff; padding:60px 24px 30px; margin-top:80px; border-top:3px solid var(--paris-gold);">
