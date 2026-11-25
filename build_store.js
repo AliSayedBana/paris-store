@@ -57,14 +57,8 @@ function buildStore() {
     const formattedReg = (p.regularPrice && p.regularPrice > p.price) ? Number(p.regularPrice).toLocaleString('en-US') : '';
     const formattedSave = discountAmount > 0 ? Number(discountAmount).toLocaleString('en-US') : '';
 
-    const instEnabled = !settings.installments || settings.installments.enabled !== false;
-    const instMinPrice = (settings.installments && settings.installments.minPrice) || 1000;
-    const instMonths = (settings.installments && settings.installments.months) || 12;
-    const isHighTicket = instEnabled && p.price >= instMinPrice;
-    const installmentMonthly = Math.round(p.price / instMonths).toLocaleString('en-US');
-    const installmentTag = isHighTicket
-      ? `<div class="card-installment-tag">💳 أو قسط يبدأ من <strong>${installmentMonthly} ج.م</strong>/شهر</div>`
-      : '';
+    const isHighTicket = false;
+    const installmentTag = '';
     const highTicketTrustTag = p.price >= 1000
       ? `<div class="card-vip-trust">🛡️ معاينة كاملة وفحص مع المندوب قبل الدفع</div>`
       : '';
@@ -213,7 +207,7 @@ function buildStore() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f3322">
   <title>متجر باريس | Paris Store — أفخم مول تجاري للتسوق الإلكتروني</title>
-  <meta name="description" content="متجر باريس التجاري — تسوق أفخم الأزياء والملابس، الأدوات المنزلية الملكية، والأحذية الإيطالية والرياضية مع حق المعاينة الكاملة مع المندوب قبل الدفع وإمكانية التقسيط.">
+  <meta name="description" content="متجر باريس التجاري — تسوق أفخم الأزياء والملابس، الأدوات المنزلية الملكية، والأحذية الإيطالية والرياضية مع حق المعاينة الكاملة مع المندوب قبل الدفع.">
   <meta property="og:title" content="متجر باريس | Paris Store — تجربة تسوق فاخرة">
   <meta property="og:description" content="ملابس فاخرة، أطقم طهي ملكية، وأحذية جلد طبيعي مع شحن سريع لجميع المحافظات وحق الفحص والمعاينة قبل الدفع.">
   <meta property="og:type" content="website">
@@ -1630,6 +1624,139 @@ function buildStore() {
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* ===================== BUDGET & PRODUCTS CHATBOT ===================== */
+    .paris-bot-toggle {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: linear-gradient(135deg, var(--paris-forest) 0%, #164b33 100%);
+      color: #fff;
+      border: 2px solid var(--paris-gold);
+      border-radius: 50px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(15, 51, 34, 0.35);
+      z-index: 9998;
+      transition: all 0.25s ease;
+    }
+    .paris-bot-toggle:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 32px rgba(15, 51, 34, 0.45);
+    }
+    .paris-bot-window {
+      position: fixed;
+      bottom: 90px;
+      right: 25px;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      height: 530px;
+      max-height: 76vh;
+      background: #fff;
+      border-radius: 20px;
+      border: 1.5px solid var(--paris-border);
+      box-shadow: 0 20px 55px rgba(10, 28, 18, 0.28);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .paris-bot-header {
+      background: linear-gradient(135deg, var(--paris-forest) 0%, #164b33 100%);
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--paris-gold);
+    }
+    .paris-bot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      background: #f8f9f8;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bot-msg {
+      background: #fff;
+      border: 1px solid #e4e1d6;
+      color: var(--paris-text-main);
+      padding: 10px 13px;
+      border-radius: 14px 14px 14px 4px;
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 92%;
+      align-self: flex-start;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .user-msg {
+      background: var(--paris-forest);
+      color: #fff;
+      padding: 9px 13px;
+      border-radius: 14px 14px 4px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      max-width: 82%;
+      align-self: flex-end;
+    }
+    .bot-quick-row {
+      padding: 8px 12px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .bot-chip {
+      background: #f4f1ea;
+      border: 1px solid #ded7c8;
+      color: var(--paris-forest);
+      padding: 5px 11px;
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .bot-chip:hover {
+      background: var(--paris-forest);
+      color: #fff;
+      border-color: var(--paris-forest);
+    }
+    .bot-prod-mini {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      background: #fbfaf7;
+      border: 1px solid #e5e0d5;
+      border-radius: 10px;
+      padding: 7px;
+      margin-top: 7px;
+    }
+    .bot-prod-mini img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .paris-bot-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      border-top: 1.5px solid #e8e3d8;
+    }
   </style>
 </head>
 <body>
@@ -1798,7 +1925,7 @@ function buildStore() {
           <div class="floating-crest-icon">💎</div>
           <div>
             <div class="floating-card-title" id="heroFloatingTitle">أفخم المنتجات المعتمدة</div>
-            <div class="floating-card-sub" id="heroFloatingLink">ضمان جودة واستبدال مجاني</div>
+            <div class="floating-card-sub" id="heroFloatingLink">خامات أصلية ومعاينة قبل الدفع</div>
           </div>
         </div>
       </div>
@@ -1827,10 +1954,10 @@ function buildStore() {
       </div>
 
       <div class="trust-card">
-        <div class="trust-icon-box">🔄</div>
+        <div class="trust-icon-box">💵</div>
         <div>
-          <div class="trust-title">استبدال مجاني 14 يوماً</div>
-          <p class="trust-desc">مرونة كاملة في الاسترجاع والتبديل بسهولة.</p>
+          <div class="trust-title">دفع كاش عند الاستلام</div>
+          <p class="trust-desc">لا تدفع أي مبلغ قبل فتح الشحنة وفحصها بالكامل.</p>
         </div>
       </div>
 
@@ -1931,7 +2058,7 @@ function buildStore() {
         <div class="qv-highlights-list" id="qvModalHighlights">
           ✨ خامات عالية الجودة ومضمونة 100%<br>
           🚚 شحن سريع مع حق الفحص والمعاينة قبل الاستلام<br>
-          🔄 استبدال واسترجاع فوري خلال 14 يوماً
+          💵 الدفع نقداً عند الاستلام بعد المعاينة الكاملة
         </div>
 
         <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:10px; margin-top:auto;">
@@ -2070,7 +2197,7 @@ function buildStore() {
       <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px 14px; border-radius:10px; margin-bottom:18px; font-size:12.5px; color:#166534; line-height:1.6;">
         🛡️ <strong>ضمان باريس الذهبي للمشتريات:</strong><br>
         • حق الفحص والمعاينة والتجربة الكاملة مع المندوب قبل دفع أي مليم.<br>
-        • شحن مجاني وسريع ومؤمّن بالكامل + فاتورة معتمدة وضمان استبدال 14 يوماً.
+        • الدفع نقداً عند الاستلام بعد التأكد التام من مطابقة المنتج وجودته.
       </div>
 
       <button type="button" class="btn-card-whatsapp-quick" onclick="submitWhatsAppOrder()" style="width:100%; padding:14px; font-size:16px; border-radius:12px;">
@@ -2164,7 +2291,7 @@ function buildStore() {
         <ul style="list-style:none; padding:0; margin:0; line-height:2.2; font-size:14px; color:#d6e2dc;">
           <li>🚚 شحن لجميع محافظات جمهورية مصر العربية</li>
           <li>💵 الدفع عند الاستلام مع إمكانية فتح الشحنة والفحص</li>
-          <li>🔄 استرجاع واستبدال مجاني خلال 14 يوماً</li>
+          <li>🛡️ فحص وتجربة كاملة قبل الدفع للمندوب</li>
           <li>📞 خط ساخن وخدمة عملاء VIP عبر واتساب</li>
         </ul>
       </div>
@@ -2188,6 +2315,45 @@ function buildStore() {
   <a href="https://wa.me/${settings.whatsappNumber}" target="_blank" class="paris-wa-float" style="position:fixed; bottom:25px; left:25px; width:60px; height:60px; background:#25d366; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(37,211,102,0.45); z-index:9999; color:#fff; text-decoration:none; transition:all 0.3s;" aria-label="تواصل واتساب">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.311.045-.698.077-1.118-.056-.277-.088-.636-.217-1.096-.416-1.936-.838-3.195-2.798-3.292-2.927-.098-.129-.785-1.045-.785-1.993 0-.948.497-1.414.674-1.606.177-.193.385-.241.513-.241.129 0 .257.002.369.006.118.005.276-.045.432.329.16.386.546 1.332.594 1.43.048.097.08.21.016.339-.064.13-.097.21-.193.322-.096.113-.203.252-.29.339-.096.096-.197.2-.085.392.112.193.498.822 1.069 1.33.736.655 1.357.858 1.55.954.193.096.305.08.418-.049.112-.128.481-.561.61-.754.128-.193.257-.161.433-.096.177.064 1.123.53 1.316.626.193.097.321.145.369.226.048.08.048.466-.096.871z"/></svg>
   </a>
+
+  <!-- Products & Budget Chatbot Widget -->
+  <button type="button" class="paris-bot-toggle" id="parisBotToggleBtn" onclick="toggleParisChatbot()">
+    <span>🤖</span>
+    <span>مساعد الميزانية والمنتجات</span>
+  </button>
+
+  <div class="paris-bot-window" id="parisChatbotWindow" role="dialog" aria-label="مساعد الميزانية والمنتجات">
+    <div class="paris-bot-header">
+      <div>
+        <div style="font-weight:900; font-size:14.5px;">🤖 مساعد المنتجات والميزانية</div>
+        <div style="font-size:11px; color:#d4e0d9;">اكتب ميزانيتك أو اسم المنتج لعرض المتاح فوراً</div>
+      </div>
+      <button type="button" onclick="toggleParisChatbot()" style="background:rgba(255,255,255,0.18); color:#fff; border:none; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer;">&times;</button>
+    </div>
+
+    <div class="paris-bot-messages" id="parisBotMessages">
+      <div class="bot-msg">
+        أهلاً بك في <strong>متجر باريس</strong>! 👋<br>
+        أنا هنا لمساعدتك في اختيار المنتج المناسب لميزانيتك من المتاح بالمخزن حالياً.<br>
+        <strong>اكتب رقم ميزانيتك</strong> (مثلاً: <code>1500</code> أو <code>10000</code>) أو اسم المنتج، أو اختر من الأزرار بالأسفل:
+      </div>
+    </div>
+
+    <div class="bot-quick-row">
+      <button type="button" class="bot-chip" onclick="sendBotQuery('تحت 500')">💰 تحت 500</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('حتى 1000')">💰 حتى 1,000</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('حتى 3000')">💰 حتى 3,000</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('حتى 10500')">💰 حتى 10,500</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('ملابس')">👗 ملابس</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('أدوات منزلية')">🏠 منزل</button>
+      <button type="button" class="bot-chip" onclick="sendBotQuery('أحذية')">👟 أحذية</button>
+    </div>
+
+    <form class="paris-bot-input-bar" onsubmit="event.preventDefault(); sendBotFromInput();">
+      <input type="text" id="parisBotInput" placeholder="اكتب ميزانيتك (مثلاً 2000) أو اسم المنتج..." autocomplete="off" style="flex:1; padding:9px 12px; border:1.5px solid #ded7c8; border-radius:50px; font-family:inherit; font-size:13px; outline:none;">
+      <button type="submit" style="background:var(--paris-forest); color:#fff; border:none; padding:9px 16px; border-radius:50px; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;">إرسال</button>
+    </form>
+  </div>
 
   <!-- Toast -->
   <div class="paris-toast" id="parisToast">
@@ -2558,8 +2724,7 @@ function buildStore() {
       const msg = 'مرحباً متجر باريس 👋%0Aأود الاستفسار وحجز هذا المنتج فوراً:%0A' +
                   '• *المنتج:* ' + encodeURIComponent(title) + '%0A' +
                   '• *السعر:* ' + formatPrice(price) + ' ج.م%0A' +
-                  '• *المعاينة:* متاح الفحص والمعاينة قبل الدفع مع المندوب 🛡️%0A' +
-                  '• *الضمان:* فاتورة معتمدة وضمان استبدال 14 يوماً 📜%0A%0A' +
+                  '• *الدفع:* الدفع نقداً عند الاستلام بعد المعاينة والفحص مع المندوب 🛡️%0A%0A' +
                   'يرجى تأكيد التوافر وتفاصيل الشحن.';
       window.open('https://wa.me/' + PARIS_WHATSAPP + '?text=' + msg, '_blank');
     }
@@ -2599,8 +2764,7 @@ function buildStore() {
                        discountLine +
                        shippingLine +
                        '*إجمالي الفاتورة النهائي:* ' + formatPrice(t.total) + ' ج.م%0A' +
-                       '*طريقة الدفع:* الدفع عند الاستلام بعد المعاينة والفحص التام 🛡️%0A' +
-                       '*الضمان:* فاتورة رسمية معتمدة + ضمان استبدال واسترجاع 14 يوماً مجاناً 📜%0A%0A' +
+                       '*طريقة الدفع:* الدفع نقداً عند الاستلام بعد المعاينة والفحص التام 🛡️%0A%0A' +
                        'يرجى تأكيد تجهيز الشحنة والتوصيل.';
 
       window.trackParisEvent('Purchase', { value: t.total, currency: 'EGP' });
@@ -2688,16 +2852,15 @@ function buildStore() {
       const sgBox = document.getElementById('qvSizeGuideBox');
       if (sgBox) sgBox.style.display = 'none';
 
-      // High-Ticket Features in Highlights
-      const isHigh = PARIS_INSTALLMENTS.enabled && prod.price >= PARIS_INSTALLMENTS.minPrice;
-      const monthly = Math.round(prod.price / (PARIS_INSTALLMENTS.months || 12)).toLocaleString('en-US');
+      // High-Ticket Features in Highlights (Cash on Delivery after full inspection — NO installments/returns)
+      const isHigh = prod.price >= 1000;
       const highHighlights = isHigh
-        ? \`<div style="color:#0d5c3a; font-weight:800; margin-bottom:5px;">💳 متاح التقسيط المريح حتى \${PARIS_INSTALLMENTS.months || 12} شهر (يبدأ من \${monthly} ج.م/شهرياً عبر ValU أو البنوك)</div>
-           <div style="color:#b45309; font-weight:800; margin-bottom:5px;">🛡️ حق المعاينة والفحص والتجربة مع المندوب قبل دفع أي مليم</div>
-           <div>📜 فاتورة ضريبية رسمية وضمان استبدال واسترجاع مجاني 14 يوماً</div>\`
+        ? \`<div style="color:#b45309; font-weight:800; margin-bottom:5px;">🛡️ حق المعاينة والفحص والتجربة الكاملة مع المندوب قبل دفع أي مليم</div>
+           <div>💵 الدفع نقداً عند الاستلام فقط بعد التأكد من مطابقة المنتج</div>
+           <div>💎 خامات أصلية وتغليف فاخر + شحن سريع مؤمّن</div>\`
         : \`✨ خامات عالية الجودة ومضمونة 100%<br>
            🚚 شحن سريع مع حق الفحص والمعاينة قبل الاستلام<br>
-           🔄 استبدال واسترجاع فوري خلال 14 يوماً\`;
+           💵 الدفع نقداً عند الاستلام بعد المعاينة\`;
       document.getElementById('qvModalHighlights').innerHTML = highHighlights;
 
       // Sizes
@@ -3040,6 +3203,147 @@ function buildStore() {
     function scrollToProducts() {
       const el = document.getElementById('products');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ===================== PRODUCTS & BUDGET CHATBOT ENGINE =====================
+    function toggleParisChatbot() {
+      const win = document.getElementById('parisChatbotWindow');
+      if (!win) return;
+      const isOpen = win.style.display === 'flex';
+      win.style.display = isOpen ? 'none' : 'flex';
+      if (!isOpen) {
+        const inp = document.getElementById('parisBotInput');
+        if (inp) setTimeout(() => inp.focus(), 100);
+      }
+    }
+
+    function sendBotFromInput() {
+      const inp = document.getElementById('parisBotInput');
+      if (!inp) return;
+      const txt = inp.value.trim();
+      if (!txt) return;
+      inp.value = '';
+      sendBotQuery(txt);
+    }
+
+    function normalizeBotDigits(str) {
+      return String(str || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+
+    function escapeBotHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function botAddToCart(pid) {
+      const p = productsData.find(item => item.id === pid);
+      if (!p) return;
+      const defaultSize = (p.sizes && p.sizes.length) ? p.sizes[0] : '';
+      addToCart(p.title, p.price, p.image || '', defaultSize, p.id);
+    }
+
+    function renderBotProductCard(p) {
+      const stk = getProductStock(p.id, p.title);
+      const safeT = escapeBotHtml(p.title);
+      return '<div class="bot-prod-mini">' +
+        '<img src="' + escapeBotHtml(p.image || '') + '" alt="">' +
+        '<div style="flex:1; min-width:0;">' +
+          '<div style="font-weight:800; font-size:12px; color:var(--paris-forest); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + safeT + '</div>' +
+          '<div style="display:flex; align-items:center; gap:6px; margin-top:2px;">' +
+            '<strong style="font-size:12.5px; color:#0d5c3a;">' + formatPrice(p.price) + ' ج.م</strong>' +
+            '<span style="font-size:10.5px; color:#15803d;">(متوفر ' + stk + ')</span>' +
+          '</div>' +
+          '<div style="display:flex; gap:5px; margin-top:4px;">' +
+            '<button type="button" onclick="openQuickView(' + p.id + ')" style="background:#f4f1ea; border:1px solid #ded7c8; color:var(--paris-forest); padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">معاينة 👁️</button>' +
+            '<button type="button" onclick="botAddToCart(' + p.id + ')" style="background:var(--paris-forest); border:none; color:#fff; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">أضف للسلة 🛒</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function sendBotQuery(rawText) {
+      const box = document.getElementById('parisBotMessages');
+      if (!box) return;
+
+      const userDiv = document.createElement('div');
+      userDiv.className = 'user-msg';
+      userDiv.innerText = rawText;
+      box.appendChild(userDiv);
+
+      const q = normalizeBotDigits(rawText).toLowerCase().replace(/,/g, '');
+      const inStock = productsData.filter(p => getProductStock(p.id, p.title) > 0);
+
+      let replyHtml = '';
+
+      // Detect broad department browse ONLY when generic department term is used (not specific item like بدلة)
+      let targetMall = '';
+      if (/ملابس|هدوم|أزياء|ازياء/.test(q)) targetMall = 'clothes';
+      else if (/أدوات منزلية|ادوات منزلية|منزل|مطبخ|ديكور/.test(q)) targetMall = 'home';
+      else if (/أحذية|احذية|شوزات|شوز/.test(q)) targetMall = 'shoes';
+
+      // Extract numeric budget or range
+      const nums = (q.match(/[0-9]+/g) || []).map(n => parseInt(n, 10)).filter(n => n > 0);
+
+      // Guard if asked explicitly about installments or returns (handles combined questions clearly)
+      const asksInstallment = /قسط|تقسيط|فاليو|valu/.test(q);
+      const asksReturn = /استرجاع|استبدال|ارجاع|ترجيع/.test(q);
+      if ((asksInstallment || asksReturn) && nums.length === 0) {
+        const parts = [];
+        if (asksReturn) parts.push('متاح لك <strong>فتح الشحنة ومعاينتها وفحصها بالكامل مع المندوب قبل الدفع</strong>، ولا يوجد استرجاع أو استبدال بعد الاستلام.');
+        if (asksInstallment) parts.push('الدفع لدينا <strong>كاش عند الاستلام فقط</strong> (لا يوجد نظام تقسيط).');
+        replyHtml = parts.join('<br>') + '<br>اكتب ميزانيتك الكاش أو اسم المنتج الآن وسأعرض لك المتاح فوراً!';
+      } else if (nums.length >= 2 && (/من|بين|الى|إلى|-/.test(q))) {
+        const minB = Math.min(nums[0], nums[1]);
+        const maxB = Math.max(nums[0], nums[1]);
+        let matches = inStock.filter(p => p.price >= minB && p.price <= maxB && (!targetMall || p.mall === targetMall));
+        matches.sort((a, b) => b.price - a.price);
+        if (matches.length > 0) {
+          replyHtml = 'متاح لدينا <strong>' + matches.length + '</strong> منتج بين <strong>' + formatPrice(minB) + '</strong> و<strong>' + formatPrice(maxB) + ' ج.م</strong>:' +
+            matches.slice(0, 5).map(renderBotProductCard).join('');
+        } else {
+          replyHtml = 'لا توجد منتجات متوفرة في النطاق من ' + formatPrice(minB) + ' إلى ' + formatPrice(maxB) + ' ج.م حالياً. جرّب ميزانية أخرى!';
+        }
+      } else if (nums.length >= 1) {
+        const budget = nums[0];
+        const isAbove = /فوق|أعلى|اعلى|اكثر|أكثر/.test(q);
+        let pool = targetMall ? inStock.filter(p => p.mall === targetMall) : inStock;
+        let matches = isAbove
+          ? pool.filter(p => p.price >= budget).sort((a, b) => a.price - b.price)
+          : pool.filter(p => p.price <= budget).sort((a, b) => b.price - a.price);
+
+        if (matches.length > 0) {
+          const intro = isAbove
+            ? 'المتاح بسعر أعلى من <strong>' + formatPrice(budget) + ' ج.م</strong> (' + matches.length + ' منتج):'
+            : 'على قد ميزانيتك حتى <strong>' + formatPrice(budget) + ' ج.م</strong>، متاح لدينا <strong>' + matches.length + ' منتج</strong> (أفضل الاختيارات):';
+          replyHtml = intro + matches.slice(0, 5).map(renderBotProductCard).join('');
+        } else {
+          const cheapest = [...pool].sort((a, b) => a.price - b.price).slice(0, 3);
+          const minAvail = cheapest.length ? formatPrice(cheapest[0].price) : '0';
+          replyHtml = 'المتوفر حالياً يبدأ من <strong>' + minAvail + ' ج.م</strong> — هذه أقل المنتجات المتوفرة سعراً:' +
+            cheapest.map(renderBotProductCard).join('');
+        }
+      } else {
+        // Keyword / department search across available in-stock products
+        const cleanWords = q.replace(/عندكم|عاوز|ابحث|عن|في|من|بكام|سعر|لو سمحت|منتجات|قسم/g, '').trim().split(/ +/).filter(Boolean);
+        let matches = inStock.filter(p => {
+          const hay = ((p.title || '') + ' ' + (p.chip || '') + ' ' + (p.category || '') + ' ' + (p.brand || '')).toLowerCase();
+          return cleanWords.some(w => hay.includes(w));
+        });
+        if (matches.length === 0 && targetMall) {
+          matches = inStock.filter(p => p.mall === targetMall);
+        }
+        if (matches.length > 0) {
+          replyHtml = 'وجدت لك <strong>' + matches.length + ' منتج متوفر</strong> مطابق لبحثك:' +
+            matches.slice(0, 5).map(renderBotProductCard).join('');
+        } else {
+          replyHtml = 'أنا مساعد المنتجات والميزانية فقط 😊<br>اكتب <strong>رقم ميزانيتك</strong> (مثلاً: <code>500</code> أو <code>2000</code> أو <code>10000</code>) أو اسم المنتج اللي تبحث عنه وسأعرض لك المتاح فوراً.';
+        }
+      }
+
+      const botDiv = document.createElement('div');
+      botDiv.className = 'bot-msg';
+      botDiv.innerHTML = replyHtml;
+      box.appendChild(botDiv);
+      box.scrollTop = box.scrollHeight;
     }
 
     // Initialize store state & restore persisted cart / coupon

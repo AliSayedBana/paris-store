@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS = {
     otherFee: 95
   },
   installments: {
-    enabled: true,
+    enabled: false,
     minPrice: 1000,
     months: 12
   },
